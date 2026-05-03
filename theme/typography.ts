@@ -12,11 +12,11 @@ export const fonts = {
   displaySemi: 'PlayfairDisplay_600SemiBold',
   displayMed:  'PlayfairDisplay_500Medium',
   displayReg:  'PlayfairDisplay_400Regular',
-  displayItal: 'PlayfairDisplay_400Italic',
+  displayItal: 'PlayfairDisplay_400Regular_Italic',
 
   // EB Garamond — corpo, labels, listas, notas
   body:        'EBGaramond_400Regular',
-  bodyItal:    'EBGaramond_400Italic',
+  bodyItal:    'EBGaramond_400Regular_Italic',
   bodyMed:     'EBGaramond_500Medium',
 };
 
