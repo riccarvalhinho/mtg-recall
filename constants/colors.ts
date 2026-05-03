@@ -1,8 +1,4 @@
-export const Colors = {
-  background: '#1C1A14',
-  text: '#EDE8D5',
-  tabBar: '#252318',
-  tabBarBorder: '#3A3826',
-  tabIconActive: '#EDE8D5',
-  tabIconInactive: '#6B6650',
-};
+// Re-exporta do theme/ para retrocompatibilidade
+// Usar directamente: import { colors } from '../theme/colors'
+export { colors as Colors } from '../theme/colors';
+export { colors } from '../theme/colors';

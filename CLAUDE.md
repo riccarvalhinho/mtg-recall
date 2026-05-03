@@ -1,4 +1,4 @@
-# CLAUDE.md — MTG Companion App
+# CLAUDE.md — MTG Recall
 
 Este ficheiro é lido automaticamente pelo Claude Code em cada sessão. Contém contexto completo do projecto para evitar repetição e garantir consistência.
 
@@ -26,110 +26,171 @@ O developer é um iniciante em programação — explicar conceitos quando relev
 
 ---
 
-## Estrutura de Pastas (a criar)
+## Estrutura de Pastas (actual)
 
+```
 /app              — écrans (Expo Router)
+  _layout.tsx     — root layout (auth init)
+  (tabs)/
+    _layout.tsx   — tab bar
+    index.tsx     — Home (placeholder)
+    events.tsx    — Events (placeholder)
+    stats.tsx     — Stats (placeholder)
+    profile.tsx   — Profile (placeholder)
 
-/components       — componentes reutilizáveis
-
-/services         — chamadas a APIs externas (Scryfall, Cardmarket, Supabase)
-
-/hooks            — lógica reutilizável
-
-/types            — definições TypeScript
-
-/constants        — cores, tamanhos, configurações fixas
-
-/assets           — imagens, ícones, fontes
+/components       — componentes reutilizáveis (a criar)
+/services         — Supabase client + auth
+/hooks            — lógica reutilizável (a criar)
+/types
+  index.ts        — todos os tipos TypeScript (Event, Match, ManaSelection, etc.)
+/theme
+  colors.ts       — paleta completa (fonte de verdade)
+  typography.ts   — fontes e tamanhos
+  mana.ts         — cores MTG por símbolo (W/U/B/R/G)
+/constants
+  colors.ts       — re-exporta theme/colors (retrocompatibilidade)
+/design
+  handoff.md      — spec completa de implementação React Native
+  screen-home.png
+  screen-events.png
+  screen-event-detail.png
+  screen-match-registration.png
+design-brief.md   — conceito visual, paleta original, referências
+```
 
 ---
 
 ## Convenções
 
-- Linguagem dos comentários: **português**  
-- Ficheiros e variáveis: **camelCase** em inglês (convenção da linguagem)  
-- Componentes React: **PascalCase**  
-- Sempre usar **TypeScript** — nunca JavaScript puro  
-- Prefer **functional components** e **hooks**  
+- Linguagem dos comentários: **português**
+- Ficheiros e variáveis: **camelCase** em inglês (convenção da linguagem)
+- Componentes React: **PascalCase**
+- Sempre usar **TypeScript** — nunca JavaScript puro
+- Prefer **functional components** e **hooks**
 - Cada ficheiro deve ter **uma responsabilidade** clara
+- Imports de tema: sempre de `../theme/colors`, `../theme/typography`, `../theme/mana`
+
+---
+
+## Design System — "Scholar's Archive"
+
+**Conceito:** biblioteca académica semi-minimalista. Warm, culta, organizada. Não épico/gaming.
+
+### Cores principais (theme/colors.ts)
+- Fundo: `#130F0A` / Card: `#1E1812` / Hover: `#252019`
+- Gold accent: `#C9A96E` / Gold dim: `#8B7248`
+- Texto: `#E8DCC8` (prim) / `#A8967A` (sec) / `#6B5C3E` (dim)
+- Win: `#5A8B5C` / Loss: `#8B4A4A` / Draw: `#7A7060`
+
+### Tipografia (theme/typography.ts)
+- **Playfair Display** — títulos, nomes de eventos (`fonts.display`, `.displaySemi`, etc.)
+- **EB Garamond** — corpo, labels, listas (`fonts.body`, `.bodyItal`, etc.)
+- Instalar: `@expo-google-fonts/playfair-display` + `@expo-google-fonts/eb-garamond`
+
+### Componentes partilhados (a criar em /components)
+- `ManaPip` — pip de cor de mana (W/U/B/R/G), com estado `isSplash`
+- `TabBar` — 4 tabs: Home, Events, Stats, Profile
+- `TypeBadge` — badge de formato (Sealed/Draft)
+- `RecordBadge` — score W–L com win rate
+- `CardThumbnailPlaceholder` — placeholder 36×50 ou 40×56px
+- `EventCard` — card de evento com record, mana pips, chevron
+- `MatchCard` — resultado de match com pill W/L/D
+
+### Elementos visuais
+- `border-radius: 4px` (pequeno) a `12px` (cards)
+- Bordas: `1px solid #3A3020`
+- Accent bar: `3px` wide, gold gradient (eventos activos)
+- Iconografia: linha fina (stroke), não preenchido
 
 ---
 
 ## Decisões Técnicas Já Tomadas
 
-1. **Supabase** como backend — não Firebase  
-2. **Scryfall API** como fonte única de dados de cartas (pesquisa, imagens, metadata)  
-3. **Cardmarket API** para preços — actualização frequente, não real-time por cada request  
-4. **Expo Router** para navegação (file-based routing, padrão moderno do Expo)  
-5. Dados do utilizador guardados **na cloud** (Supabase) — não apenas local  
-6. **MVP usa Supabase Anonymous Auth** — utilizador invisível criado automaticamente no primeiro uso, sem login. Na Fase 2, quando o utilizador criar conta, os dados do anónimo migram para a conta real. Isto permite cloud storage no MVP sem forçar login.
+1. **Supabase** como backend — não Firebase
+2. **Scryfall API** como fonte única de dados de cartas
+3. **Cardmarket API** para preços — Fase 4+
+4. **Expo Router** para navegação (file-based routing)
+5. Dados guardados **na cloud** (Supabase)
+6. **MVP usa Supabase Anonymous Auth** — sem login forçado; dados migram na Fase 2
+7. **theme/** pasta separada de **constants/** — fonte de verdade do design
+8. **types/index.ts** — tipos centralizados (Event, Match, ManaSelection, etc.)
 
 ---
 
 ## APIs — Informação Importante
 
 ### Scryfall
-
-- Base URL: `https://api.scryfall.com`  
-- Endpoints principais: `/cards/search`, `/cards/autocomplete`, `/cards/named`  
-- Rate limit: 50-100ms entre requests (respeitar sempre)  
-- Imagens: disponíveis em vários tamanhos no objecto de cada carta  
-- Documentação: [https://scryfall.com/docs/api](https://scryfall.com/docs/api)
+- Base URL: `https://api.scryfall.com`
+- Endpoints: `/cards/search`, `/cards/autocomplete`, `/cards/named`
+- Rate limit: 50-100ms entre requests (respeitar sempre)
+- Documentação: https://scryfall.com/docs/api
 
 ### Cardmarket
-
-- Requer autenticação OAuth 1.0  
-- Base URL: `https://api.cardmarket.com/ws/v2.0`  
-- Documentação: [https://api.cardmarket.com/ws/documentation](https://api.cardmarket.com/ws/documentation)
+- Requer autenticação OAuth 1.0
+- Base URL: `https://api.cardmarket.com/ws/v2.0`
 
 ### Supabase
-
-- URL e anon key guardadas em variáveis de ambiente (`.env`)  
-- Nunca hardcode credenciais no código
+- URL e anon key em `.env` — nunca hardcode credenciais
 
 ---
 
 ## Modelo de Dados (Supabase) — Definido
 
-Ver ficheiro `data-model.md` para detalhe completo. Resumo:
+Ver `data-model.md` para detalhe completo. Tipos TypeScript em `types/index.ts`.
 
-users           — auth (Anon no MVP, real na Fase 2\)
+Resumo das tabelas:
+- `users` — auth (Anon no MVP)
+- `events` — torneios (type, date, active, rank)
+- `matches` — resultado W/L/D, ronda, opponent_colors (com splash)
+- `opponents` — entidade própria para stats cross-event
+- `games` — games individuais (opcional no registo rápido)
+- `decks` — 1 por evento, Fase 2+
+- `deck_cards` — Fase 2+
+- `portfolio_cards` — Fase 3+
 
-events          — torneios (type, set\_code, date, status, rank)
+**Campos calculados (não guardar):** points (W×3+D×1), win_rate, record W-L-D
+**Cores:** sempre `ManaSelection { main: ManaColor[], splash: ManaColor[] }`
 
-opponents       — entidade própria para stats cross-event (ligação a app\_user\_id na Fase 4+)
+---
 
-matches         — resultado W/L/D, ronda, went\_first, opponent\_colors (com splash)
+## Navegação (design/handoff.md § 8)
 
-games           — games individuais dentro de cada match (1, 2 ou 3\) — opcional no registo rápido
+```
+Stack principal:
+  Home          ← tab 1
+  Events List   ← tab 2
+    Event Detail  ← push
+  Stats         ← tab 3 (Fase 2+)
+  Profile       ← tab 4 (Fase 2+)
 
-decks           — 1 por evento, com colors (com splash) e thumbnail\_card\_id
+Modal (sheet, bottom-up):
+  Match Registration ← a partir de Event Detail + Home CTA
+```
 
-deck\_cards      — Fase 2+ (in\_deck bool para separar deck de card pool)
-
-portfolio\_cards — Fase 3+ (condition, foil)
-
-**Campos calculados (não guardados):** points (W*3+D*1), win\_rate, record W-L-D, ELO (Fase 3\) **Cores:** sempre `{ color: string, splash: boolean }` — nunca array plano **Sets MTG:** não é tabela — vêm da Scryfall API (`/sets`), cache local
+Usar `@react-navigation/native` com `createBottomTabNavigator` + `createNativeStackNavigator`.
 
 ---
 
 ## Estado Actual do Projecto
 
-- **Fase:** Planning — ainda não há código  
-- **Roadmap definido:**  
-  - MVP: Event Tracker, Match Registration, Tournament Stats, Cloud Storage (Supabase Anon Auth)  
-  - Fase 2: Deck Manager, Deck Analyser, User Auth completo  
-  - Fase 3: Card Search (Scryfall), Portfolio Manager  
-  - Fase 4+: Portfolio Value (Cardmarket), Life Point Tracker, Social Layer  
-- **Próximo passo:** Prototipar écrans MVP no Claude Design
+- **Fase:** MVP — infraestrutura pronta, a implementar écrans reais
+- **O que está feito:**
+  - Supabase client + Anon Auth (`services/supabase.ts`, `services/auth.ts`)
+  - Expo Router com 4 tabs (écrans placeholder)
+  - Design system completo: `theme/colors.ts`, `theme/typography.ts`, `theme/mana.ts`
+  - Tipos TypeScript: `types/index.ts` (Event, Match, ManaSelection, calcEventStats)
+  - Design assets: `design/handoff.md` + 4 prints de écran
+- **Próximo passo:** Implementar écrans — começar pelo **Home Screen**
+- **Ver também:** `project-overview.md` para estado detalhado e `design/handoff.md` para spec completa
 
 ---
 
 ## Regras de Trabalho
 
-1. Antes de criar um novo ficheiro, verificar se já existe algo semelhante em `/components` ou `/services`  
-2. Sempre criar tipos TypeScript para dados que vêm de APIs externas  
-3. Chamadas a APIs externas **sempre** em `/services` — nunca directamente nos écrans  
-4. Quando houver dúvida sobre uma abordagem, apresentar 2 opções com prós/contras antes de implementar  
-5. **Antes de cada acção que requer aprovação, explicar em português o que vai fazer e porquê, em 2-3 linhas simples**
-
+1. Antes de criar um ficheiro, verificar se já existe algo semelhante
+2. Sempre criar tipos TypeScript para dados que vêm de APIs externas
+3. Chamadas a APIs **sempre** em `/services` — nunca nos écrans
+4. Quando houver dúvida, apresentar 2 opções com prós/contras antes de implementar
+5. **Antes de cada acção, explicar em português o que vai fazer e porquê, em 2-3 linhas**
+6. **Sempre que se implementar uma feature ou o estado mudar — actualizar CLAUDE.md e project-overview.md**
+7. Para implementar um écran, consultar sempre `design/handoff.md` para a spec exacta
