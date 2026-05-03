@@ -10,7 +10,7 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { calcEventStats } from '../../types';
-import { mockEvents } from '../../data/mock';
+import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ManaPip } from '../../components/ManaPip';
@@ -265,7 +265,7 @@ const addBtn = StyleSheet.create({
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const event = mockEvents.find(e => e.id === id);
+  const event = useEventsStore(s => s.events.find(e => e.id === id));
 
   if (!event) {
     return (

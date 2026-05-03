@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { ManaColor, MatchResult } from '../types';
+import { useEventsStore } from '../store/useEventsStore';
 import { ManaPip } from '../components/ManaPip';
 
 const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
@@ -108,6 +109,7 @@ export default function MatchRegistrationScreen() {
   const [notesOpen, setNotesOpen] = useState(false);
   const [notes, setNotes]         = useState('');
   const [saved, setSaved]         = useState(false);
+  const addMatch = useEventsStore(s => s.addMatch);
 
   const canSave = opponent.trim().length > 0 && result !== null;
   const roundNum = round ?? '1';
@@ -127,8 +129,19 @@ export default function MatchRegistrationScreen() {
   const hasAnyColor = Object.values(colorStates).some(s => s > 0);
 
   function handleSave() {
-    if (!canSave) return;
-    // TODO: persistir no Supabase via services/matches.ts
+    if (!canSave || !eventId) return;
+
+    // Constrói ManaSelection a partir dos estados dos pips
+    const main   = MANA_ORDER.filter(c => colorStates[c] === 1);
+    const splash = MANA_ORDER.filter(c => colorStates[c] === 2);
+
+    addMatch(eventId, {
+      opponent:       opponent.trim(),
+      opponentColors: { main, splash },
+      result:         result!,
+      notes:          notes.trim() || undefined,
+    });
+
     setSaved(true);
     setTimeout(() => {
       setSaved(false);

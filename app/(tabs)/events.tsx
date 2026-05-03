@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { Event } from '../../types';
-import { mockEvents } from '../../data/mock';
+import { useEventsStore } from '../../store/useEventsStore';
 import { EventCard } from '../../components/EventCard';
 
 // ─── StatsStrip ───────────────────────────────────────────────────────────────
@@ -158,8 +158,9 @@ type ListItem =
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function EventsScreen() {
-  const activeEvents = mockEvents.filter(e => e.active);
-  const pastEvents   = mockEvents.filter(e => !e.active);
+  const events       = useEventsStore(s => s.events);
+  const activeEvents = events.filter(e => e.active);
+  const pastEvents   = events.filter(e => !e.active);
 
   const sections: ListItem[] = [
     { key: 'strip', type: 'strip' },
@@ -197,7 +198,7 @@ export default function EventsScreen() {
         renderItem={({ item }) => {
           switch (item.type) {
             case 'strip':
-              return <StatsStrip events={mockEvents} />;
+              return <StatsStrip events={events} />;
             case 'active-header':
               return <SectionHeader label="Em Curso" />;
             case 'past-header':
