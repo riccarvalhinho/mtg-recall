@@ -174,13 +174,13 @@ Params de navegação para match-registration: `{ eventId, round, eventName }`
 
 ---
 
-## Estado Actual do Projecto (2026-05-09)
+## Estado Actual do Projecto (2026-05-10)
 
-- **Fase:** MVP — écrans completos com mock data; próximo passo: Supabase DB
-- **Écrans prontos:** Home (empty state), Events List, Event Detail, Match Registration, Add Event, Stats/Profile (placeholders)
-- **Componentes prontos:** ManaPip, TypeBadge, RecordBadge, CardThumbnailPlaceholder, EventCard, MatchCard
-- **Estado reactivo:** Zustand store com mock data (addMatch funciona end-to-end)
-- **Próximo passo:** Criar tabelas Supabase + `services/events.ts` + `services/matches.ts` → persistência real
+- **Fase:** MVP — integração Supabase completa; app persiste dados reais
+- **Écrans prontos:** Home (empty state + detecção hasEvents), Events List, Event Detail (com delete), Match Registration, Add Event (persiste no Supabase), Stats/Profile (placeholders)
+- **Componentes prontos:** ManaPip, TypeBadge, RecordBadge, CardThumbnailPlaceholder, EventCard, MatchCard, ConfirmModal
+- **Estado reactivo:** Zustand store chama services Supabase (loadEvents, addMatch, createEvent, deleteEvent, deleteMatch)
+- **Próximo passo:** Home "com dados" (StatsBlock + EventoActivo + EventosRecentes) + ligar CTA do empty state a Add Event
 - **Ver também:** `project-overview.md` para estado detalhado, `design/handoff.md` para spec completa, `data-model.md` para schema das tabelas
 
 ---

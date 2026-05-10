@@ -1,13 +1,13 @@
 # MTG Recall — Project Overview
 
 > Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica for tomada, ou o estado mudar.
-> Última actualização: 2026-05-09
+> Última actualização: 2026-05-10
 
 ---
 
 ## Estado Actual
 
-**Fase:** MVP — écrans e navegação completos com mock data; a integrar Supabase DB
+**Fase:** MVP — integração Supabase completa; persistência real em produção
 
 ---
 
@@ -60,6 +60,7 @@
 - [x] `components/CardThumbnailPlaceholder.tsx` — LinearGradient placeholder 36×50 / 40×56
 - [x] `components/EventCard.tsx` — card com accent bar (activo), TypeBadge, ManaPips, RecordBadge
 - [x] `components/MatchCard.tsx` — pill W/L/D, ronda, adversário, mana pips do adversário
+- [x] `components/ConfirmModal.tsx` — modal de confirmação genérico (título, mensagem, botão destrutivo)
 
 ### Écrans
 - [x] **Home** (`app/(tabs)/index.tsx`) — empty state completo (ScholarOrnament SVG, CTA dourado, flavour text)
@@ -68,6 +69,7 @@
 - [x] **Event Detail** (`app/event/[id].tsx`) — StatsBar, DeckSection colapsável, lista de MatchCards, AddMatchButton
 - [x] **Match Registration** (`app/match-registration.tsx`) — modal com seletor de cores (3 estados por pip), ResultSelector, notas opcionais, guarda via Zustand
 - [x] **Add Event** (`app/add-event.tsx`) — modal com seletor de formato (6 tipos), inputs de nome/data/local (sem persistência por ora)
+- [x] **Event Detail** (`app/event/[id].tsx`) — delete evento + delete match com ConfirmModal (long press)
 - [x] **Stats** (`app/(tabs)/stats.tsx`) — placeholder estilizado
 - [x] **Profile** (`app/(tabs)/profile.tsx`) — placeholder estilizado
 
@@ -76,15 +78,16 @@
 ## O que falta (MVP)
 
 ### Base de Dados (Supabase)
-- [ ] Criar tabelas conforme `data-model.md` (events, matches, opponents, games, decks)
-- [ ] Activar Row Level Security (RLS) nas tabelas
-- [ ] `services/events.ts` — CRUD de eventos via Supabase
-- [ ] `services/matches.ts` — CRUD de matches via Supabase
-- [ ] Substituir Zustand mock data por queries Supabase (store actions chamam services)
+- [x] Tabelas criadas no Supabase (events, matches, opponents, games, decks)
+- [x] Row Level Security (RLS) activo
+- [x] `services/events.ts` — fetchEvents, createEvent, deleteEvent
+- [x] `services/matches.ts` — createMatch, deleteMatch, upsertOpponent
+- [x] Zustand store migrado: loadEvents, addMatch, createEvent, deleteEvent, deleteMatch
 
 ### Écrans
-- [ ] Home — variante "com dados"
-- [ ] Add Event — persistir evento no Supabase (actualmente faz `router.back()` sem guardar)
+- [ ] Home — variante "com dados" (StatsBlock + EventoActivo + EventosRecentes)
+- [ ] Home CTA empty state — ligar botão a `router.push('/add-event')` (actualmente sem handler)
+- [x] Add Event — persiste no Supabase + navega para o evento criado
 
 ### Produção / Qualidade
 - [ ] ManaPip: migrar de Scryfall CDN para assets locais em `assets/mana/` (offline + performance)
@@ -116,6 +119,7 @@
   CardThumbnailPlaceholder.tsx ✓
   EventCard.tsx         ✓
   MatchCard.tsx         ✓
+  ConfirmModal.tsx      ✓ (modal genérico de confirmação/destruição)
 
 /constants
   colors.ts             — re-exporta theme/colors

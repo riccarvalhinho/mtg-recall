@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
@@ -143,7 +144,7 @@ export default function HomeScreen() {
         </View>
         {/* Botão "Novo Evento" só aparece quando há dados */}
         {hasEvents && (
-          <Pressable style={styles.newEventBtn}>
+          <Pressable style={styles.newEventBtn} onPress={() => router.push('/add-event')}>
             <Text style={styles.newEventBtnText}>+ Novo Evento</Text>
           </Pressable>
         )}
@@ -170,7 +171,7 @@ export default function HomeScreen() {
           {/* CTA */}
           <Pressable
             style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}
-            onPress={() => { /* TODO: navegar para Add Event */ }}
+            onPress={() => router.push('/add-event')}
           >
             <LinearGradient
               colors={[colors.gold, '#A07840']}
