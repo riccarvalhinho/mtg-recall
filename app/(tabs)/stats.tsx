@@ -516,8 +516,8 @@ const pyramid = StyleSheet.create({
     color: colors.textDim,
   },
   pct: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 11,
+    fontFamily: fonts.bodyMed,
+    fontSize: 12,
   },
 });
 
