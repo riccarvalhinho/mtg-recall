@@ -268,27 +268,27 @@ const addBtn = StyleSheet.create({
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const event = useEventsStore(s => s.events.find(e => e.id === id));
-
-  if (!event) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <Text style={{ color: colors.textSec, padding: 20 }}>Evento não encontrado.</Text>
-      </SafeAreaView>
-    );
-  }
-
+  const event       = useEventsStore(s => s.events.find(e => e.id === id));
   const deleteEvent   = useEventsStore(s => s.deleteEvent);
   const completeEvent = useEventsStore(s => s.completeEvent);
   const deleteMatch   = useEventsStore(s => s.deleteMatch);
-  const stats = calcEventStats(event);
 
-  // Estado dos modais de confirmação
+  // All useState calls must be above any early return
   const [deleteEventModal,   setDeleteEventModal]   = useState(false);
   const [completeEventModal, setCompleteEventModal] = useState(false);
   const [rank,               setRank]               = useState<string | null>(null);
   const [playersCount,       setPlayersCount]       = useState('');
   const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ id: string; opponent: string } | null>(null);
+
+  if (!event) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Text style={{ color: colors.textSec, padding: 20 }}>Event not found.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  const stats = calcEventStats(event);
 
   function goToMatchRegistration() {
     router.push({
@@ -475,10 +475,10 @@ export default function EventDetailScreen() {
         message={`Are you sure you want to delete "${event.name}"?\n\nAll matches will be deleted.`}
         confirmLabel="Delete"
         confirmDestructive
-        onConfirm={async () => {
+        onConfirm={() => {
           setDeleteEventModal(false);
-          const ok = await deleteEvent(event.id);
-          if (ok) router.back();
+          router.back();
+          deleteEvent(event.id);
         }}
         onCancel={() => setDeleteEventModal(false)}
       />

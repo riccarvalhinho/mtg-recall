@@ -54,6 +54,7 @@ export async function fetchEvents(): Promise<Event[]> {
       )
     `)
     .eq('user_id', user.id)
+    .eq('deleted', false)
     .order('date', { ascending: false });
 
   if (error) {
@@ -100,11 +101,11 @@ export async function completeEvent(
 
 // ─── deleteEvent ─────────────────────────────────────────────────────────────
 
-// Apaga um evento e todos os seus matches (CASCADE na DB)
+// Soft-deletes an event — marks deleted: true so it is excluded from all future queries
 export async function deleteEvent(eventId: string): Promise<boolean> {
   const { error } = await supabase
     .from('events')
-    .delete()
+    .update({ deleted: true })
     .eq('id', eventId);
 
   if (error) {

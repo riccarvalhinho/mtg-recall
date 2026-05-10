@@ -176,6 +176,67 @@ const active = StyleSheet.create({
   },
 });
 
+// ─── Stats Block ─────────────────────────────────────────────────────────────
+
+function StatsBlock({ eventCount, winRate }: { eventCount: number; winRate: number }) {
+  return (
+    <View style={statsBlock.container}>
+      <View style={statsBlock.cell}>
+        <Text style={statsBlock.value}>{eventCount}</Text>
+        <Text style={statsBlock.label}>Events</Text>
+      </View>
+      <View style={statsBlock.divider} />
+      <View style={statsBlock.cell}>
+        <Text style={statsBlock.value}>{winRate}%</Text>
+        <Text style={statsBlock.label}>Win Rate</Text>
+      </View>
+      <View style={statsBlock.divider} />
+      <View style={statsBlock.cell}>
+        <Text style={[statsBlock.value, statsBlock.valueDim]}>—</Text>
+        <Text style={statsBlock.label}>Portfolio</Text>
+      </View>
+    </View>
+  );
+}
+
+const statsBlock = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgCard,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  cell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  divider: {
+    width: 1,
+    backgroundColor: colors.border,
+    marginVertical: 8,
+  },
+  value: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.textPrim,
+  },
+  valueDim: {
+    color: colors.textDim,
+  },
+  label: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.textSec,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: 2,
+  },
+});
+
 // ─── History Entry Point ──────────────────────────────────────────────────────
 
 function HistoryEntryPoint() {
@@ -228,6 +289,10 @@ export default function HomeScreen() {
   const hasEvents   = events.length > 0;
   const activeEvent = events.find(e => e.active);
 
+  const totalMatches = events.reduce((s, e) => s + e.matches.length, 0);
+  const totalWins    = events.reduce((s, e) => s + e.matches.filter(m => m.result === 'W').length, 0);
+  const overallWR    = totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 0;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -276,6 +341,7 @@ export default function HomeScreen() {
       {/* Variante "com dados" */}
       {hasEvents && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}>
+          <StatsBlock eventCount={events.length} winRate={overallWR} />
           {activeEvent && (
             <ActiveEventSection event={activeEvent} />
           )}
