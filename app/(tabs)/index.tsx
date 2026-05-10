@@ -70,24 +70,6 @@ function ScholarOrnament({ size = 140 }: { size?: number }) {
   );
 }
 
-// ─── OrnamentDivider ──────────────────────────────────────────────────────────
-
-function OrnamentDivider() {
-  return (
-    <View style={divider.container}>
-      <View style={divider.line} />
-      <Text style={divider.star}>✦</Text>
-      <View style={divider.line} />
-    </View>
-  );
-}
-
-const divider = StyleSheet.create({
-  container: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginVertical: 16, gap: 10 },
-  line:      { flex: 1, height: 1, backgroundColor: colors.border },
-  star:      { color: colors.goldDim, fontSize: 10 },
-});
-
 // ─── Secção: Evento Activo ────────────────────────────────────────────────────
 
 function ActiveEventSection({ event }: { event: Event }) {
@@ -194,31 +176,27 @@ const active = StyleSheet.create({
   },
 });
 
-// ─── Secção: Eventos Recentes ─────────────────────────────────────────────────
+// ─── History Entry Point ──────────────────────────────────────────────────────
 
-function RecentEventsSection({ events }: { events: Event[] }) {
+function HistoryEntryPoint() {
   return (
-    <View>
-      <View style={recent.header}>
-        <Text style={recent.label}>Recent Events</Text>
-        <Pressable onPress={() => router.push('/(tabs)/events')}>
-          <Text style={recent.verTodos}>See all →</Text>
-        </Pressable>
-      </View>
-      {events.map(e => (
-        <EventCard key={e.id} event={e} onPress={() => router.push(`/event/${e.id}`)} />
-      ))}
+    <View style={history.row}>
+      <Text style={history.label}>Tournament History</Text>
+      <Pressable onPress={() => router.push('/(tabs)/events')}>
+        <Text style={history.seeAll}>See all →</Text>
+      </Pressable>
     </View>
   );
 }
 
-const recent = StyleSheet.create({
-  header: {
+const history = StyleSheet.create({
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginHorizontal: 16,
-    marginBottom: 10,
+    marginTop: 16,
+    marginBottom: 4,
   },
   label: {
     fontFamily: fonts.bodyItal,
@@ -227,7 +205,7 @@ const recent = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  verTodos: {
+  seeAll: {
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.textDim,
@@ -247,9 +225,8 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const hasEvents     = events.length > 0;
-  const activeEvent   = events.find(e => e.active);
-  const recentEvents  = events.filter(e => !e.active);
+  const hasEvents   = events.length > 0;
+  const activeEvent = events.find(e => e.active);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -302,14 +279,7 @@ export default function HomeScreen() {
           {activeEvent && (
             <ActiveEventSection event={activeEvent} />
           )}
-
-          {activeEvent && recentEvents.length > 0 && (
-            <OrnamentDivider />
-          )}
-
-          {recentEvents.length > 0 && (
-            <RecentEventsSection events={recentEvents} />
-          )}
+          <HistoryEntryPoint />
         </ScrollView>
       )}
     </SafeAreaView>
