@@ -11,9 +11,9 @@ import { ManaPip } from './ManaPip';
 
 // Configuração visual por resultado
 const RESULT_STYLES: Record<MatchResult, { bg: string; border: string; text: string; label: string }> = {
-  W: { bg: colors.winBg,  border: colors.winBorder,  text: colors.win,  label: 'Vitória'  },
-  L: { bg: colors.lossBg, border: colors.lossBorder, text: colors.loss, label: 'Derrota'  },
-  D: { bg: colors.drawBg, border: colors.drawBorder, text: colors.draw, label: 'Empate'   },
+  W: { bg: colors.winBg,  border: colors.winBorder,  text: colors.win,  label: 'Win'  },
+  L: { bg: colors.lossBg, border: colors.lossBorder, text: colors.loss, label: 'Loss' },
+  D: { bg: colors.drawBg, border: colors.drawBorder, text: colors.draw, label: 'Draw' },
 };
 
 interface MatchCardProps {
@@ -41,7 +41,7 @@ export function MatchCard({ match, onPress, onLongPress }: MatchCardProps) {
 
       {/* Info */}
       <View style={styles.info}>
-        <Text style={styles.round}>Ronda {match.round}</Text>
+        <Text style={styles.round}>Round {match.round}</Text>
         <Text style={styles.opponent} numberOfLines={1}>
           {match.opponent}
         </Text>

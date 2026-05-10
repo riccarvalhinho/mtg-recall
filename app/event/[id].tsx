@@ -3,7 +3,7 @@
 // Print: design/screen-event-detail.png
 
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -17,10 +17,12 @@ import { ManaPip } from '../../components/ManaPip';
 import { CardThumbnailPlaceholder } from '../../components/CardThumbnailPlaceholder';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const RANK_OPTIONS = ['1st Place', 'Top 2', 'Top 4', 'Top 8', 'Top 16', 'Top 32', 'Other'];
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 // ─── StatsBar ─────────────────────────────────────────────────────────────────
@@ -152,7 +154,7 @@ function DeckSection({ deckName, deckColors }: {
       {expanded && (
         <View style={deck.expanded}>
           <Text style={deck.expandedText}>
-            Detalhes do deck disponíveis na Fase 2 →
+            Deck details available in Phase 2 →
           </Text>
         </View>
       )}
@@ -208,7 +210,7 @@ const deck = StyleSheet.create({
   },
 });
 
-// ─── Botão Adicionar Match ────────────────────────────────────────────────────
+// ─── Botão Add Match ────────────────────────────────────────────────────
 
 function AddMatchButton({ onPress }: { onPress: () => void }) {
   return (
@@ -219,7 +221,7 @@ function AddMatchButton({ onPress }: { onPress: () => void }) {
       <View style={addBtn.circle}>
         <Text style={addBtn.plus}>+</Text>
       </View>
-      <Text style={addBtn.text}>Adicionar Match</Text>
+      <Text style={addBtn.text}>Add Match</Text>
     </Pressable>
   );
 }
@@ -276,13 +278,17 @@ export default function EventDetailScreen() {
     );
   }
 
-  const deleteEvent = useEventsStore(s => s.deleteEvent);
-  const deleteMatch = useEventsStore(s => s.deleteMatch);
+  const deleteEvent   = useEventsStore(s => s.deleteEvent);
+  const completeEvent = useEventsStore(s => s.completeEvent);
+  const deleteMatch   = useEventsStore(s => s.deleteMatch);
   const stats = calcEventStats(event);
 
   // Estado dos modais de confirmação
-  const [deleteEventModal, setDeleteEventModal] = useState(false);
-  const [deleteMatchModal, setDeleteMatchModal] = useState<{ id: string; opponent: string } | null>(null);
+  const [deleteEventModal,   setDeleteEventModal]   = useState(false);
+  const [completeEventModal, setCompleteEventModal] = useState(false);
+  const [rank,               setRank]               = useState<string | null>(null);
+  const [playersCount,       setPlayersCount]       = useState('');
+  const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ id: string; opponent: string } | null>(null);
 
   function goToMatchRegistration() {
     router.push({
@@ -302,7 +308,7 @@ export default function EventDetailScreen() {
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name="chevron-left" size={20} color={colors.textPrim} />
         </Pressable>
-        <Text style={styles.breadcrumb}>Eventos</Text>
+        <Text style={styles.breadcrumb}>Events</Text>
         <Pressable style={styles.deleteBtn} onPress={() => setDeleteEventModal(true)}>
           <Feather name="trash-2" size={16} color={colors.loss} />
         </Pressable>
@@ -313,6 +319,11 @@ export default function EventDetailScreen() {
         <View style={styles.eventHeader}>
           <View style={styles.badges}>
             <TypeBadge type={event.type} />
+            <View style={[styles.statusBadge, event.active ? styles.statusActive : styles.statusDone]}>
+              <Text style={[styles.statusText, event.active ? styles.statusTextActive : styles.statusTextDone]}>
+                {event.active ? 'Active' : 'Completed'}
+              </Text>
+            </View>
             {event.name.includes('—') && (
               <View style={styles.setBadge}>
                 <Text style={styles.setBadgeText}>
@@ -370,14 +381,99 @@ export default function EventDetailScreen() {
           <AddMatchButton onPress={goToMatchRegistration} />
         )}
 
+        {/* Botão concluir torneio */}
+        {event.active && (
+          <Pressable
+            style={({ pressed }) => [styles.completeBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => setCompleteEventModal(true)}
+          >
+            <Feather name="check-circle" size={15} color={colors.gold} />
+            <Text style={styles.completeBtnText}>Complete Tournament</Text>
+          </Pressable>
+        )}
+
         <View style={{ height: 16 }} />
       </ScrollView>
+      {/* Sheet: concluir evento */}
+      <Modal
+        visible={completeEventModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCompleteEventModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <Pressable style={complete.overlay} onPress={() => setCompleteEventModal(false)} />
+          <View style={complete.sheet}>
+            <View style={complete.handle} />
+            <Text style={complete.title}>Complete Tournament</Text>
+            <Text style={complete.subtitle}>{event.name}</Text>
+
+
+            <View style={complete.field}>
+              <Text style={complete.label}>Final ranking (optional)</Text>
+              <View style={complete.rankGrid}>
+                {RANK_OPTIONS.map(option => (
+                  <Pressable
+                    key={option}
+                    onPress={() => setRank(rank === option ? null : option)}
+                    style={[complete.rankBtn, rank === option && complete.rankBtnActive]}
+                  >
+                    <Text style={[complete.rankBtnText, rank === option && complete.rankBtnTextActive]}>
+                      {option}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={complete.field}>
+              <Text style={complete.label}>Number of players (optional)</Text>
+              <TextInput
+                style={complete.input}
+                value={playersCount}
+                onChangeText={setPlayersCount}
+                placeholder="e.g. 32"
+                placeholderTextColor={colors.textDim}
+                keyboardType="number-pad"
+                returnKeyType="done"
+              />
+            </View>
+
+            <View style={complete.actions}>
+              <Pressable
+                style={({ pressed }) => [complete.btn, complete.cancelBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => setCompleteEventModal(false)}
+              >
+                <Text style={complete.cancelLabel}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [complete.btn, complete.confirmBtn, pressed && { opacity: 0.7 }]}
+                onPress={async () => {
+                  setCompleteEventModal(false);
+                  await completeEvent(
+                    event.id,
+                    rank ?? undefined,
+                    playersCount ? parseInt(playersCount, 10) : undefined,
+                  );
+                  router.replace('/(tabs)/');
+                }}
+              >
+                <Text style={complete.confirmLabel}>Complete</Text>
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Modal: apagar evento */}
       <ConfirmModal
         visible={deleteEventModal}
-        title="Apagar evento"
-        message={`Tens a certeza que queres apagar "${event.name}"?\n\nTodos os matches serão apagados.`}
-        confirmLabel="Apagar"
+        title="Delete event"
+        message={`Are you sure you want to delete "${event.name}"?\n\nAll matches will be deleted.`}
+        confirmLabel="Delete"
         confirmDestructive
         onConfirm={async () => {
           setDeleteEventModal(false);
@@ -390,9 +486,9 @@ export default function EventDetailScreen() {
       {/* Modal: apagar match */}
       <ConfirmModal
         visible={deleteMatchModal !== null}
-        title="Apagar match"
-        message={`Apagar o match contra ${deleteMatchModal?.opponent}?`}
-        confirmLabel="Apagar"
+        title="Delete match"
+        message={`Delete match against ${deleteMatchModal?.opponent}?`}
+        confirmLabel="Delete"
         confirmDestructive
         onConfirm={() => {
           if (deleteMatchModal) deleteMatch(event.id, deleteMatchModal.id);
@@ -403,6 +499,122 @@ export default function EventDetailScreen() {
     </SafeAreaView>
   );
 }
+
+const complete = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+  },
+  sheet: {
+    backgroundColor: '#1E1812',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 36,
+    gap: 16,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.border,
+    alignSelf: 'center',
+    marginBottom: 4,
+  },
+  title: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
+    color: colors.textPrim,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 13,
+    color: colors.textSec,
+    textAlign: 'center',
+    marginTop: -8,
+  },
+  field: {
+    gap: 8,
+  },
+  label: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: colors.textDim,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  input: {
+    backgroundColor: '#1A1510',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    height: 50,
+    paddingHorizontal: 16,
+    fontFamily: fonts.displayMed,
+    fontSize: 16,
+    color: colors.textPrim,
+  },
+  rankGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  rankBtn: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    backgroundColor: colors.bgCard,
+  },
+  rankBtnActive: {
+    borderColor: colors.gold,
+    backgroundColor: colors.gold + '22',
+  },
+  rankBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textSec,
+  },
+  rankBtnTextActive: {
+    color: colors.gold,
+    fontFamily: fonts.bodyMed,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  btn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: 'transparent',
+    borderColor: colors.border,
+  },
+  confirmBtn: {
+    backgroundColor: colors.gold + '22',
+    borderColor: colors.gold + '88',
+  },
+  cancelLabel: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textSec,
+  },
+  confirmLabel: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.gold,
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -415,6 +627,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
+  },
+  completeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingVertical: 11,
+    borderWidth: 1,
+    borderColor: colors.gold + '44',
+    borderRadius: 10,
+  },
+  completeBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.gold,
   },
   deleteBtn: {
     marginLeft: 'auto',
@@ -451,6 +680,30 @@ const styles = StyleSheet.create({
   badges: {
     flexDirection: 'row',
     gap: 6,
+  },
+  statusBadge: {
+    borderRadius: 4,
+    borderWidth: 1,
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+  },
+  statusActive: {
+    backgroundColor: colors.gold + '18',
+    borderColor: colors.gold + '66',
+  },
+  statusDone: {
+    backgroundColor: 'transparent',
+    borderColor: colors.border,
+  },
+  statusText: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 10,
+  },
+  statusTextActive: {
+    color: colors.gold,
+  },
+  statusTextDone: {
+    color: colors.textDim,
   },
   setBadge: {
     borderRadius: 4,

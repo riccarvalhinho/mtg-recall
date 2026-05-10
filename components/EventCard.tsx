@@ -13,11 +13,10 @@ import { TypeBadge } from './TypeBadge';
 import { RecordBadge } from './RecordBadge';
 import { CardThumbnailPlaceholder } from './CardThumbnailPlaceholder';
 
-// Formata data: "12 Abr 2026"
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
-  return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 interface EventCardProps {
@@ -59,7 +58,7 @@ export function EventCard({ event, onPress, showThumbnail = true }: EventCardPro
           <View style={styles.badges}>
             {event.active && (
               <View style={styles.activeBadge}>
-                <Text style={styles.activeBadgeText}>Em curso</Text>
+                <Text style={styles.activeBadgeText}>Active</Text>
               </View>
             )}
             <TypeBadge type={event.type} />

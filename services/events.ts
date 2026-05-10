@@ -9,14 +9,16 @@ import { Event, EventType, ManaSelection } from '../types';
 // Converte uma linha da DB (com matches aninhados) para o tipo Event da app
 function dbRowToEvent(row: any): Event {
   return {
-    id:       row.id,
-    name:     row.name,
-    type:     row.type as EventType,
-    date:     row.date,
-    location: row.location ?? undefined,
-    active:   row.active,
-    deckName:   row.deck_name   ?? undefined,
-    deckColors: row.deck_colors ?? undefined,
+    id:           row.id,
+    name:         row.name,
+    type:         row.type as EventType,
+    date:         row.date,
+    location:     row.location     ?? undefined,
+    active:       row.active,
+    deckName:     row.deck_name    ?? undefined,
+    deckColors:   row.deck_colors  ?? undefined,
+    rank:         row.rank         ?? undefined,
+    playersCount: row.players_count ?? undefined,
     matches: (row.matches ?? [])
       // Ordenar por round para garantir ordem correcta
       .sort((a: any, b: any) => a.round - b.round)
@@ -69,6 +71,31 @@ export interface NewEventData {
   type:      EventType;
   date:      string;   // formato YYYY-MM-DD
   location?: string;
+}
+
+// ─── completeEvent ────────────────────────────────────────────────────────────
+
+// Marca o evento como concluído (active: false) e guarda classificação e nº de jogadores
+export async function completeEvent(
+  eventId: string,
+  rank?: string,
+  playersCount?: number,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('events')
+    .update({
+      active: false,
+      rank: rank?.trim() || null,
+      players_count: playersCount || null,
+    })
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('[events] Erro ao concluir evento:', error.message);
+    return false;
+  }
+
+  return true;
 }
 
 // ─── deleteEvent ─────────────────────────────────────────────────────────────

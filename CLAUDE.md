@@ -85,7 +85,7 @@ data-model.md             — modelo de dados Supabase
 
 ## Convenções
 
-- Linguagem dos comentários: **português**
+- **Toda a app está em inglês** — texto, labels, menus, placeholders, mensagens de erro, comentários de código, tudo
 - Ficheiros e variáveis: **camelCase** em inglês (convenção da linguagem)
 - Componentes React: **PascalCase**
 - Sempre usar **TypeScript** — nunca JavaScript puro

@@ -16,9 +16,9 @@ export default function StatsScreen() {
       </View>
       <View style={styles.empty}>
         <Feather name="bar-chart-2" size={40} color={colors.goldDim} style={{ opacity: 0.4 }} />
-        <Text style={styles.emptyTitle}>Em construção</Text>
+        <Text style={styles.emptyTitle}>Coming soon</Text>
         <Text style={styles.emptyText}>
-          Estatísticas detalhadas disponíveis na Fase 2.
+          Detailed stats available in Phase 2.
         </Text>
       </View>
     </SafeAreaView>

@@ -20,8 +20,8 @@ interface ConfirmModalProps {
   visible:             boolean;
   title:               string;
   message:             string;
-  confirmLabel?:       string;   // default: "Confirmar"
-  cancelLabel?:        string;   // default: "Cancelar"
+  confirmLabel?:       string;   // default: "Confirm"
+  cancelLabel?:        string;   // default: "Cancel"
   confirmDestructive?: boolean;  // true: botão vermelho
   onConfirm:           () => void;
   onCancel:            () => void;
@@ -31,8 +31,8 @@ export function ConfirmModal({
   visible,
   title,
   message,
-  confirmLabel       = 'Confirmar',
-  cancelLabel        = 'Cancelar',
+  confirmLabel       = 'Confirm',
+  cancelLabel        = 'Cancel',
   confirmDestructive = false,
   onConfirm,
   onCancel,

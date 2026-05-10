@@ -5,6 +5,12 @@
 
 ---
 
+## Language
+
+**All app text is in English** — UI labels, menus, placeholders, error messages, and code comments must be written in English without exception.
+
+---
+
 ## Estado Actual
 
 **Fase:** MVP — integração Supabase completa; persistência real em produção

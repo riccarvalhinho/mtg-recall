@@ -30,11 +30,11 @@ function StatsStrip({ events }: { events: Event[] }) {
 
   return (
     <View style={strip.container}>
-      <StatCell value={events.length} label="Torneios" />
+      <StatCell value={events.length} label="Tournaments" />
       <View style={strip.divider} />
       <StatCell value={`${wr}%`} label="Win Rate" />
       <View style={strip.divider} />
-      <StatCell value={totalWins} label="Vitórias" />
+      <StatCell value={totalWins} label="Wins" />
     </View>
   );
 }
@@ -187,14 +187,14 @@ export default function EventsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.archiveLabel}>Arquivo Pessoal</Text>
-          <Text style={styles.title}>Eventos</Text>
+          <Text style={styles.archiveLabel}>Personal Archive</Text>
+          <Text style={styles.title}>Events</Text>
         </View>
         <Pressable
           style={({ pressed }) => [styles.newBtn, pressed && { opacity: 0.8 }]}
           onPress={() => router.push('/add-event')}
         >
-          <Text style={styles.newBtnText}>+ Novo Evento</Text>
+          <Text style={styles.newBtnText}>+ New Event</Text>
         </Pressable>
       </View>
 
@@ -215,9 +215,9 @@ export default function EventsScreen() {
             case 'strip':
               return <StatsStrip events={events} />;
             case 'active-header':
-              return <SectionHeader label="Em Curso" />;
+              return <SectionHeader label="Active" />;
             case 'past-header':
-              return <SectionHeader label="Histórico" action="Filtrar" />;
+              return <SectionHeader label="History" action="Filter" />;
             case 'divider':
               return <OrnamentDivider />;
             case 'event':

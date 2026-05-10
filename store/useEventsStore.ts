@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import { Event, ManaSelection, MatchResult, EventType } from '../types';
-import { fetchEvents, createEvent as serviceCreateEvent, deleteEvent as serviceDeleteEvent, NewEventData } from '../services/events';
+import { fetchEvents, createEvent as serviceCreateEvent, completeEvent as serviceCompleteEvent, deleteEvent as serviceDeleteEvent, NewEventData } from '../services/events';
 import { createMatch as serviceCreateMatch, deleteMatch as serviceDeleteMatch, NewMatchData } from '../services/matches';
 
 interface EventsStore {
@@ -24,6 +24,9 @@ interface EventsStore {
 
   // Cria um novo evento (persiste no Supabase); devolve o ID do evento criado
   createEvent: (data: NewEventData) => Promise<string | null>;
+
+  // Marca um evento como concluído (com classificação e nº jogadores opcionais)
+  completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
 
   // Apaga um evento e todos os seus matches
   deleteEvent: (eventId: string) => Promise<boolean>;
@@ -72,6 +75,22 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
     set(state => ({ events: [event, ...state.events] }));
     return event.id;
+  },
+
+  // ─── completeEvent ─────────────────────────────────────────────────────────
+
+  completeEvent: async (eventId, rank, playersCount) => {
+    const ok = await serviceCompleteEvent(eventId, rank, playersCount);
+    if (!ok) return false;
+
+    set(state => ({
+      events: state.events.map(e =>
+        e.id === eventId
+          ? { ...e, active: false, rank: rank?.trim() || undefined, playersCount: playersCount || undefined }
+          : e,
+      ),
+    }));
+    return true;
   },
 
   // ─── deleteEvent ───────────────────────────────────────────────────────────

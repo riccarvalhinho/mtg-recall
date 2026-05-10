@@ -18,11 +18,11 @@ import { useEventsStore } from '../store/useEventsStore';
 
 const FORMATS: EventType[] = ['Sealed', 'Draft', 'Standard', 'Modern', 'Pioneer', 'Commander', 'Legacy'];
 
-const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // Formata Date para exibição: "9 Mai 2026"
 function formatDisplay(date: Date): string {
-  return `${date.getDate()} ${MESES[date.getMonth()]} ${date.getFullYear()}`;
+  return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 // Converte Date para YYYY-MM-DD (formato Supabase)
@@ -102,9 +102,9 @@ export default function AddEventScreen() {
         {/* NavBar */}
         <View style={styles.navBar}>
           <Pressable onPress={() => router.back()}>
-            <Text style={styles.cancelBtn}>Cancelar</Text>
+            <Text style={styles.cancelBtn}>Cancel</Text>
           </Pressable>
-          <Text style={styles.navTitle}>Novo Evento</Text>
+          <Text style={styles.navTitle}>New Event</Text>
           <Pressable onPress={handleSave} disabled={!canSave}>
             {name.trim().length > 0 && format !== null ? (
               <LinearGradient
@@ -115,12 +115,12 @@ export default function AddEventScreen() {
               >
                 {saving
                   ? <ActivityIndicator size="small" color={colors.bg} />
-                  : <Text style={styles.saveActiveText}>Criar</Text>
+                  : <Text style={styles.saveActiveText}>Create</Text>
                 }
               </LinearGradient>
             ) : (
               <View style={styles.saveInactive}>
-                <Text style={styles.saveInactiveText}>Criar</Text>
+                <Text style={styles.saveInactiveText}>Create</Text>
               </View>
             )}
           </Pressable>
@@ -133,13 +133,13 @@ export default function AddEventScreen() {
         >
           {/* Nome */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Nome do evento *</Text>
+            <Text style={styles.fieldLabel}>Event name *</Text>
             <View style={[styles.inputContainer, name.length > 0 && styles.inputFilled]}>
               <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="ex: FNM Sealed — Aetherdrift"
+                placeholder="e.g. FNM Sealed — Aetherdrift"
                 placeholderTextColor={colors.textDim}
                 returnKeyType="done"
               />
@@ -148,7 +148,7 @@ export default function AddEventScreen() {
 
           {/* Formato */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Formato *</Text>
+            <Text style={styles.fieldLabel}>Format *</Text>
             <View style={styles.formatGrid}>
               {FORMATS.map(f => (
                 <Pressable
@@ -166,7 +166,7 @@ export default function AddEventScreen() {
 
           {/* Data — Pressable que abre o picker */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Data</Text>
+            <Text style={styles.fieldLabel}>Date</Text>
             <Pressable
               style={[styles.inputContainer, styles.inputFilled, styles.dateRow]}
               onPress={openPicker}
@@ -190,13 +190,13 @@ export default function AddEventScreen() {
 
           {/* Localização */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Localização (opcional)</Text>
+            <Text style={styles.fieldLabel}>Location (optional)</Text>
             <View style={[styles.inputContainer, location.length > 0 && styles.inputFilled]}>
               <TextInput
                 style={styles.input}
                 value={location}
                 onChangeText={setLocation}
-                placeholder="ex: Nave Espacial, Lisboa"
+                placeholder="e.g. Town Hall, Lisbon"
                 placeholderTextColor={colors.textDim}
                 returnKeyType="done"
               />
@@ -216,11 +216,11 @@ export default function AddEventScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.modalHeader}>
               <Pressable onPress={() => setShowPicker(false)}>
-                <Text style={styles.modalCancel}>Cancelar</Text>
+                <Text style={styles.modalCancel}>Cancel</Text>
               </Pressable>
-              <Text style={styles.modalTitle}>Data do evento</Text>
+              <Text style={styles.modalTitle}>Event date</Text>
               <Pressable onPress={confirmIosDate}>
-                <Text style={styles.modalConfirm}>Confirmar</Text>
+                <Text style={styles.modalConfirm}>Confirm</Text>
               </Pressable>
             </View>
             <DateTimePicker

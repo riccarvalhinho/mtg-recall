@@ -23,9 +23,9 @@ type ManaState = 0 | 1 | 2; // 0: off, 1: principal, 2: splash
 // ─── Seletor de Resultado ─────────────────────────────────────────────────────
 
 const RESULT_CONFIG: Record<MatchResult, { label: string; bg: string; border: string; color: string }> = {
-  W: { label: 'Vitória',  bg: colors.winBg,  border: colors.winBorder,  color: colors.win  },
-  L: { label: 'Derrota',  bg: colors.lossBg, border: colors.lossBorder, color: colors.loss },
-  D: { label: 'Empate',   bg: colors.drawBg, border: colors.drawBorder, color: colors.draw },
+  W: { label: 'Win',  bg: colors.winBg,  border: colors.winBorder,  color: colors.win  },
+  L: { label: 'Loss', bg: colors.lossBg, border: colors.lossBorder, color: colors.loss },
+  D: { label: 'Draw', bg: colors.drawBg, border: colors.drawBorder, color: colors.draw },
 };
 
 function ResultSelector({ value, onChange }: {
@@ -160,13 +160,13 @@ export default function MatchRegistrationScreen() {
         {/* NavBar */}
         <View style={styles.navBar}>
           <Pressable onPress={() => router.back()}>
-            <Text style={styles.cancelBtn}>Cancelar</Text>
+            <Text style={styles.cancelBtn}>Cancel</Text>
           </Pressable>
 
           <View style={styles.navCenter}>
-            <Text style={styles.navTitle}>Novo Match</Text>
+            <Text style={styles.navTitle}>New Match</Text>
             <View style={styles.roundBadge}>
-              <Text style={styles.roundBadgeText}>Ronda {roundNum}</Text>
+              <Text style={styles.roundBadgeText}>Round {roundNum}</Text>
             </View>
           </View>
 
@@ -184,12 +184,12 @@ export default function MatchRegistrationScreen() {
               >
                 {saving
                   ? <ActivityIndicator size="small" color={colors.bg} />
-                  : <Text style={styles.saveActiveText}>{saved ? '✓ Guardado' : 'Guardar'}</Text>
+                  : <Text style={styles.saveActiveText}>{saved ? '✓ Saved' : 'Save'}</Text>
                 }
               </LinearGradient>
             ) : (
               <View style={styles.saveInactive}>
-                <Text style={styles.saveInactiveText}>Guardar</Text>
+                <Text style={styles.saveInactiveText}>Save</Text>
               </View>
             )}
           </Pressable>
@@ -202,13 +202,13 @@ export default function MatchRegistrationScreen() {
         >
           {/* Nome do adversário */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Nome do adversário</Text>
+            <Text style={styles.fieldLabel}>Opponent name</Text>
             <View style={[styles.inputContainer, opponent.length > 0 && styles.inputFilled]}>
               <TextInput
                 style={styles.input}
                 value={opponent}
                 onChangeText={setOpponent}
-                placeholder="ex: João Ferreira"
+                placeholder="e.g. John Smith"
                 placeholderTextColor={colors.textDim}
                 returnKeyType="done"
               />
@@ -218,10 +218,10 @@ export default function MatchRegistrationScreen() {
           {/* Seletor de cores */}
           <View style={styles.field}>
             <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Cores do adversário</Text>
+              <Text style={styles.fieldLabel}>Opponent colors</Text>
               {hasAnyColor && (
                 <Pressable onPress={clearColors}>
-                  <Text style={styles.clearBtn}>limpar</Text>
+                  <Text style={styles.clearBtn}>clear</Text>
                 </Pressable>
               )}
             </View>
@@ -248,7 +248,7 @@ export default function MatchRegistrationScreen() {
                       state === 1 && { color: colors.gold },
                       state === 2 && { color: '#8B9CBB' },
                     ]}>
-                      {state === 1 ? 'principal' : state === 2 ? 'splash' : 'principal'}
+                      {state === 1 ? 'main' : state === 2 ? 'splash' : 'main'}
                     </Text>
                   </Pressable>
                 );
@@ -257,13 +257,13 @@ export default function MatchRegistrationScreen() {
 
             {/* Hint */}
             <Text style={styles.colorHint}>
-              1 tap = principal · 2 taps = splash · 3 taps = limpar
+              1 tap = main · 2 taps = splash · 3 taps = clear
             </Text>
           </View>
 
           {/* Seletor de resultado */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Resultado</Text>
+            <Text style={styles.fieldLabel}>Result</Text>
             <ResultSelector value={result} onChange={setResult} />
           </View>
 
@@ -277,7 +277,7 @@ export default function MatchRegistrationScreen() {
                 <Text style={styles.notesToggleIcon}>{notesOpen ? '−' : '+'}</Text>
               </View>
               <Text style={[styles.notesToggleText, notesOpen && { color: colors.textSec }]}>
-                Notas opcionais
+                Optional notes
               </Text>
             </Pressable>
 
@@ -286,7 +286,7 @@ export default function MatchRegistrationScreen() {
                 style={styles.notesInput}
                 value={notes}
                 onChangeText={setNotes}
-                placeholder="Cartas relevantes, notas da partida…"
+                placeholder="Relevant cards, match notes…"
                 placeholderTextColor={colors.textDim}
                 multiline
                 numberOfLines={3}

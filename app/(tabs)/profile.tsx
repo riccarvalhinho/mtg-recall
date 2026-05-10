@@ -16,9 +16,9 @@ export default function ProfileScreen() {
       </View>
       <View style={styles.empty}>
         <Feather name="user" size={40} color={colors.goldDim} style={{ opacity: 0.4 }} />
-        <Text style={styles.emptyTitle}>Em construção</Text>
+        <Text style={styles.emptyTitle}>Coming soon</Text>
         <Text style={styles.emptyText}>
-          Perfil e autenticação disponíveis na Fase 2.
+          Profile and authentication available in Phase 2.
         </Text>
       </View>
     </SafeAreaView>

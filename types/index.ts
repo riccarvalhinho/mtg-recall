@@ -40,6 +40,8 @@ export interface Event {
   deckName?: string;       // Fase 2+
   deckColors?: ManaSelection;        // Fase 2+
   deckThumbnailCardId?: string;      // Fase 3+ (Scryfall card ID)
+  rank?: string;           // ex: "1º lugar", "Top 8"
+  playersCount?: number;
   matches: Match[];
   // Campos calculados — NÃO guardar na DB, calcular em runtime:
   // wins, losses, draws, winRate, points, rank
