@@ -1,32 +1,96 @@
-// Add Event Screen — modal básico
+// Add Event Screen — modal
 // Permite criar um novo evento com nome, formato, data e localização
 
 import { useState } from 'react';
 import {
-  View, Text, Pressable, TextInput, ScrollView,
-  StyleSheet, KeyboardAvoidingView, Platform,
+  View, Text, Pressable, TextInput, ScrollView, Modal,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { EventType } from '../types';
+import { useEventsStore } from '../store/useEventsStore';
 
 const FORMATS: EventType[] = ['Sealed', 'Draft', 'Standard', 'Modern', 'Pioneer', 'Commander', 'Legacy'];
 
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+// Formata Date para exibição: "9 Mai 2026"
+function formatDisplay(date: Date): string {
+  return `${date.getDate()} ${MESES[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+// Converte Date para YYYY-MM-DD (formato Supabase)
+function toIsoDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 export default function AddEventScreen() {
-  const [name, setName]         = useState('');
-  const [format, setFormat]     = useState<EventType | null>(null);
-  const [date, setDate]         = useState('');
-  const [location, setLocation] = useState('');
+  const [name, setName]           = useState('');
+  const [format, setFormat]       = useState<EventType | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showPicker, setShowPicker]     = useState(false);
+  // iOS: data temporária enquanto o picker está aberto
+  const [tempDate, setTempDate]   = useState<Date>(new Date());
+  const [location, setLocation]   = useState('');
+  const [saving, setSaving]       = useState(false);
 
-  const canSave = name.trim().length > 0 && format !== null;
+  const createEvent = useEventsStore(s => s.createEvent);
+  const canSave = name.trim().length > 0 && format !== null && !saving;
 
-  function handleSave() {
-    if (!canSave) return;
-    // TODO: persistir no Supabase via services/events.ts
-    router.back();
+  // ─── Handlers do DatePicker ─────────────────────────────────────────────────
+
+  function openPicker() {
+    setTempDate(selectedDate);
+    setShowPicker(true);
+  }
+
+  // Android: o picker é um dialog nativo — confirma imediatamente ao seleccionar
+  function onAndroidChange(event: DateTimePickerEvent, date?: Date) {
+    setShowPicker(false);
+    if (event.type === 'set' && date) {
+      setSelectedDate(date);
+    }
+  }
+
+  // iOS: o picker aparece num modal com botão de confirmação
+  function onIosChange(_event: DateTimePickerEvent, date?: Date) {
+    if (date) setTempDate(date);
+  }
+
+  function confirmIosDate() {
+    setSelectedDate(tempDate);
+    setShowPicker(false);
+  }
+
+  // ─── Guardar ────────────────────────────────────────────────────────────────
+
+  async function handleSave() {
+    if (!canSave || !format) return;
+    setSaving(true);
+
+    const eventId = await createEvent({
+      name:     name.trim(),
+      type:     format,
+      date:     toIsoDate(selectedDate),
+      location: location.trim() || undefined,
+    });
+
+    setSaving(false);
+
+    if (eventId) {
+      router.replace(`/event/${eventId}`);
+    } else {
+      router.back();
+    }
   }
 
   return (
@@ -42,14 +106,17 @@ export default function AddEventScreen() {
           </Pressable>
           <Text style={styles.navTitle}>Novo Evento</Text>
           <Pressable onPress={handleSave} disabled={!canSave}>
-            {canSave ? (
+            {name.trim().length > 0 && format !== null ? (
               <LinearGradient
                 colors={[colors.gold, '#A07840']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveActive}
               >
-                <Text style={styles.saveActiveText}>Criar</Text>
+                {saving
+                  ? <ActivityIndicator size="small" color={colors.bg} />
+                  : <Text style={styles.saveActiveText}>Criar</Text>
+                }
               </LinearGradient>
             ) : (
               <View style={styles.saveInactive}>
@@ -97,21 +164,29 @@ export default function AddEventScreen() {
             </View>
           </View>
 
-          {/* Data */}
+          {/* Data — Pressable que abre o picker */}
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Data</Text>
-            <View style={[styles.inputContainer, date.length > 0 && styles.inputFilled]}>
-              <TextInput
-                style={styles.input}
-                value={date}
-                onChangeText={setDate}
-                placeholder="DD/MM/AAAA"
-                placeholderTextColor={colors.textDim}
-                keyboardType="numeric"
-                returnKeyType="done"
-              />
-            </View>
+            <Pressable
+              style={[styles.inputContainer, styles.inputFilled, styles.dateRow]}
+              onPress={openPicker}
+            >
+              <Text style={styles.input}>{formatDisplay(selectedDate)}</Text>
+              <Feather name="calendar" size={16} color={colors.textDim} />
+            </Pressable>
           </View>
+
+          {/* Android: picker aparece directamente (é um dialog nativo) */}
+          {Platform.OS === 'android' && showPicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={onAndroidChange}
+              maximumDate={new Date(2100, 0, 1)}
+              minimumDate={new Date(2000, 0, 1)}
+            />
+          )}
 
           {/* Localização */}
           <View style={styles.field}>
@@ -129,6 +204,38 @@ export default function AddEventScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* iOS: picker num modal com confirmação */}
+      {Platform.OS === 'ios' && (
+        <Modal
+          visible={showPicker}
+          transparent
+          animationType="slide"
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setShowPicker(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeader}>
+              <Pressable onPress={() => setShowPicker(false)}>
+                <Text style={styles.modalCancel}>Cancelar</Text>
+              </Pressable>
+              <Text style={styles.modalTitle}>Data do evento</Text>
+              <Pressable onPress={confirmIosDate}>
+                <Text style={styles.modalConfirm}>Confirmar</Text>
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display="spinner"
+              onChange={onIosChange}
+              maximumDate={new Date(2100, 0, 1)}
+              minimumDate={new Date(2000, 0, 1)}
+              locale="pt-PT"
+              style={styles.iosPicker}
+            />
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 }
@@ -161,6 +268,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 7,
+    minWidth: 56,
+    alignItems: 'center',
   },
   saveActiveText: {
     fontFamily: fonts.displaySemi,
@@ -205,6 +314,11 @@ const styles = StyleSheet.create({
   inputFilled: {
     borderColor: colors.gold + '66',
   },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   input: {
     fontFamily: fonts.displayMed,
     fontSize: 16,
@@ -235,5 +349,44 @@ const styles = StyleSheet.create({
   formatBtnTextActive: {
     color: colors.gold,
     fontFamily: fonts.bodyMed,
+  },
+
+  // Modal iOS
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalSheet: {
+    backgroundColor: '#1E1812',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingBottom: 32,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.textPrim,
+  },
+  modalCancel: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textSec,
+  },
+  modalConfirm: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.gold,
+  },
+  iosPicker: {
+    backgroundColor: '#1E1812',
   },
 });

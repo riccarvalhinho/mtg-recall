@@ -19,14 +19,17 @@ const RESULT_STYLES: Record<MatchResult, { bg: string; border: string; text: str
 interface MatchCardProps {
   match: Match;
   onPress?: () => void;
+  onLongPress?: () => void;
 }
 
-export function MatchCard({ match, onPress }: MatchCardProps) {
+export function MatchCard({ match, onPress, onLongPress }: MatchCardProps) {
   const rs = RESULT_STYLES[match.result];
 
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={400}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
     >
       {/* Pill de resultado */}

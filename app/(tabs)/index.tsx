@@ -5,6 +5,7 @@
 // Estado actual: empty state (primeiro uso)
 // TODO: adicionar variante "com dados" (StatsBlock + EventoActivo + EventosRecentes)
 
+import { useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line } from 'react-native-svg';
@@ -13,6 +14,7 @@ import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { ManaPip } from '../../components/ManaPip';
 import { ManaColor } from '../../types';
+import { useEventsStore } from '../../store/useEventsStore';
 
 // ─── Ornamento central ────────────────────────────────────────────────────────
 // Pentágono com um pip de mana em cada vértice (WUBRG, sentido horário desde topo)
@@ -118,8 +120,18 @@ function ScholarOrnament({ size = 140 }: { size?: number }) {
 // ─── Home Screen ─────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  // TODO: substituir por dados reais do Supabase
-  const hasEvents = false;
+  const events     = useEventsStore(s => s.events);
+  const isLoading  = useEventsStore(s => s.isLoading);
+  const loadEvents = useEventsStore(s => s.loadEvents);
+
+  // Carrega eventos quando o écran monta (sincroniza com o events tab)
+  useEffect(() => {
+    if (events.length === 0 && !isLoading) {
+      loadEvents();
+    }
+  }, []);
+
+  const hasEvents = events.length > 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

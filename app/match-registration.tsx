@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
-  StyleSheet, KeyboardAvoidingView, Platform,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -108,10 +108,11 @@ export default function MatchRegistrationScreen() {
   });
   const [notesOpen, setNotesOpen] = useState(false);
   const [notes, setNotes]         = useState('');
+  const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
   const addMatch = useEventsStore(s => s.addMatch);
 
-  const canSave = opponent.trim().length > 0 && result !== null;
+  const canSave = opponent.trim().length > 0 && result !== null && !saving;
   const roundNum = round ?? '1';
 
   // Cicla estado de cor: 0 → 1 → 2 → 0
@@ -128,25 +129,26 @@ export default function MatchRegistrationScreen() {
 
   const hasAnyColor = Object.values(colorStates).some(s => s > 0);
 
-  function handleSave() {
+  async function handleSave() {
     if (!canSave || !eventId) return;
+    setSaving(true);
 
-    // Constrói ManaSelection a partir dos estados dos pips
     const main   = MANA_ORDER.filter(c => colorStates[c] === 1);
     const splash = MANA_ORDER.filter(c => colorStates[c] === 2);
 
-    addMatch(eventId, {
+    await addMatch(eventId, {
       opponent:       opponent.trim(),
       opponentColors: { main, splash },
       result:         result!,
       notes:          notes.trim() || undefined,
     });
 
+    setSaving(false);
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
       router.back();
-    }, 1200);
+    }, 1000);
   }
 
   return (
@@ -173,16 +175,17 @@ export default function MatchRegistrationScreen() {
             disabled={!canSave}
             style={({ pressed }) => [pressed && { opacity: 0.85 }]}
           >
-            {canSave ? (
+            {opponent.trim().length > 0 && result !== null ? (
               <LinearGradient
                 colors={[colors.gold, '#A07840']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.saveActive}
               >
-                <Text style={styles.saveActiveText}>
-                  {saved ? '✓ Guardado' : 'Guardar'}
-                </Text>
+                {saving
+                  ? <ActivityIndicator size="small" color={colors.bg} />
+                  : <Text style={styles.saveActiveText}>{saved ? '✓ Guardado' : 'Guardar'}</Text>
+                }
               </LinearGradient>
             ) : (
               <View style={styles.saveInactive}>

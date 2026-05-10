@@ -15,6 +15,7 @@ import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ManaPip } from '../../components/ManaPip';
 import { CardThumbnailPlaceholder } from '../../components/CardThumbnailPlaceholder';
+import { ConfirmModal } from '../../components/ConfirmModal';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 function formatDate(dateStr: string) {
@@ -275,7 +276,13 @@ export default function EventDetailScreen() {
     );
   }
 
+  const deleteEvent = useEventsStore(s => s.deleteEvent);
+  const deleteMatch = useEventsStore(s => s.deleteMatch);
   const stats = calcEventStats(event);
+
+  // Estado dos modais de confirmação
+  const [deleteEventModal, setDeleteEventModal] = useState(false);
+  const [deleteMatchModal, setDeleteMatchModal] = useState<{ id: string; opponent: string } | null>(null);
 
   function goToMatchRegistration() {
     router.push({
@@ -296,6 +303,9 @@ export default function EventDetailScreen() {
           <Feather name="chevron-left" size={20} color={colors.textPrim} />
         </Pressable>
         <Text style={styles.breadcrumb}>Eventos</Text>
+        <Pressable style={styles.deleteBtn} onPress={() => setDeleteEventModal(true)}>
+          <Feather name="trash-2" size={16} color={colors.loss} />
+        </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -348,7 +358,11 @@ export default function EventDetailScreen() {
         </View>
 
         {event.matches.map(match => (
-          <MatchCard key={match.id} match={match} />
+          <MatchCard
+            key={match.id}
+            match={match}
+            onLongPress={() => setDeleteMatchModal({ id: match.id, opponent: match.opponent })}
+          />
         ))}
 
         {/* Botão adicionar match */}
@@ -358,6 +372,34 @@ export default function EventDetailScreen() {
 
         <View style={{ height: 16 }} />
       </ScrollView>
+      {/* Modal: apagar evento */}
+      <ConfirmModal
+        visible={deleteEventModal}
+        title="Apagar evento"
+        message={`Tens a certeza que queres apagar "${event.name}"?\n\nTodos os matches serão apagados.`}
+        confirmLabel="Apagar"
+        confirmDestructive
+        onConfirm={async () => {
+          setDeleteEventModal(false);
+          const ok = await deleteEvent(event.id);
+          if (ok) router.back();
+        }}
+        onCancel={() => setDeleteEventModal(false)}
+      />
+
+      {/* Modal: apagar match */}
+      <ConfirmModal
+        visible={deleteMatchModal !== null}
+        title="Apagar match"
+        message={`Apagar o match contra ${deleteMatchModal?.opponent}?`}
+        confirmLabel="Apagar"
+        confirmDestructive
+        onConfirm={() => {
+          if (deleteMatchModal) deleteMatch(event.id, deleteMatchModal.id);
+          setDeleteMatchModal(null);
+        }}
+        onCancel={() => setDeleteMatchModal(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -373,6 +415,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
+  },
+  deleteBtn: {
+    marginLeft: 'auto',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.lossBg,
+    borderWidth: 1,
+    borderColor: colors.lossBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   backBtn: {
     width: 34,

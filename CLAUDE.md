@@ -16,46 +16,69 @@ O developer é um iniciante em programação — explicar conceitos quando relev
 
 | Camada | Tecnologia |
 | :---- | :---- |
-| Mobile | React Native \+ Expo |
+| Mobile | React Native \+ Expo SDK 54 |
 | Linguagem | TypeScript |
-| Base de dados | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
+| Routing | Expo Router (file-based) |
+| State | Zustand (`store/useEventsStore.ts`) |
+| Base de dados | Supabase (PostgreSQL) — tabelas ainda por criar |
+| Auth | Supabase Anon Auth (activo) |
 | Card data | Scryfall API |
-| Card prices | Cardmarket API |
-| State management | A decidir (provavelmente Zustand) |
+| Card prices | Cardmarket API (Fase 4+) |
+| Mana symbols | Scryfall CDN SVG via `react-native-svg` `SvgUri` |
 
 ---
 
 ## Estrutura de Pastas (actual)
 
 ```
-/app              — écrans (Expo Router)
-  _layout.tsx     — root layout (auth init)
+/app
+  _layout.tsx             — root layout (fonts + auth + Stack screens)
+  match-registration.tsx  — modal: registo de match
+  add-event.tsx           — modal: criar evento
   (tabs)/
-    _layout.tsx   — tab bar
-    index.tsx     — Home (placeholder)
-    events.tsx    — Events (placeholder)
-    stats.tsx     — Stats (placeholder)
-    profile.tsx   — Profile (placeholder)
+    _layout.tsx           — tab bar (Home/Events/Stats/Profile)
+    index.tsx             — Home (empty state implementado)
+    events.tsx            — Events List (completo)
+    stats.tsx             — placeholder
+    profile.tsx           — placeholder
+  event/
+    [id].tsx              — Event Detail (completo, fora dos tabs)
 
-/components       — componentes reutilizáveis (a criar)
-/services         — Supabase client + auth
-/hooks            — lógica reutilizável (a criar)
-/types
-  index.ts        — todos os tipos TypeScript (Event, Match, ManaSelection, etc.)
+/components
+  ManaPip.tsx             — pip oficial MTG (Scryfall CDN SVG, isSplash)
+  TypeBadge.tsx           — badge Sealed/Draft
+  RecordBadge.tsx         — score W–L + win rate
+  CardThumbnailPlaceholder.tsx
+  EventCard.tsx           — card de evento com accent bar
+  MatchCard.tsx           — resultado de match com pill W/L/D
+
+/data
+  mock.ts                 — mockEvents (5 eventos de exemplo)
+
+/services
+  supabase.ts             — Supabase client
+  auth.ts                 — Anon Auth
+
+/store
+  useEventsStore.ts       — Zustand: events[], addMatch()
+
 /theme
-  colors.ts       — paleta completa (fonte de verdade)
-  typography.ts   — fontes e tamanhos
-  mana.ts         — cores MTG por símbolo (W/U/B/R/G)
+  colors.ts               — paleta completa (fonte de verdade)
+  typography.ts           — fontes e tamanhos
+  mana.ts                 — cores MTG por símbolo (referência)
+
+/types
+  index.ts                — todos os tipos TypeScript
+
 /constants
-  colors.ts       — re-exporta theme/colors (retrocompatibilidade)
+  colors.ts               — re-exporta theme/colors (retrocompatibilidade)
+
 /design
-  handoff.md      — spec completa de implementação React Native
-  screen-home.png
-  screen-events.png
-  screen-event-detail.png
-  screen-match-registration.png
-design-brief.md   — conceito visual, paleta original, referências
+  handoff.md              — spec completa de implementação React Native
+  screen-*.png            — prints de écran de referência
+
+design-brief.md           — conceito visual, paleta original
+data-model.md             — modelo de dados Supabase
 ```
 
 ---
@@ -68,7 +91,9 @@ design-brief.md   — conceito visual, paleta original, referências
 - Sempre usar **TypeScript** — nunca JavaScript puro
 - Prefer **functional components** e **hooks**
 - Cada ficheiro deve ter **uma responsabilidade** clara
-- Imports de tema: sempre de `../theme/colors`, `../theme/typography`, `../theme/mana`
+- Imports de tema: sempre de `../theme/colors`, `../theme/typography`
+- `npm install` requer sempre `--legacy-peer-deps` (conflito react-dom@19.2.5 vs react@19.1.0)
+- Metro cache: limpar com `npx expo start --tunnel --clear` ao adicionar novas pastas
 
 ---
 
@@ -80,40 +105,59 @@ design-brief.md   — conceito visual, paleta original, referências
 - Fundo: `#130F0A` / Card: `#1E1812` / Hover: `#252019`
 - Gold accent: `#C9A96E` / Gold dim: `#8B7248`
 - Texto: `#E8DCC8` (prim) / `#A8967A` (sec) / `#6B5C3E` (dim)
-- Win: `#5A8B5C` / Loss: `#8B4A4A` / Draw: `#7A7060`
+- Border: `#3A3020` / Tab bar: `#16120D`
+- Win bg/border/text: `#1E2E1F` / `#3A5C3C` / `#5A8B5C`
+- Loss bg/border/text: `#2E1E1E` / `#5C3A3A` / `#8B4A4A`
+- Draw bg/border/text: `#252019` / `#4A4030` / `#7A7060`
 
 ### Tipografia (theme/typography.ts)
-- **Playfair Display** — títulos, nomes de eventos (`fonts.display`, `.displaySemi`, etc.)
-- **EB Garamond** — corpo, labels, listas (`fonts.body`, `.bodyItal`, etc.)
-- Instalar: `@expo-google-fonts/playfair-display` + `@expo-google-fonts/eb-garamond`
+- **Playfair Display** — títulos, nomes de eventos
+  - `fonts.display` = `PlayfairDisplay_700Bold`
+  - `fonts.displaySemi` = `PlayfairDisplay_600SemiBold`
+  - `fonts.displayMed` = `PlayfairDisplay_500Medium`
+  - `fonts.displayItal` = `PlayfairDisplay_400Regular_Italic` ← atenção ao nome exato
+- **EB Garamond** — corpo, labels, listas
+  - `fonts.body` = `EBGaramond_400Regular`
+  - `fonts.bodyItal` = `EBGaramond_400Regular_Italic`
+  - `fonts.bodyMed` = `EBGaramond_500Medium`
 
-### Componentes partilhados (a criar em /components)
-- `ManaPip` — pip de cor de mana (W/U/B/R/G), com estado `isSplash`
-- `TabBar` — 4 tabs: Home, Events, Stats, Profile
-- `TypeBadge` — badge de formato (Sealed/Draft)
-- `RecordBadge` — score W–L com win rate
-- `CardThumbnailPlaceholder` — placeholder 36×50 ou 40×56px
-- `EventCard` — card de evento com record, mana pips, chevron
-- `MatchCard` — resultado de match com pill W/L/D
-
-### Elementos visuais
-- `border-radius: 4px` (pequeno) a `12px` (cards)
-- Bordas: `1px solid #3A3020`
-- Accent bar: `3px` wide, gold gradient (eventos activos)
-- Iconografia: linha fina (stroke), não preenchido
+### ManaPip (components/ManaPip.tsx)
+- Usa `SvgUri` de `react-native-svg` com URLs do Scryfall CDN
+- Props: `color: ManaColor`, `size?: number` (default 16), `isSplash?: boolean`
+- `isSplash`: tamanho ×0.70, opacidade 0.65
+- URLs: `https://svgs.scryfall.io/card-symbols/{W|U|B|R|G}.svg`
 
 ---
 
-## Decisões Técnicas Já Tomadas
+## State Management — Zustand
 
-1. **Supabase** como backend — não Firebase
-2. **Scryfall API** como fonte única de dados de cartas
-3. **Cardmarket API** para preços — Fase 4+
-4. **Expo Router** para navegação (file-based routing)
-5. Dados guardados **na cloud** (Supabase)
-6. **MVP usa Supabase Anonymous Auth** — sem login forçado; dados migram na Fase 2
-7. **theme/** pasta separada de **constants/** — fonte de verdade do design
-8. **types/index.ts** — tipos centralizados (Event, Match, ManaSelection, etc.)
+**`store/useEventsStore.ts`** é a fonte de verdade durante a sessão.
+
+```ts
+useEventsStore(s => s.events)         // lista reactiva de eventos
+useEventsStore(s => s.addMatch)       // acção: adicionar match a um evento
+```
+
+Estado inicial vem de `data/mock.ts`. Na Fase 2, as acções chamarão `services/events.ts` e `services/matches.ts` em vez de modificar estado local.
+
+---
+
+## Navegação (Expo Router)
+
+```
+Stack principal:
+  (tabs)/index        ← Home (tab 1)
+  (tabs)/events       ← Events List (tab 2)
+  (tabs)/stats        ← Stats (tab 3, placeholder)
+  (tabs)/profile      ← Profile (tab 4, placeholder)
+  event/[id]          ← Event Detail (push, sem tab bar)
+
+Modals (presentation: 'modal'):
+  match-registration  ← a partir de Event Detail
+  add-event           ← a partir de Events List
+```
+
+Params de navegação para match-registration: `{ eventId, round, eventName }`
 
 ---
 
@@ -121,67 +165,23 @@ design-brief.md   — conceito visual, paleta original, referências
 
 ### Scryfall
 - Base URL: `https://api.scryfall.com`
-- Endpoints: `/cards/search`, `/cards/autocomplete`, `/cards/named`
+- Mana SVGs: `https://svgs.scryfall.io/card-symbols/{COLOR}.svg`
 - Rate limit: 50-100ms entre requests (respeitar sempre)
-- Documentação: https://scryfall.com/docs/api
-
-### Cardmarket
-- Requer autenticação OAuth 1.0
-- Base URL: `https://api.cardmarket.com/ws/v2.0`
 
 ### Supabase
 - URL e anon key em `.env` — nunca hardcode credenciais
+- Auth anónimo activo; tabelas DB ainda não criadas
 
 ---
 
-## Modelo de Dados (Supabase) — Definido
+## Estado Actual do Projecto (2026-05-09)
 
-Ver `data-model.md` para detalhe completo. Tipos TypeScript em `types/index.ts`.
-
-Resumo das tabelas:
-- `users` — auth (Anon no MVP)
-- `events` — torneios (type, date, active, rank)
-- `matches` — resultado W/L/D, ronda, opponent_colors (com splash)
-- `opponents` — entidade própria para stats cross-event
-- `games` — games individuais (opcional no registo rápido)
-- `decks` — 1 por evento, Fase 2+
-- `deck_cards` — Fase 2+
-- `portfolio_cards` — Fase 3+
-
-**Campos calculados (não guardar):** points (W×3+D×1), win_rate, record W-L-D
-**Cores:** sempre `ManaSelection { main: ManaColor[], splash: ManaColor[] }`
-
----
-
-## Navegação (design/handoff.md § 8)
-
-```
-Stack principal:
-  Home          ← tab 1
-  Events List   ← tab 2
-    Event Detail  ← push
-  Stats         ← tab 3 (Fase 2+)
-  Profile       ← tab 4 (Fase 2+)
-
-Modal (sheet, bottom-up):
-  Match Registration ← a partir de Event Detail + Home CTA
-```
-
-Usar `@react-navigation/native` com `createBottomTabNavigator` + `createNativeStackNavigator`.
-
----
-
-## Estado Actual do Projecto
-
-- **Fase:** MVP — infraestrutura pronta, a implementar écrans reais
-- **O que está feito:**
-  - Supabase client + Anon Auth (`services/supabase.ts`, `services/auth.ts`)
-  - Expo Router com 4 tabs (écrans placeholder)
-  - Design system completo: `theme/colors.ts`, `theme/typography.ts`, `theme/mana.ts`
-  - Tipos TypeScript: `types/index.ts` (Event, Match, ManaSelection, calcEventStats)
-  - Design assets: `design/handoff.md` + 4 prints de écran
-- **Próximo passo:** Implementar écrans — começar pelo **Home Screen**
-- **Ver também:** `project-overview.md` para estado detalhado e `design/handoff.md` para spec completa
+- **Fase:** MVP — écrans completos com mock data; próximo passo: Supabase DB
+- **Écrans prontos:** Home (empty state), Events List, Event Detail, Match Registration, Add Event, Stats/Profile (placeholders)
+- **Componentes prontos:** ManaPip, TypeBadge, RecordBadge, CardThumbnailPlaceholder, EventCard, MatchCard
+- **Estado reactivo:** Zustand store com mock data (addMatch funciona end-to-end)
+- **Próximo passo:** Criar tabelas Supabase + `services/events.ts` + `services/matches.ts` → persistência real
+- **Ver também:** `project-overview.md` para estado detalhado, `design/handoff.md` para spec completa, `data-model.md` para schema das tabelas
 
 ---
 

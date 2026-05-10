@@ -2,7 +2,8 @@
 // Spec: design/handoff.md § 4
 // Print: design/screen-events.png
 
-import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
+import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors } from '../../theme/colors';
@@ -159,8 +160,15 @@ type ListItem =
 
 export default function EventsScreen() {
   const events       = useEventsStore(s => s.events);
+  const isLoading    = useEventsStore(s => s.isLoading);
+  const loadEvents   = useEventsStore(s => s.loadEvents);
   const activeEvents = events.filter(e => e.active);
   const pastEvents   = events.filter(e => !e.active);
+
+  // Carrega eventos do Supabase quando o écran monta
+  useEffect(() => {
+    loadEvents();
+  }, []);
 
   const sections: ListItem[] = [
     { key: 'strip', type: 'strip' },
@@ -189,6 +197,13 @@ export default function EventsScreen() {
           <Text style={styles.newBtnText}>+ Novo Evento</Text>
         </Pressable>
       </View>
+
+      {isLoading && events.length === 0 && (
+        <ActivityIndicator
+          color={colors.gold}
+          style={{ marginTop: 40 }}
+        />
+      )}
 
       <FlatList
         data={sections}

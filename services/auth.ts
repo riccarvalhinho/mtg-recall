@@ -1,6 +1,18 @@
 import { supabase } from './supabase';
 
+// Inicia sessão anónima se não existir nenhuma activa.
+// Com AsyncStorage configurado no client, a sessão persiste entre restarts
+// e este código só cria um novo utilizador no primeiro arranque da app.
 export async function signInAnonymously() {
+  // Verificar se já existe uma sessão guardada
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (session) {
+    console.log('[auth] Sessão existente. User ID:', session.user.id);
+    return { user: session.user, error: null };
+  }
+
+  // Primeiro arranque — criar utilizador anónimo
   const { data, error } = await supabase.auth.signInAnonymously();
 
   if (error) {
@@ -8,18 +20,6 @@ export async function signInAnonymously() {
     return { user: null, error };
   }
 
-  console.log('[auth] Login anónimo bem-sucedido. User ID:', data.user?.id);
+  console.log('[auth] Novo utilizador anónimo criado. User ID:', data.user?.id);
   return { user: data.user, error: null };
-}
-
-export async function testDatabaseConnection() {
-  const { error } = await supabase.from('users').select('id').limit(1);
-
-  if (error) {
-    console.error('[auth] Falha na ligação à base de dados:', error.message);
-    return false;
-  }
-
-  console.log('[auth] Ligação à base de dados OK.');
-  return true;
 }
