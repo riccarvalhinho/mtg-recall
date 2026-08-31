@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       # O conflito react-dom@19.2.5 vs react@19.1.0 obriga a isto — ver CLAUDE.md.
