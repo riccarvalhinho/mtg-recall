@@ -151,10 +151,13 @@ for (const entry of data.events) {
   });
 }
 
-// Não é um erro de dados, mas é quase sempre um esquecimento: um torneio antigo que ficou por
-// concluir aparece para sempre na Home como se estivesse a decorrer.
+// Aviso, não erro. É quase sempre um esquecimento — um torneio antigo que ficou por concluir e
+// aparece para sempre na Home como se estivesse a decorrer. Mas chumbar aqui seria pior: a app cria
+// eventos sem verificar isto, e o CI recusaria um commit que ela própria acabou de fazer, sem
+// ninguém poder corrigir a partir do telemóvel. Ver open-questions Q6.
+const warnings: string[] = [];
 if (activeEvents > 1) {
-  fail(rel(paths.events), `${activeEvents} eventos com status "active" — só devia haver um a decorrer`);
+  warnings.push(`${activeEvents} eventos com status "active" — só devia haver um a decorrer`);
 }
 
 // ------------------------------------------------------------------------- resultado
@@ -170,3 +173,5 @@ console.log(
   `✓ dados válidos — ${data.events.length} evento(s), ${totalMatches} match(es), ` +
     `${opponentIds.size} adversário(s)`,
 );
+
+for (const warning of warnings) console.log(`  ⚠ ${warning}`);

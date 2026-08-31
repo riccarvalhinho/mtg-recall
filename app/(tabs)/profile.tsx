@@ -37,7 +37,11 @@ function waitingFor(since: number | undefined): string {
 
 function statusLine(sync: SyncState): { icon: keyof typeof Feather.glyphMap; color: string; text: string } {
   if (sync.pending === 0) {
-    return { icon: 'check-circle', color: colors.win, text: 'Everything is saved to GitHub.' };
+    // Sem token, uma fila vazia não quer dizer que está tudo guardado — quer dizer que nada foi
+    // sequer tentado. Dizer o contrário seria mentir sobre onde os dados estão.
+    return sync.hasToken
+      ? { icon: 'check-circle', color: colors.win, text: 'Everything is saved to GitHub.' }
+      : { icon: 'alert-circle', color: colors.textSec, text: 'No token yet — nothing is being sent to GitHub.' };
   }
   if (!sync.hasToken) {
     return {
