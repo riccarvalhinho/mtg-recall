@@ -1,179 +1,158 @@
 # MTG Recall — Modelo de Dados
 
-> Estado: Definido — pronto para implementar no Supabase
-> Última actualização: Planning session
+> Os dados são ficheiros JSON no repositório. Ver `docs/adr/0002-dados-json-versionados.md`.
+> O contrato executável são os schemas em `data/schema/`, validados em CI. Este ficheiro explica
+> as decisões; o schema é que manda.
+> Última actualização: 2026-08-31
 
 ---
 
 ## Decisões Chave
 
-- Um evento tem exactamente um deck (foco Limited)
-- Pontos calculados automaticamente (W=3, D=1, L=0) — rank introduzido manualmente
-- Matches têm games individuais (para registar 2-1, 2-0, etc.)
-- Jogador 1 (plays first) registado por match
-- Adversários ligados entre eventos por nome — Fase 4+ liga ao perfil se tiverem a app
-- Cores guardadas sempre com flag de splash `{ color, splash }`
+- **Um evento = um ficheiro.** `data/events/<AAAA-MM-DD-slug>.json`. O nome do ficheiro é igual ao `id`.
+- **Os matches vivem dentro do evento.** Um match não existe fora do seu torneio, e o diff de uma
+  noite de FNM deve ler-se de uma vez só.
+- **A ronda identifica o match.** Não há UUIDs: dentro de um evento, `round` é único. Apagar um match
+  renumera as rondas seguintes.
+- **Os adversários são referências**, não texto livre — apontam para `data/taxonomies/opponents.json`.
+  Sem isto, as estatísticas por adversário nunca agregam "João Ferreira" e "joão ferreira".
+- **Um evento tem um deck.** Os campos do deck vivem no evento (foco Limited). Quando o Deck Manager
+  chegar (Fase 2), o deck ganha ficheiro próprio e o evento passa a ter também um `deckId`.
+- **Nada de campos calculados nos ficheiros.** Pontos, win rate e record calculam-se em runtime a
+  partir dos matches. Guardá-los seria guardar duas verdades.
+- **Nada de timestamps.** O Git já sabe quando cada ficheiro mudou; um `updatedAt` só acrescentava
+  ruído a cada diff. A data que interessa — a do torneio — é um campo de produto (`date`), e pode ser
+  retroactiva.
 
 ---
 
-## Tabelas
+## Estrutura
 
-### users
 ```
-id            uuid          PK, gerado pelo Supabase Auth
-email         text          único
-username      text          único, opcional no MVP (Anon Auth)
-created_at    timestamp     auto
+data/
+  schema/
+    event.schema.json        contrato de um evento (e dos matches lá dentro)
+    opponents.schema.json    contrato da taxonomia de adversários
+  events/
+    2026-04-12-fnm-sealed-aetherdrift.json
+    2026-04-05-ptq-trial-draft.json
+  taxonomies/
+    opponents.json
 ```
-> No MVP o utilizador é anónimo (Supabase Anon Auth). Na Fase 2 migra para conta real.
+
+A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collection/cards.json`.
 
 ---
 
-### events
+## Evento
+
+`data/events/2026-04-12-fnm-sealed-aetherdrift.json`
+
+```json
+{
+  "id": "2026-04-12-fnm-sealed-aetherdrift",
+  "name": "FNM Sealed — Aetherdrift",
+  "type": "Sealed",
+  "setCode": "dft",
+  "date": "2026-04-12",
+  "location": "Nave Espacial, Lisboa",
+  "status": "completed",
+  "rank": "3rd",
+  "playersCount": 16,
+  "deckName": "Selesnya Midrange",
+  "deckColors": { "main": ["G", "W"], "splash": ["U"] },
+  "matches": [
+    {
+      "round": 1,
+      "opponentId": "joao-ferreira",
+      "opponentColors": { "main": ["U", "B"], "splash": [] },
+      "result": "W",
+      "wentFirst": true,
+      "games": [
+        { "number": 1, "result": "W", "wentFirst": true },
+        { "number": 2, "result": "L", "wentFirst": false },
+        { "number": 3, "result": "W", "wentFirst": true }
+      ],
+      "notes": "Removal a mais do outro lado no game 2."
+    }
+  ]
+}
 ```
-id            uuid          PK
-user_id       uuid          FK → users.id
-name          text          ex: "FNM Sealed — Aetherdrift"
-type          text          enum: 'sealed' | 'draft' | 'constructed' | 'cube'
-set_code      text          código do set Scryfall (ex: "dft") — null se cube/personal
-format_note   text          null ou "Personal Collection" | "Cube" — alternativa ao set
-date          date          data do evento (pode ser retroactiva)
-location      text          opcional
-status        text          enum: 'active' | 'completed'
-rank          text          introduzido manualmente (ex: "1st", "5th") — opcional
-created_at    timestamp     auto
+
+| Campo | Obrigatório | Notas |
+|---|---|---|
+| `id` | sim | Slug igual ao nome do ficheiro. Prefixo de data para o `ls` sair por ordem cronológica |
+| `name` | sim | Como aparece na app |
+| `type` | sim | `Sealed`, `Draft`, `Standard`, `Modern`, `Pioneer`, `Legacy`, `Commander` |
+| `setCode` | não | Código Scryfall do set (ex.: `dft`). Só faz sentido em Limited |
+| `date` | sim | `AAAA-MM-DD`. Pode ser retroactiva |
+| `location` | não | |
+| `status` | sim | `active` ou `completed`. Só um evento deve estar `active` de cada vez |
+| `rank` | não | Introduzido à mão no fim (`1st`, `Top 8`, …) |
+| `playersCount` | não | |
+| `deckName`, `deckColors`, `deckThumbnailCardId` | não | O deck jogado neste evento |
+| `notes` | não | |
+| `matches` | sim | Pode ser lista vazia — um evento acabado de criar ainda não tem rondas |
+
+## Match
+
+Dentro do array `matches` do evento.
+
+| Campo | Obrigatório | Notas |
+|---|---|---|
+| `round` | sim | Inteiro ≥ 1, único dentro do evento, sem saltos |
+| `opponentId` | sim | Referência a `data/taxonomies/opponents.json` |
+| `opponentColors` | sim | `{ "main": [...], "splash": [...] }`, cores em `W U B R G` |
+| `result` | sim | `W`, `L` ou `D` |
+| `wentFirst` | não | `true` se fui eu a jogar primeiro na ronda |
+| `games` | não | Registo game a game — permite saber que um 2-1 foi 2-1. Sem `D` num game |
+| `notes` | não | |
+
+Quando há `games`, o `result` do match tem de ser coerente com eles: dois `W` dão `W`, dois `L` dão
+`L`, um a um com um game não jogado dá `D`. A validação verifica isso — um match a dizer `W` com dois
+games perdidos é um erro de dedo, não uma opção.
+
+## Adversários
+
+`data/taxonomies/opponents.json`
+
+```json
+{
+  "kind": "opponents",
+  "items": [
+    { "id": "joao-ferreira", "name": "João Ferreira" }
+  ]
+}
 ```
-> `points` não é guardado — calculado dinamicamente a partir dos matches (W*3 + D*1)
-> `date` e `created_at` são campos separados para suportar registo retroactivo
+
+O `id` é o slug do nome. O `name` é o que aparece na app e é o único sítio onde ele existe — mudar
+aqui muda em todos os eventos. O repositório é público (ADR 0005): se um nome não dever aparecer,
+troca-se o `name` por uma alcunha e nenhum evento precisa de ser tocado.
 
 ---
 
-### opponents
-```
-id            uuid          PK
-user_id       uuid          FK → users.id (dono do registo)
-name          text          nome do adversário
-app_user_id   uuid          FK → users.id — null até Fase 4+ (ligação ao perfil)
-created_at    timestamp     auto
-```
-> Adversários são entidades próprias para permitir stats cross-event
-> Dois registos com o mesmo nome são considerados a mesma pessoa — deduplicação por nome
-
----
-
-### matches
-```
-id              uuid        PK
-event_id        uuid        FK → events.id
-opponent_id     uuid        FK → opponents.id
-round           integer     número da ronda (1, 2, 3...)
-result          text        enum: 'W' | 'L' | 'D'
-went_first      boolean     true = eu joguei primeiro, false = adversário jogou primeiro
-opponent_colors jsonb       array: [{ color: 'U', splash: false }, { color: 'B', splash: true }]
-notes           text        opcional
-created_at      timestamp   auto
-```
-
----
-
-### games
-```
-id            uuid          PK
-match_id      uuid          FK → matches.id
-game_number   integer       1, 2 ou 3
-result        text          enum: 'W' | 'L' — sem draw em games individuais
-went_first    boolean       true = eu joguei primeiro neste game
-created_at    timestamp     auto
-```
-> Um match tem 2 ou 3 games
-> O resultado do match é calculado a partir dos games (ex: 2 wins = W, 2 losses = L)
-
----
-
-### decks
-```
-id                  uuid    PK
-event_id            uuid    FK → events.id — único (1 deck por evento)
-user_id             uuid    FK → users.id
-name                text    ex: "Selesnya Midrange"
-colors              jsonb   array: [{ color: 'G', splash: false }, { color: 'W', splash: false }]
-thumbnail_card_id   text    scryfall_id da carta thumbnail — null até ser definido
-created_at          timestamp auto
-```
-> thumbnail_card_id default: primeira rare do deck (lógica na app)
-
----
-
-### deck_cards
-```
-id                uuid      PK
-deck_id           uuid      FK → decks.id
-scryfall_card_id  text      ID da carta no Scryfall
-quantity          integer   quantidade no deck
-in_deck           boolean   true = no deck, false = no card pool (sideboard/restante)
-created_at        timestamp auto
-```
-> Fase 2+ — tabela só relevante quando Deck Manager for implementado
-
----
-
-### portfolio_cards
-```
-id                uuid      PK
-user_id           uuid      FK → users.id
-scryfall_card_id  text      ID da carta no Scryfall
-quantity          integer
-condition         text      enum: 'M' | 'NM' | 'LP' | 'MP' | 'HP' | 'DMG'
-foil              boolean
-added_at          timestamp auto
-```
-> Fase 3+ — só relevante quando Portfolio for implementado
-
----
-
-## Relações
-
-```
-users
-  └── events (1:N)
-        └── matches (1:N)
-              └── games (1:N)
-        └── decks (1:1)
-              └── deck_cards (1:N)
-  └── opponents (1:N)
-  └── portfolio_cards (1:N)
-
-matches
-  └── opponents (N:1)
-```
-
----
-
-## Campos Calculados (não guardados na DB)
+## Campos calculados (nunca guardados)
 
 | Campo | Cálculo | Usado em |
 |---|---|---|
-| `event.points` | matches W*3 + D*1 | Event Detail, Stats |
-| `event.win_rate` | W / (W+L+D) * 100 | Event Detail, Stats, Home |
-| `event.record` | contagem W-L-D | Event Detail, Events List |
-| `match.result` | maioria de games W/L | calculado se não introduzido |
-| `opponent.win_rate` | W contra este oponente / total | Stats (Fase 3) |
-| `user.elo` | algoritmo ELO por formato | Stats (Fase 3) |
+| `event.points` | `W*3 + D*1` | Event Detail, Stats |
+| `event.winRate` | `W / (W+L+D) * 100` | Event Detail, Stats, Home |
+| `event.record` | contagem W–L–D | Event Detail, Events List |
+| `opponent.winRate` | vitórias contra ele / total | Stats (Fase 3) |
 
 ---
 
 ## Sets MTG
 
-> Não é uma tabela própria — dados vêm da Scryfall API
-> Endpoint: `GET https://api.scryfall.com/sets`
-> Ordenar por `released_at` descrescente para o selector de "Add New Event"
-> Cache local para não fazer request em cada abertura do selector
+Não são dados nossos — vêm da Scryfall API (`GET https://api.scryfall.com/sets`), ordenados por
+`released_at` descendente para o selector de "Add New Event", com cache local para não repetir o
+pedido a cada abertura.
 
 ---
 
-## Notas de Implementação
+## Correspondência com SQL, se um dia for preciso
 
-1. Todas as tabelas têm Row Level Security (RLS) no Supabase — cada utilizador só vê os seus dados
-2. `opponent_colors` e `deck.colors` usam sempre estrutura `{ color: string, splash: boolean }` — nunca array plano
-3. No MVP, `username` pode ser null (utilizador anónimo)
-4. `games` é opcional no registo rápido — pode ser adicionado depois do match
+O ADR 0002 promete uma saída de emergência. É esta: `data/events/*.json` → tabela `events` mais
+tabela `matches` com FK `event_id` e coluna `round`; `games` → tabela filha de `matches`;
+`opponents.json` → tabela `opponents`. Não há nada no modelo que dependa de ser um ficheiro além da
+comodidade do diff.

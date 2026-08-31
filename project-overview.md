@@ -1,188 +1,99 @@
 # MTG Recall — Project Overview
 
-> Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica for tomada, ou o estado mudar.
-> Última actualização: 2026-05-10
+> Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica
+> for tomada, ou o estado mudar.
+> Última actualização: 2026-08-31
 
 ---
 
 ## Language
 
-**All app text is in English** — UI labels, menus, placeholders, error messages, and code comments must be written in English without exception.
+**All app text is in English** — UI labels, menus, placeholders and error messages. Code comments and
+project documentation (`docs/`, ADRs) are written in Portuguese.
 
 ---
 
 ## Estado Actual
 
-**Fase:** MVP — integração Supabase completa; persistência real em produção
+**Fase 0 — Repurpose.** A app deixa de depender do Supabase e passa a guardar os dados como ficheiros
+JSON no próprio repositório, escritos pela app através da Contents API do GitHub. Utilizador único,
+sem contas. As decisões estão em `docs/adr/`; o que falta está em `docs/product/roadmap.md`.
 
 ---
 
 ## O que está feito
 
-### Infraestrutura
-- [x] Expo + React Native + TypeScript configurados
-- [x] Supabase client (`services/supabase.ts`) com variáveis de ambiente
-- [x] Anon Auth (`services/auth.ts`) — login anónimo automático no arranque
-- [x] Expo Router instalado e configurado
-- [x] `npm install --legacy-peer-deps` necessário (conflito react-dom@19.2.5 vs react@19.1.0)
-
 ### Design System
 - [x] `design-brief.md` — conceito "Scholar's Archive", paleta original, referências
 - [x] `design/handoff.md` — spec completa de implementação React Native
-- [x] 4 prints de écran em `/design/`
-- [x] `theme/colors.ts` — paleta definitiva (bg, gold, texto, win/loss/draw, tabBar, border)
-- [x] `theme/typography.ts` — Playfair Display + EB Garamond (variantes italic: `_400Regular_Italic`)
-- [x] `theme/mana.ts` — cores MTG por símbolo (referência; ManaPip usa Scryfall CDN)
-- [x] `constants/colors.ts` — re-exporta theme/colors para retrocompatibilidade
-
-### Tipos TypeScript
-- [x] `types/index.ts` — tipos completos: `ManaColor`, `MatchResult`, `EventType`, `ManaSelection`, `Match`, `Event`, `EventStats`, `calcEventStats()`
-
-### State Management
-- [x] `store/useEventsStore.ts` — Zustand store com estado reactivo
-  - Estado inicial: `mockEvents` (substituir por Supabase na Fase 2)
-  - Acção `addMatch(eventId, data)` — adiciona match e actualiza lista de matches do evento
-
-### Mock Data
-- [x] `data/mock.ts` — 5 eventos de exemplo (1 activo: "FNM Sealed — Aetherdrift" com 5 matches, 4 passados)
-
-### Dependências instaladas
-- [x] `@expo-google-fonts/playfair-display` + `@expo-google-fonts/eb-garamond` + `expo-font`
-- [x] `react-native-svg` + `expo-linear-gradient`
-- [x] `zustand`
-- [x] `@expo/vector-icons` (Feather)
-- [x] `react-native-safe-area-context`
-
-### Navegação
-- [x] Root layout (`app/_layout.tsx`) — carrega 9 variantes de fonte, auth init, StatusBar
-- [x] Tab layout (`app/(tabs)/_layout.tsx`) — 4 tabs: Home, Events, Stats, Profile
-- [x] Event Detail fora do grupo de tabs → sem tab bar
-- [x] Modals: `match-registration` e `add-event` com `presentation: 'modal'`
+- [x] Prints de écran de referência em `/design/`
+- [x] `theme/colors.ts`, `theme/typography.ts` (Playfair Display + EB Garamond), `theme/mana.ts`
+- [x] `constants/colors.ts` — re-exporta `theme/colors` para retrocompatibilidade
 
 ### Componentes
-- [x] `components/ManaPip.tsx` — SVGs oficiais MTG via Scryfall CDN (`SvgUri`), com `isSplash`
-- [x] `components/TypeBadge.tsx` — badge Sealed/Draft com cores distintas
-- [x] `components/RecordBadge.tsx` — score W–L com win rate
-- [x] `components/CardThumbnailPlaceholder.tsx` — LinearGradient placeholder 36×50 / 40×56
-- [x] `components/EventCard.tsx` — card com accent bar (activo), TypeBadge, ManaPips, RecordBadge
-- [x] `components/MatchCard.tsx` — pill W/L/D, ronda, adversário, mana pips do adversário
-- [x] `components/ConfirmModal.tsx` — modal de confirmação genérico (título, mensagem, botão destrutivo)
+- [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
+- [x] `TypeBadge`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`, `MatchCard`, `ConfirmModal`
 
 ### Écrans
-- [x] **Home** (`app/(tabs)/index.tsx`) — empty state completo (ScholarOrnament SVG, CTA dourado, flavour text)
-- [ ] Home — variante "com dados" (StatsBlock + Evento Activo + Eventos Recentes)
-- [x] **Events List** (`app/(tabs)/events.tsx`) — StatsStrip, secções activo/histórico, OrnamentDivider
-- [x] **Event Detail** (`app/event/[id].tsx`) — StatsBar, DeckSection colapsável, lista de MatchCards, AddMatchButton
-- [x] **Match Registration** (`app/match-registration.tsx`) — modal com seletor de cores (3 estados por pip), ResultSelector, notas opcionais, guarda via Zustand
-- [x] **Add Event** (`app/add-event.tsx`) — modal com seletor de formato (6 tipos), inputs de nome/data/local (sem persistência por ora)
-- [x] **Event Detail** (`app/event/[id].tsx`) — delete evento + delete match com ConfirmModal (long press)
-- [x] **Stats** (`app/(tabs)/stats.tsx`) — placeholder estilizado
-- [x] **Profile** (`app/(tabs)/profile.tsx`) — placeholder estilizado
+- [x] **Home** — empty state e variante com dados (StatsBlock + evento activo)
+- [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider
+- [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
+      (rank + nº de jogadores), apagar evento e apagar match com confirmação
+- [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
+- [x] **Add Event** — selector de formato (7 tipos), nome, data e local
+- [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações
+- [ ] **Settings** (hoje o tab Profile é um placeholder) — token e estado da sincronização
+
+### Navegação
+- [x] Root layout com 9 variantes de fonte carregadas por `expo-font`
+- [x] 4 tabs; Event Detail fora do grupo de tabs; modais com `presentation: 'modal'`
+
+### Decisões
+- [x] `docs/adr/0001` a `0006` — GitHub como source of truth, dados JSON versionados, app nativa em
+      vez de PWA, escrita por outbox, repositório público, utilizador único
+- [x] `data-model.md` reescrito para o modelo de ficheiros
 
 ---
 
-## O que falta (MVP)
+## O que falta (Fase 0)
 
-### Base de Dados (Supabase)
-- [x] Tabelas criadas no Supabase (events, matches, opponents, games, decks)
-- [x] Row Level Security (RLS) activo
-- [x] `services/events.ts` — fetchEvents, createEvent, deleteEvent
-- [x] `services/matches.ts` — createMatch, deleteMatch, upsertOpponent
-- [x] Zustand store migrado: loadEvents, addMatch, createEvent, deleteEvent, deleteMatch
+- [ ] `data/schema/*.json` + `tools/validate-data.ts` + `npm run validate` em CI
+- [ ] `tools/build-bundle.ts` + publicação do `bundle.json` em GitHub Pages
+- [ ] `services/github.ts` — Contents API e guarda do token no `expo-secure-store`
+- [ ] `domain/outbox.ts` (puro, testado) + `services/outbox.ts` (persistência e worker)
+- [ ] `services/repoFiles.ts` — serializadores, testados byte a byte contra `data/`
+- [ ] `services/localStore.ts` — cópia local em AsyncStorage, uma chave por ficheiro
+- [ ] `store/useEventsStore.ts` local-first
+- [ ] Apagar `services/supabase.ts`, `auth.ts`, `events.ts`, `matches.ts`, a pasta `supabase/` e a
+      dependência `@supabase/supabase-js`
+- [ ] Écran de Settings
+- [ ] EAS Build (APK) + EAS Update + `docs/ops/telemovel-setup.md`
 
-### Écrans
-- [ ] Home — variante "com dados" (StatsBlock + EventoActivo + EventosRecentes)
-- [ ] Home CTA empty state — ligar botão a `router.push('/add-event')` (actualmente sem handler)
-- [x] Add Event — persiste no Supabase + navega para o evento criado
-
-### Produção / Qualidade
-- [ ] ManaPip: migrar de Scryfall CDN para assets locais em `assets/mana/` (offline + performance)
-- [ ] Actualizar `project-overview.md` e `CLAUDE.md` após cada sessão
-
----
-
-## Estrutura de Pastas Actual
-
-```
-/app
-  _layout.tsx           — root layout (fonts + auth)
-  match-registration.tsx — modal
-  add-event.tsx         — modal
-  (tabs)/
-    _layout.tsx         — tab bar (4 tabs)
-    index.tsx           — Home (empty state ✓)
-    events.tsx          — Events List ✓
-    stats.tsx           — placeholder
-    profile.tsx         — placeholder
-  event/
-    [id].tsx            — Event Detail ✓ (fora dos tabs)
-
-/assets
-/components
-  ManaPip.tsx           — pip oficial MTG (Scryfall CDN SVG)
-  TypeBadge.tsx         ✓
-  RecordBadge.tsx       ✓
-  CardThumbnailPlaceholder.tsx ✓
-  EventCard.tsx         ✓
-  MatchCard.tsx         ✓
-  ConfirmModal.tsx      ✓ (modal genérico de confirmação/destruição)
-
-/constants
-  colors.ts             — re-exporta theme/colors
-
-/data
-  mock.ts               — mockEvents (5 eventos de exemplo)
-
-/design
-  handoff.md            — spec completa de implementação
-  screen-home.png
-  screen-events.png
-  screen-event-detail.png
-  screen-match-registration.png
-
-/services
-  supabase.ts
-  auth.ts
-
-/store
-  useEventsStore.ts     — Zustand (events + addMatch)
-
-/theme
-  colors.ts             — paleta (fonte de verdade)
-  typography.ts         — fontes e tamanhos
-  mana.ts               — cores MTG por símbolo
-
-/types
-  index.ts              — todos os tipos TypeScript
-
-design-brief.md
-data-model.md
-```
+O detalhe das fases seguintes está em `docs/product/roadmap.md`.
 
 ---
 
 ## Decisões Técnicas
 
-| Decisão | Escolha | Razão |
+| Decisão | Escolha | Porquê |
 |---|---|---|
-| Backend | Supabase | PostgreSQL + Auth + RLS integrados |
-| State management | Zustand | Simples, reactivo, fácil de migrar para Supabase |
+| Onde vivem os dados | Ficheiros JSON no repositório | ADR 0002 — custo zero, nada que adormeça, histórico de graça |
+| Como a app escreve | Local-first + outbox → Contents API | ADR 0004 — instantâneo e funciona sem rede |
+| Forma da app | Nativa (Expo), APK por EAS Build | ADR 0003 — seis écrans já feitos; sideload no Android é grátis |
+| Utilizadores | Um só, sem contas | ADR 0006 — a infraestrutura multi-utilizador estava a travar o produto |
+| Visibilidade do repo | Público | ADR 0005 — Pages gratuito; a saída para privacidade são alcunhas |
+| State management | Zustand | Simples e reactivo |
 | Dados de cartas | Scryfall API | Gratuita, completa, bem documentada |
-| Mana symbols | Scryfall CDN SVG (dev) → assets locais (prod) | Oficial MTG, zero manutenção |
-| Preços | Cardmarket API | Fase 4+ |
-| Navegação | Expo Router | File-based routing, padrão moderno |
-| Auth MVP | Supabase Anon Auth | Cloud storage sem forçar login |
-| Design tokens | theme/ (não constants/) | Separação clara design/código |
-| Tipos | types/index.ts centralizado | Uma fonte de verdade |
+| Mana symbols | SVG locais | Offline e sem dependência de CDN |
+| Design tokens | `theme/` (não `constants/`) | Separação clara design/código |
+| Tipos | `types/index.ts` centralizado, derivado dos schemas | Uma fonte de verdade |
 | Dark mode | `userInterfaceStyle: dark` | Design brief |
 
 ---
 
-## Roadmap
+## Histórico de arquitectura
 
-| Fase | Features |
-|---|---|
-| **MVP** | Event Tracker ✓, Match Registration ✓, Supabase DB (próximo), Stats, Cloud Sync |
-| **Fase 2** | Deck Manager, Deck Analyser, User Auth completo, Home "com dados" |
-| **Fase 3** | Card Search (Scryfall), Portfolio Manager |
-| **Fase 4+** | Preços (Cardmarket), Life Point Tracker, Social Layer |
+O MVP foi construído sobre Supabase (PostgreSQL + Anon Auth + RLS) e chegou a persistir dados reais.
+Foi abandonado em 2026-08-31: manter uma base de dados partilhável obrigava a pensar em contas, RLS e
+free tiers que adormecem, e esse trabalho estava entre o autor e a app que ele queria usar. O
+raciocínio completo está no ADR 0002 e no ADR 0006.

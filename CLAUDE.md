@@ -1,14 +1,35 @@
 # CLAUDE.md — MTG Recall
 
-Este ficheiro é lido automaticamente pelo Claude Code em cada sessão. Contém contexto completo do projecto para evitar repetição e garantir consistência.
+Este ficheiro é lido automaticamente pelo Claude Code em cada sessão. Contém contexto completo do
+projecto para evitar repetição e garantir consistência.
 
 ---
 
 ## O Projecto
 
-App mobile para jogadores de Magic: The Gathering. Permite gerir eventos de torneio, decks, matches, estatísticas, e coleção pessoal de cartas com tracking de valor.
+App para telemóvel Android, **de uso pessoal**, para jogadores de Magic: The Gathering. Regista
+eventos de torneio, matches, decks, estatísticas e a colecção pessoal com tracking de valor.
 
-O developer é um iniciante em programação — explicar conceitos quando relevante, não assumir conhecimento prévio de padrões ou convenções.
+**Um utilizador só: eu.** Não há contas, não há partilha, não há camada social — ver
+`docs/adr/0006-utilizador-unico-sem-contas.md`. Foi uma decisão deliberada: a infraestrutura
+multi-utilizador estava a impedir a app de ficar pronta para aquilo que é o objectivo primário, que é
+um registo pessoal de torneios.
+
+O developer é um iniciante em programação — explicar conceitos quando relevante, não assumir
+conhecimento prévio de padrões ou convenções.
+
+---
+
+## Regras não negociáveis
+
+1. **O GitHub é a source of truth.** Se uma decisão não está no repositório, não foi tomada. Decisão
+   estrutural nova = um ADR em `docs/adr/` (`template.md` tem o formato).
+2. **Sem servidor e sem base de dados gerida.** Os dados são ficheiros JSON em `data/`, versionados
+   em Git. Ler `docs/adr/0002-dados-json-versionados.md` antes de propor uma DB.
+3. **Offline-first.** A app é usada numa loja de cartas, entre rondas, muitas vezes sem rede. Tudo
+   escreve primeiro em disco; a sincronização com o GitHub vem depois e sozinha (ADR 0004).
+4. **Nunca commitar tokens.** O repositório é público (ADR 0005). O token de escrita vive só no
+   `expo-secure-store` do telemóvel.
 
 ---
 
@@ -16,84 +37,108 @@ O developer é um iniciante em programação — explicar conceitos quando relev
 
 | Camada | Tecnologia |
 | :---- | :---- |
-| Mobile | React Native \+ Expo SDK 54 |
+| Mobile | React Native + Expo SDK 54 |
 | Linguagem | TypeScript |
 | Routing | Expo Router (file-based) |
 | State | Zustand (`store/useEventsStore.ts`) |
-| Base de dados | Supabase (PostgreSQL) — tabelas ainda por criar |
-| Auth | Supabase Anon Auth (activo) |
+| Dados | Ficheiros JSON em `data/`, versionados em Git |
+| Persistência local | AsyncStorage — uma chave por caminho de ficheiro |
+| Sincronização | GitHub Contents API, por outbox (ADR 0004) |
+| Segredos | `expo-secure-store` (token do GitHub) |
+| Distribuição | EAS Build (APK) + EAS Update |
 | Card data | Scryfall API |
-| Card prices | Cardmarket API (Fase 4+) |
-| Mana symbols | Scryfall CDN SVG via `react-native-svg` `SvgUri` |
+| Card prices | Cardmarket API (Fase 4) |
+| Mana symbols | SVG locais em `assets/mana/symbols.ts` |
 
 ---
 
-## Estrutura de Pastas (actual)
+## Estrutura de Pastas
 
 ```
-/app
-  _layout.tsx             — root layout (fonts + auth + Stack screens)
-  match-registration.tsx  — modal: registo de match
-  add-event.tsx           — modal: criar evento
+/app                        écrans (Expo Router)
+  _layout.tsx               root layout (fontes + Stack)
+  match-registration.tsx    modal: registo de match
+  add-event.tsx             modal: criar evento
   (tabs)/
-    _layout.tsx           — tab bar (Home/Events/Stats/Profile)
-    index.tsx             — Home (empty state implementado)
-    events.tsx            — Events List (completo)
-    stats.tsx             — placeholder
-    profile.tsx           — placeholder
-  event/
-    [id].tsx              — Event Detail (completo, fora dos tabs)
+    _layout.tsx             tab bar (Home/Events/Stats/Settings)
+    index.tsx               Home
+    events.tsx              Events List
+    stats.tsx               Stats
+    profile.tsx             Settings (token + sincronização)
+  event/[id].tsx            Event Detail (push, sem tab bar)
 
-/components
-  ManaPip.tsx             — pip oficial MTG (Scryfall CDN SVG, isSplash)
-  TypeBadge.tsx           — badge Sealed/Draft
-  RecordBadge.tsx         — score W–L + win rate
-  CardThumbnailPlaceholder.tsx
-  EventCard.tsx           — card de evento com accent bar
-  MatchCard.tsx           — resultado de match com pill W/L/D
+/components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
+                            CardThumbnailPlaceholder, ConfirmModal
+/domain                     lógica pura, sem I/O e testável (outbox)
+/services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles
+/store                      useEventsStore (Zustand)
+/theme                      colors, typography, mana
+/types                      tipos TypeScript — derivam dos schemas
+/assets/mana/symbols.ts     símbolos de mana em SVG, locais
 
-/data
-  mock.ts                 — mockEvents (5 eventos de exemplo)
+/data                       OS DADOS (ADR 0002)
+  schema/                   o contrato, validado em CI
+  events/                   um evento por ficheiro
+  taxonomies/opponents.json adversários, por referência
 
-/services
-  supabase.ts             — Supabase client
-  auth.ts                 — Anon Auth
+/tools                      validate-data.ts, build-bundle.ts
+/docs
+  adr/                      decisões estruturais
+  product/                  roadmap, perguntas em aberto
+  ops/                      instalar no telemóvel, gerar o token
+/design                     handoff.md (spec de implementação) + prints de referência
 
-/store
-  useEventsStore.ts       — Zustand: events[], addMatch()
-
-/theme
-  colors.ts               — paleta completa (fonte de verdade)
-  typography.ts           — fontes e tamanhos
-  mana.ts                 — cores MTG por símbolo (referência)
-
-/types
-  index.ts                — todos os tipos TypeScript
-
-/constants
-  colors.ts               — re-exporta theme/colors (retrocompatibilidade)
-
-/design
-  handoff.md              — spec completa de implementação React Native
-  screen-*.png            — prints de écran de referência
-
-design-brief.md           — conceito visual, paleta original
-data-model.md             — modelo de dados Supabase
+data-model.md               o modelo de dados explicado
+design-brief.md             conceito visual
+project-overview.md         estado actual detalhado
 ```
+
+---
+
+## Os dados
+
+Um evento = um ficheiro `data/events/<AAAA-MM-DD-slug>.json`, com os matches lá dentro. Os
+adversários são referências para `data/taxonomies/opponents.json`. Nada de campos calculados nos
+ficheiros — win rate e pontos calculam-se em runtime. **Ler `data-model.md` antes de mexer em
+qualquer coisa relacionada com dados**, e alterar o schema antes de alterar o código.
+
+Comandos na raiz:
+
+```bash
+npm run validate    # valida data/**/*.json contra data/schema/*.json
+npm run bundle      # gera o bundle.json que a app lê ao instalar/restaurar
+npm run test        # testes dos módulos puros (outbox, serializadores)
+npm start           # Expo em desenvolvimento
+```
+
+## Como a app escreve
+
+Local-first com outbox — ver `docs/adr/0004-escrita-via-github-api-com-outbox.md`:
+
+1. A alteração grava em AsyncStorage e o écran actualiza logo.
+2. Entra na outbox (a chave é o **caminho do ficheiro** — cinco rondas do mesmo torneio deixam uma
+   entrada e portanto um commit).
+3. Um worker esvazia a fila quando há rede, pela Contents API. Falha → recuo exponencial.
+
+A lógica pura vive em `domain/outbox.ts` e tem testes. Os serializadores vivem em
+`services/repoFiles.ts` e são testados byte a byte contra os ficheiros reais de `data/` — um ficheiro
+mal formado só daria erro **depois** do commit.
 
 ---
 
 ## Convenções
 
-- **Toda a app está em inglês** — texto, labels, menus, placeholders, mensagens de erro, comentários de código, tudo
-- Ficheiros e variáveis: **camelCase** em inglês (convenção da linguagem)
-- Componentes React: **PascalCase**
-- Sempre usar **TypeScript** — nunca JavaScript puro
-- Prefer **functional components** e **hooks**
-- Cada ficheiro deve ter **uma responsabilidade** clara
+- **Toda a app está em inglês** — texto, labels, menus, placeholders, mensagens de erro. Os
+  comentários de código e a documentação (`docs/`, ADRs) são em **português de Portugal**.
+- Ficheiros e variáveis: **camelCase**; componentes React: **PascalCase**
+- Sempre **TypeScript**, nunca JavaScript puro. Functional components e hooks.
+- **Os tipos derivam dos schemas JSON**, não o contrário. Mudar um campo é mudar
+  `data/schema/*.json` primeiro e `types/` depois.
+- Cada ficheiro tem **uma responsabilidade** clara
+- Chamadas a APIs e I/O **sempre** em `/services` — nunca nos écrans
 - Imports de tema: sempre de `../theme/colors`, `../theme/typography`
 - `npm install` requer sempre `--legacy-peer-deps` (conflito react-dom@19.2.5 vs react@19.1.0)
-- Metro cache: limpar com `npx expo start --tunnel --clear` ao adicionar novas pastas
+- Metro cache: limpar com `npx expo start --clear` ao adicionar novas pastas
 
 ---
 
@@ -115,30 +160,16 @@ data-model.md             — modelo de dados Supabase
   - `fonts.display` = `PlayfairDisplay_700Bold`
   - `fonts.displaySemi` = `PlayfairDisplay_600SemiBold`
   - `fonts.displayMed` = `PlayfairDisplay_500Medium`
-  - `fonts.displayItal` = `PlayfairDisplay_400Regular_Italic` ← atenção ao nome exato
+  - `fonts.displayItal` = `PlayfairDisplay_400Regular_Italic` ← atenção ao nome exacto
 - **EB Garamond** — corpo, labels, listas
   - `fonts.body` = `EBGaramond_400Regular`
   - `fonts.bodyItal` = `EBGaramond_400Regular_Italic`
   - `fonts.bodyMed` = `EBGaramond_500Medium`
 
 ### ManaPip (components/ManaPip.tsx)
-- Usa `SvgUri` de `react-native-svg` com URLs do Scryfall CDN
+- SVGs locais (`assets/mana/symbols.ts`), sem rede — funciona offline
 - Props: `color: ManaColor`, `size?: number` (default 16), `isSplash?: boolean`
 - `isSplash`: tamanho ×0.70, opacidade 0.65
-- URLs: `https://svgs.scryfall.io/card-symbols/{W|U|B|R|G}.svg`
-
----
-
-## State Management — Zustand
-
-**`store/useEventsStore.ts`** é a fonte de verdade durante a sessão.
-
-```ts
-useEventsStore(s => s.events)         // lista reactiva de eventos
-useEventsStore(s => s.addMatch)       // acção: adicionar match a um evento
-```
-
-Estado inicial vem de `data/mock.ts`. Na Fase 2, as acções chamarão `services/events.ts` e `services/matches.ts` em vez de modificar estado local.
 
 ---
 
@@ -146,51 +177,49 @@ Estado inicial vem de `data/mock.ts`. Na Fase 2, as acções chamarão `services
 
 ```
 Stack principal:
-  (tabs)/index        ← Home (tab 1)
-  (tabs)/events       ← Events List (tab 2)
-  (tabs)/stats        ← Stats (tab 3, placeholder)
-  (tabs)/profile      ← Profile (tab 4, placeholder)
+  (tabs)/index        ← Home
+  (tabs)/events       ← Events List
+  (tabs)/stats        ← Stats
+  (tabs)/profile      ← Settings
   event/[id]          ← Event Detail (push, sem tab bar)
 
 Modals (presentation: 'modal'):
   match-registration  ← a partir de Event Detail
-  add-event           ← a partir de Events List
+  add-event           ← a partir de Events List / Home
 ```
 
 Params de navegação para match-registration: `{ eventId, round, eventName }`
 
 ---
 
-## APIs — Informação Importante
+## APIs
 
 ### Scryfall
 - Base URL: `https://api.scryfall.com`
-- Mana SVGs: `https://svgs.scryfall.io/card-symbols/{COLOR}.svg`
-- Rate limit: 50-100ms entre requests (respeitar sempre)
+- Rate limit: 50–100 ms entre requests (respeitar sempre)
 
-### Supabase
-- URL e anon key em `.env` — nunca hardcode credenciais
-- Auth anónimo activo; tabelas DB ainda não criadas
+### GitHub
+- Contents API para escrever; `bundle.json` em GitHub Pages para ler
+- Token fine-grained, só este repositório, `Contents: read and write`
 
 ---
 
-## Estado Actual do Projecto (2026-05-10)
+## Estado Actual
 
-- **Fase:** MVP — integração Supabase completa; app persiste dados reais
-- **Écrans prontos:** Home (empty state + detecção hasEvents), Events List, Event Detail (com delete), Match Registration, Add Event (persiste no Supabase), Stats/Profile (placeholders)
-- **Componentes prontos:** ManaPip, TypeBadge, RecordBadge, CardThumbnailPlaceholder, EventCard, MatchCard, ConfirmModal
-- **Estado reactivo:** Zustand store chama services Supabase (loadEvents, addMatch, createEvent, deleteEvent, deleteMatch)
-- **Próximo passo:** Home "com dados" (StatsBlock + EventoActivo + EventosRecentes) + ligar CTA do empty state a Add Event
-- **Ver também:** `project-overview.md` para estado detalhado, `design/handoff.md` para spec completa, `data-model.md` para schema das tabelas
+Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que vem a seguir.
 
 ---
 
 ## Regras de Trabalho
 
 1. Antes de criar um ficheiro, verificar se já existe algo semelhante
-2. Sempre criar tipos TypeScript para dados que vêm de APIs externas
-3. Chamadas a APIs **sempre** em `/services` — nunca nos écrans
-4. Quando houver dúvida, apresentar 2 opções com prós/contras antes de implementar
-5. **Antes de cada acção, explicar em português o que vai fazer e porquê, em 2-3 linhas**
-6. **Sempre que se implementar uma feature ou o estado mudar — actualizar CLAUDE.md e project-overview.md**
-7. Para implementar um écran, consultar sempre `design/handoff.md` para a spec exacta
+2. Antes de implementar um écran, consultar `design/handoff.md` para a spec exacta
+3. Antes de mexer em dados, consultar `data-model.md` e alterar o schema primeiro
+4. Chamadas a APIs **sempre** em `/services` — nunca nos écrans
+5. Uma decisão estrutural nova é um ADR em `docs/adr/`
+6. Uma pergunta que aparece a meio vai para `docs/product/open-questions.md` em vez de ser
+   respondida em silêncio
+7. Quando houver dúvida, apresentar 2 opções com prós/contras antes de implementar
+8. **Antes de cada acção, explicar em português o que vai fazer e porquê, em 2-3 linhas**
+9. **Sempre que se implementar uma feature ou o estado mudar — actualizar `CLAUDE.md`,
+   `project-overview.md` e o roadmap**
