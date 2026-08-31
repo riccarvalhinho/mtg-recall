@@ -13,7 +13,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { EventType } from '../types';
+import { EventType, isActive } from '../types';
 import { useEventsStore } from '../store/useEventsStore';
 
 const FORMATS: EventType[] = ['Sealed', 'Draft', 'Standard', 'Modern', 'Pioneer', 'Commander', 'Legacy'];
@@ -44,7 +44,14 @@ export default function AddEventScreen() {
   const [saving, setSaving]       = useState(false);
 
   const createEvent = useEventsStore(s => s.createEvent);
-  const canSave = name.trim().length > 0 && format !== null && !saving;
+
+  // Dois torneios ao mesmo tempo não existem, e um evento por concluir ficava para sempre na Home
+  // como se estivesse a decorrer. Impedir aqui é melhor do que concluir o anterior em silêncio —
+  // ver docs/product/open-questions.md Q6.
+  const activeEvent = useEventsStore(s => s.events.find(isActive));
+  const blocked = activeEvent !== undefined;
+
+  const canSave = name.trim().length > 0 && format !== null && !saving && !blocked;
 
   // ─── Handlers do DatePicker ─────────────────────────────────────────────────
 
@@ -106,7 +113,7 @@ export default function AddEventScreen() {
           </Pressable>
           <Text style={styles.navTitle}>New Event</Text>
           <Pressable onPress={handleSave} disabled={!canSave}>
-            {name.trim().length > 0 && format !== null ? (
+            {canSave || saving ? (
               <LinearGradient
                 colors={[colors.gold, '#A07840']}
                 start={{ x: 0, y: 0 }}
@@ -131,6 +138,22 @@ export default function AddEventScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Um torneio a decorrer bloqueia a criação de outro */}
+          {activeEvent && (
+            <View style={styles.notice}>
+              <Feather name="alert-circle" size={16} color={colors.gold} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={styles.noticeText}>
+                  <Text style={styles.noticeName}>{activeEvent.name}</Text> is still running.
+                  Complete it before starting a new one.
+                </Text>
+                <Pressable onPress={() => router.replace(`/event/${activeEvent.id}`)}>
+                  <Text style={styles.noticeLink}>Open tournament →</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           {/* Nome */}
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Event name *</Text>
@@ -241,6 +264,33 @@ export default function AddEventScreen() {
 }
 
 const styles = StyleSheet.create({
+  notice: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+    backgroundColor: colors.bgCard,
+    borderColor: colors.goldDim,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 14,
+    marginBottom: 20,
+  },
+  noticeText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.textSec,
+    lineHeight: 20,
+  },
+  noticeName: {
+    fontFamily: fonts.bodyMed,
+    color: colors.textPrim,
+  },
+  noticeLink: {
+    fontFamily: fonts.bodyMed,
+    fontSize: 14,
+    color: colors.gold,
+  },
+
   container: {
     flex: 1,
     backgroundColor: colors.bg,
