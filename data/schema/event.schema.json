@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riccarvalhinho/mtg-recall/data/schema/event.schema.json",
+  "title": "Evento",
+  "description": "Um torneio, com os seus matches lá dentro. Um ficheiro por evento em data/events/<id>.json. As decisões por trás de cada campo estão em data-model.md e em docs/adr/0002-dados-json-versionados.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "type", "date", "status", "matches"],
+  "properties": {
+    "id": {
+      "description": "Slug único, igual ao nome do ficheiro sem extensão. Começa pela data para o directório sair por ordem cronológica.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "name": {
+      "description": "Como o evento aparece na app.",
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "description": "Formato jogado.",
+      "type": "string",
+      "enum": ["Sealed", "Draft", "Standard", "Modern", "Pioneer", "Legacy", "Commander"]
+    },
+    "setCode": {
+      "description": "Código Scryfall do set (ex.: dft). Só faz sentido em Limited.",
+      "type": "string",
+      "pattern": "^[a-z0-9]{3,6}$"
+    },
+    "date": {
+      "description": "Dia do torneio. Pode ser retroactiva — não é a data em que o registo foi criado.",
+      "type": "string",
+      "format": "date"
+    },
+    "location": { "type": "string", "minLength": 1 },
+    "status": {
+      "description": "Um torneio a decorrer está active. Só deve haver um active de cada vez.",
+      "type": "string",
+      "enum": ["active", "completed"]
+    },
+    "rank": {
+      "description": "Classificação final, introduzida à mão (ex.: 1st, Top 8).",
+      "type": "string",
+      "minLength": 1
+    },
+    "playersCount": { "type": "integer", "minimum": 1 },
+    "deckName": { "type": "string", "minLength": 1 },
+    "deckColors": { "$ref": "#/definitions/manaSelection" },
+    "deckThumbnailCardId": {
+      "description": "Scryfall id da carta que ilustra o deck. Fase 3.",
+      "type": "string",
+      "minLength": 1
+    },
+    "notes": { "type": "string" },
+    "matches": {
+      "description": "Por ordem de ronda. Um evento acabado de criar tem a lista vazia.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/match" }
+    }
+  },
+  "definitions": {
+    "manaColor": {
+      "type": "string",
+      "enum": ["W", "U", "B", "R", "G"]
+    },
+    "manaSelection": {
+      "description": "Cores principais e cores de splash, separadas. Uma cor não pode estar nas duas.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["main", "splash"],
+      "properties": {
+        "main": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/manaColor" },
+          "uniqueItems": true
+        },
+        "splash": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/manaColor" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["round", "opponentId", "opponentColors", "result"],
+      "properties": {
+        "round": {
+          "description": "Identifica o match dentro do evento. Sequencial, a começar em 1.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "opponentId": {
+          "description": "Referência a data/taxonomies/opponents.json. Nunca o nome escrito à mão.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "opponentColors": { "$ref": "#/definitions/manaSelection" },
+        "result": {
+          "description": "Resultado do match. Um D é um empate de match, não de game.",
+          "type": "string",
+          "enum": ["W", "L", "D"]
+        },
+        "wentFirst": {
+          "description": "true se fui eu a jogar primeiro no primeiro game.",
+          "type": "boolean"
+        },
+        "games": {
+          "description": "Registo game a game, para saber que um 2-1 foi 2-1. Opcional: um match pode ser registado só pelo resultado.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["number", "result"],
+            "properties": {
+              "number": { "type": "integer", "minimum": 1, "maximum": 5 },
+              "result": {
+                "description": "Sem empates: um game ou se ganha ou se perde.",
+                "type": "string",
+                "enum": ["W", "L"]
+              },
+              "wentFirst": { "type": "boolean" }
+            }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

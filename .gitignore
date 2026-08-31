@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# gerado pelo npm run bundle — publicado no Pages, nunca commitado
+site/data/

@@ -1,0 +1,57 @@
+name: Publicar no GitHub Pages
+
+# O Pages serve um ficheiro só que interessa: data/bundle.json, que a app lê quando é instalada de
+# novo ou quando é preciso restaurar o histórico. Ver docs/adr/0004-escrita-via-github-api-com-outbox.md.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação de cada vez, sem cancelar uma que já esteja a decorrer.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Gerar o bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      # Publicar dados inválidos seria pior do que não publicar: a app leria o ficheiro e acreditaria.
+      - name: Validar dados
+        run: npm run validate
+
+      - name: Gerar o bundle
+        run: npm run bundle
+
+      # O Pages tem de ser ligado uma vez à mão, em Settings → Pages → Source: GitHub Actions.
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Publicar
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

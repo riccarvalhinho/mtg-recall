@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riccarvalhinho/mtg-recall/data/schema/opponents.schema.json",
+  "title": "Adversários",
+  "description": "A taxonomia de adversários. Os matches apontam para estes ids em vez de guardarem o nome — é o que permite juntar as estatísticas de duas noites contra a mesma pessoa. Ver data-model.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "items"],
+  "properties": {
+    "kind": { "const": "opponents" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name"],
+        "properties": {
+          "id": {
+            "description": "Slug do nome. Nunca muda, mesmo que o name mude.",
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "name": {
+            "description": "O que aparece na app. O repositório é público (ADR 0005) — se um nome não dever aparecer, é aqui que se troca por uma alcunha, sem tocar em nenhum evento.",
+            "type": "string",
+            "minLength": 1
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

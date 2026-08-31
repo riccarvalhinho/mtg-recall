@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Validar dados e compilar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # O conflito react-dom@19.2.5 vs react@19.1.0 obriga a isto — ver CLAUDE.md.
+      - name: Instalar dependências
+        run: npm ci --legacy-peer-deps
+
+      # Primeiro os dados: um evento que aponta para um adversário inexistente passa no schema e
+      # parte as estatísticas. É o erro que a app pode cometer sozinha, a escrever do telemóvel.
+      - name: Validar dados
+        run: npm run validate
+
+      - name: Gerar o bundle
+        run: npm run bundle
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # A outbox e os serializadores são onde vivem os bugs difíceis (ADR 0004).
+      - name: Testes
+        run: npm run test

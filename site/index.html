@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MTG Recall — dados</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #130f0a;
+        color: #e8dcc8;
+        font-family: Georgia, "Times New Roman", serif;
+        line-height: 1.6;
+      }
+      main { max-width: 34rem; padding: 2rem 1.5rem; }
+      h1 { font-size: 1.6rem; font-weight: 600; margin: 0 0 1rem; }
+      p { color: #a8967a; margin: 0 0 1rem; }
+      a { color: #c9a96e; }
+      code { color: #c9a96e; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>MTG Recall</h1>
+      <p>
+        Registo pessoal de torneios de Magic: The Gathering. A app vive no telemóvel; os dados vivem
+        no repositório, como ficheiros JSON.
+      </p>
+      <p>
+        Esta página serve um ficheiro só: <a href="./data/bundle.json"><code>data/bundle.json</code></a>,
+        que a app descarrega quando é instalada de novo ou quando é preciso restaurar o histórico.
+      </p>
+      <p>
+        <a href="https://github.com/riccarvalhinho/mtg-recall">Código e dados no GitHub</a>
+      </p>
+    </main>
+  </body>
+</html>
