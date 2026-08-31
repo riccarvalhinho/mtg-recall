@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Rect, Line, Circle, G, Text as SvgText } from 'react-native-svg';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-import { ManaColor, Event } from '../../types';
+import { ManaColor, Event, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 
@@ -204,7 +204,7 @@ function levelToY(level: number): number {
 
 function TrendChart({ events }: { events: Event[] }) {
   const ranked = events
-    .filter(e => !e.active && e.rank && RANK_TO_LEVEL[e.rank] !== undefined)
+    .filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   if (!ranked.length) {
@@ -526,7 +526,7 @@ const pyramid = StyleSheet.create({
 export default function StatsScreen() {
   const events = useEventsStore(s => s.events);
 
-  const trendEvents = events.filter(e => !e.active && e.rank && RANK_TO_LEVEL[e.rank] !== undefined);
+  const trendEvents = events.filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

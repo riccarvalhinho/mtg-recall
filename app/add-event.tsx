@@ -25,7 +25,7 @@ function formatDisplay(date: Date): string {
   return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-// Converte Date para YYYY-MM-DD (formato Supabase)
+// Converte Date para YYYY-MM-DD, que é o formato do campo date no schema
 function toIsoDate(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

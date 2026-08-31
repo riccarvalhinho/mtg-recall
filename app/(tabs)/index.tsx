@@ -12,7 +12,7 @@ import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { ManaPip } from '../../components/ManaPip';
 import { EventCard } from '../../components/EventCard';
-import { ManaColor, Event } from '../../types';
+import { ManaColor, Event, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 
 // ─── Ornamento central (empty state) ─────────────────────────────────────────
@@ -278,16 +278,16 @@ const history = StyleSheet.create({
 export default function HomeScreen() {
   const events     = useEventsStore(s => s.events);
   const isLoading  = useEventsStore(s => s.isLoading);
-  const loadEvents = useEventsStore(s => s.loadEvents);
+  const load       = useEventsStore(s => s.load);
 
   useEffect(() => {
     if (events.length === 0 && !isLoading) {
-      loadEvents();
+      load();
     }
   }, []);
 
   const hasEvents   = events.length > 0;
-  const activeEvent = events.find(e => e.active);
+  const activeEvent = events.find(isActive);
 
   const totalMatches = events.reduce((s, e) => s + e.matches.length, 0);
   const totalWins    = events.reduce((s, e) => s + e.matches.filter(m => m.result === 'W').length, 0);

@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-import { Event } from '../../types';
+import { Event, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 import { EventCard } from '../../components/EventCard';
 
@@ -161,13 +161,13 @@ type ListItem =
 export default function EventsScreen() {
   const events       = useEventsStore(s => s.events);
   const isLoading    = useEventsStore(s => s.isLoading);
-  const loadEvents   = useEventsStore(s => s.loadEvents);
-  const activeEvents = events.filter(e => e.active);
-  const pastEvents   = events.filter(e => !e.active);
+  const load         = useEventsStore(s => s.load);
+  const activeEvents = events.filter(isActive);
+  const pastEvents   = events.filter(e => !isActive(e));
 
-  // Carrega eventos do Supabase quando o écran monta
+  // Relê a cópia local quando o écran monta — instantâneo, sem rede
   useEffect(() => {
-    loadEvents();
+    load();
   }, []);
 
   const sections: ListItem[] = [

@@ -9,7 +9,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-import { calcEventStats } from '../../types';
+import { calcEventStats, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -278,7 +278,7 @@ export default function EventDetailScreen() {
   const [completeEventModal, setCompleteEventModal] = useState(false);
   const [rank,               setRank]               = useState<string | null>(null);
   const [playersCount,       setPlayersCount]       = useState('');
-  const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ id: string; opponent: string } | null>(null);
+  const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ round: number; opponent: string } | null>(null);
 
   if (!event) {
     return (
@@ -319,9 +319,9 @@ export default function EventDetailScreen() {
         <View style={styles.eventHeader}>
           <View style={styles.badges}>
             <TypeBadge type={event.type} />
-            <View style={[styles.statusBadge, event.active ? styles.statusActive : styles.statusDone]}>
-              <Text style={[styles.statusText, event.active ? styles.statusTextActive : styles.statusTextDone]}>
-                {event.active ? 'Active' : 'Completed'}
+            <View style={[styles.statusBadge, isActive(event) ? styles.statusActive : styles.statusDone]}>
+              <Text style={[styles.statusText, isActive(event) ? styles.statusTextActive : styles.statusTextDone]}>
+                {isActive(event) ? 'Active' : 'Completed'}
               </Text>
             </View>
             {event.name.includes('—') && (
@@ -370,19 +370,19 @@ export default function EventDetailScreen() {
 
         {event.matches.map(match => (
           <MatchCard
-            key={match.id}
+            key={match.round}
             match={match}
-            onLongPress={() => setDeleteMatchModal({ id: match.id, opponent: match.opponent })}
+            onLongPress={() => setDeleteMatchModal({ round: match.round, opponent: match.opponent })}
           />
         ))}
 
         {/* Botão adicionar match */}
-        {event.active && (
+        {isActive(event) && (
           <AddMatchButton onPress={goToMatchRegistration} />
         )}
 
         {/* Botão concluir torneio */}
-        {event.active && (
+        {isActive(event) && (
           <Pressable
             style={({ pressed }) => [styles.completeBtn, pressed && { opacity: 0.7 }]}
             onPress={() => setCompleteEventModal(true)}
@@ -491,7 +491,7 @@ export default function EventDetailScreen() {
         confirmLabel="Delete"
         confirmDestructive
         onConfirm={() => {
-          if (deleteMatchModal) deleteMatch(event.id, deleteMatchModal.id);
+          if (deleteMatchModal) deleteMatch(event.id, deleteMatchModal.round);
           setDeleteMatchModal(null);
         }}
         onCancel={() => setDeleteMatchModal(null)}

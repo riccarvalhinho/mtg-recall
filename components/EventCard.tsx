@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { Event, calcEventStats } from '../types';
+import { Event, calcEventStats, isActive } from '../types';
 import { ManaPip } from './ManaPip';
 import { TypeBadge } from './TypeBadge';
 import { RecordBadge } from './RecordBadge';
@@ -34,19 +34,19 @@ export function EventCard({ event, onPress, showThumbnail = true }: EventCardPro
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        event.active && styles.cardActive,
+        isActive(event) && styles.cardActive,
         pressed && styles.cardPressed,
       ]}
     >
       {/* Barra accent (só em eventos activos) */}
-      {event.active && (
+      {isActive(event) && (
         <LinearGradient
           colors={[colors.gold, colors.goldDim]}
           style={styles.accentBar}
         />
       )}
 
-      <View style={[styles.row, event.active && styles.rowActive]}>
+      <View style={[styles.row, isActive(event) && styles.rowActive]}>
         {/* Thumbnail */}
         {showThumbnail && (
           <CardThumbnailPlaceholder width={36} height={50} />
@@ -56,7 +56,7 @@ export function EventCard({ event, onPress, showThumbnail = true }: EventCardPro
         <View style={styles.info}>
           {/* Badges */}
           <View style={styles.badges}>
-            {event.active && (
+            {isActive(event) && (
               <View style={styles.activeBadge}>
                 <Text style={styles.activeBadgeText}>Active</Text>
               </View>

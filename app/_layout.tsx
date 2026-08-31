@@ -15,7 +15,8 @@ import {
   EBGaramond_500Medium,
   EBGaramond_700Bold,
 } from '@expo-google-fonts/eb-garamond';
-import { signInAnonymously } from '../services/auth';
+import { start as startSync } from '../services/outbox';
+import { useEventsStore } from '../store/useEventsStore';
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -31,7 +32,10 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    signInAnonymously();
+    // Ler a cópia local é instantâneo e não precisa de rede — a app abre sempre, com ou sem sinal.
+    // A sincronização com o GitHub arranca a seguir e trata-se a si própria (ADR 0004).
+    useEventsStore.getState().load();
+    void startSync();
   }, []);
 
   // Aguardar fontes — se falharem, renderiza na mesma com fontes do sistema
