@@ -15,12 +15,12 @@ objectivo é ficar com uma app que se usa a sério num torneio, instalada no tel
 
 - [x] Decisões registadas em `docs/adr/`
 - [x] `data-model.md` reescrito para ficheiros
-- [ ] Schemas em `data/schema/` e `npm run validate` a correr em CI
-- [ ] `bundle.json` publicado em GitHub Pages
-- [ ] Camada de dados: `services/github.ts`, `domain/outbox.ts`, `services/repoFiles.ts`, `services/localStore.ts`
-- [ ] Store local-first; Supabase removido do código e das dependências
-- [ ] Écran de Settings: token, estado da sincronização, sincronizar agora, puxar do GitHub
-- [ ] APK no telemóvel por EAS Build, com EAS Update ligado
+- [x] Schemas em `data/schema/` e `npm run validate` a correr em CI
+- [x] `bundle.json` publicado em GitHub Pages
+- [x] Camada de dados: `services/github.ts`, `domain/outbox.ts`, `services/repoFiles.ts`, `services/localStore.ts`
+- [x] Store local-first; Supabase removido do código e das dependências
+- [x] Écran de Settings: token, estado da sincronização, sincronizar agora, puxar do GitHub
+- [ ] APK no telemóvel por EAS Build, com EAS Update ligado — `eas.json` pronto, falta correr `eas init` e o primeiro build (`docs/ops/telemovel-setup.md`)
 
 **Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
 com o evento completo.

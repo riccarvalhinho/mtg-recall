@@ -69,7 +69,7 @@ conhecimento prévio de padrões ou convenções.
 
 /components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
                             CardThumbnailPlaceholder, ConfirmModal
-/domain                     lógica pura, sem I/O e testável (outbox)
+/domain                     lógica pura, sem I/O e testável (outbox, slug, base64)
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles
 /store                      useEventsStore (Zustand)
 /theme                      colors, typography, mana
@@ -81,7 +81,8 @@ conhecimento prévio de padrões ou convenções.
   events/                   um evento por ficheiro
   taxonomies/opponents.json adversários, por referência
 
-/tools                      validate-data.ts, build-bundle.ts
+/tools                      validate-data.mts, build-bundle.mts
+/site                       o que vai para o GitHub Pages (o bundle é gerado, não commitado)
 /docs
   adr/                      decisões estruturais
   product/                  roadmap, perguntas em aberto
@@ -107,7 +108,8 @@ Comandos na raiz:
 ```bash
 npm run validate    # valida data/**/*.json contra data/schema/*.json
 npm run bundle      # gera o bundle.json que a app lê ao instalar/restaurar
-npm run test        # testes dos módulos puros (outbox, serializadores)
+npm run test        # testes dos módulos puros (outbox, serializadores, slugs, base64)
+npm run check       # validate + typecheck + test, o que o CI corre
 npm start           # Expo em desenvolvimento
 ```
 
@@ -201,6 +203,14 @@ Params de navegação para match-registration: `{ eventId, round, eventName }`
 ### GitHub
 - Contents API para escrever; `bundle.json` em GitHub Pages para ler
 - Token fine-grained, só este repositório, `Contents: read and write`
+
+---
+
+## Distribuição
+
+APK gerado pelo EAS Build e instalado por sideload; alterações de JavaScript chegam por EAS Update
+sem APK novo. Os passos todos — token, Pages, build, restauro — estão em
+`docs/ops/telemovel-setup.md`.
 
 ---
 

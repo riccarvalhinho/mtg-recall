@@ -53,21 +53,33 @@ sem contas. As decisões estão em `docs/adr/`; o que falta está em `docs/produ
       vez de PWA, escrita por outbox, repositório público, utilizador único
 - [x] `data-model.md` reescrito para o modelo de ficheiros
 
+### Dados e ferramentas
+- [x] `data/schema/{event,opponents}.schema.json` — o contrato
+- [x] `tools/validate-data.mts` — schema + coerência (ids, rondas, adversários, games vs resultado)
+- [x] `tools/build-bundle.mts` — `bundle.json` para instalação e restauro
+- [x] CI a validar, compilar tipos e correr testes em cada push; Pages a publicar o bundle a partir de `main`
+- [x] `npm run check` — o que o CI corre, num comando
+
+### Camada de dados na app
+- [x] `services/github.ts` — Contents API (escrita e apagar), token no `expo-secure-store`
+- [x] `services/localStore.ts` — cópia local em AsyncStorage, uma chave por ficheiro
+- [x] `domain/outbox.ts` (puro) + `services/outbox.ts` (fila persistente e worker)
+- [x] `services/repoFiles.ts` — serializadores validados contra o schema verdadeiro
+- [x] `services/sync.ts` — restauro a partir do bundle publicado
+- [x] `domain/base64.ts` — base64 UTF-8 que bate certo com o Node byte a byte
+- [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
+- [x] 46 testes nos módulos puros
+
 ---
 
 ## O que falta (Fase 0)
 
-- [ ] `data/schema/*.json` + `tools/validate-data.ts` + `npm run validate` em CI
-- [ ] `tools/build-bundle.ts` + publicação do `bundle.json` em GitHub Pages
-- [ ] `services/github.ts` — Contents API e guarda do token no `expo-secure-store`
-- [ ] `domain/outbox.ts` (puro, testado) + `services/outbox.ts` (persistência e worker)
-- [ ] `services/repoFiles.ts` — serializadores, testados byte a byte contra `data/`
-- [ ] `services/localStore.ts` — cópia local em AsyncStorage, uma chave por ficheiro
-- [ ] `store/useEventsStore.ts` local-first
-- [ ] Apagar `services/supabase.ts`, `auth.ts`, `events.ts`, `matches.ts`, a pasta `supabase/` e a
-      dependência `@supabase/supabase-js`
-- [ ] Écran de Settings
-- [ ] EAS Build (APK) + EAS Update + `docs/ops/telemovel-setup.md`
+- [ ] Correr `eas init` e o primeiro `eas build --profile preview --platform android`
+- [ ] Ligar o GitHub Pages (Settings → Pages → Source: GitHub Actions)
+- [ ] Criar o token e colá-lo no écran de Settings
+- [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
+
+Os três primeiros são passos manuais, com o guia em `docs/ops/telemovel-setup.md`.
 
 O detalhe das fases seguintes está em `docs/product/roadmap.md`.
 
