@@ -18,7 +18,9 @@ import { loadAll } from './load-data.mts';
  * Sobe quando a forma do bundle mudar de maneira que uma app antiga não saiba ler.
  * A app recusa um formato que não conhece em vez de adivinhar.
  */
-const FORMAT_VERSION = 1;
+// A versão 2 acrescenta os decks (Fase 2). Uma app da versão 1 recusa este bundle em vez de o ler
+// a meio e ficar sem decks sem dizer nada.
+const FORMAT_VERSION = 2;
 
 const data = loadAll();
 
@@ -26,6 +28,7 @@ const bundle = {
   formatVersion: FORMAT_VERSION,
   generatedAt: new Date().toISOString(),
   events: data.events.map((entry) => entry.data),
+  decks: data.decks.map((entry) => entry.data),
   opponents: (data.opponents.data as { items: unknown[] }).items,
 };
 
@@ -34,4 +37,7 @@ const target = path.join(paths.bundleDir, 'bundle.json');
 fs.writeFileSync(target, `${JSON.stringify(bundle, null, 2)}\n`, 'utf8');
 
 const size = (fs.statSync(target).size / 1024).toFixed(1);
-console.log(`✓ ${rel(target)} — ${bundle.events.length} evento(s), ${bundle.opponents.length} adversário(s), ${size} kB`);
+console.log(
+  `✓ ${rel(target)} — ${bundle.events.length} evento(s), ${bundle.decks.length} deck(s), ` +
+    `${bundle.opponents.length} adversário(s), ${size} kB`,
+);

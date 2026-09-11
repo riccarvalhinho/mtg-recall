@@ -44,8 +44,20 @@
       "minLength": 1
     },
     "playersCount": { "type": "integer", "minimum": 1 },
-    "deckName": { "type": "string", "minLength": 1 },
-    "deckColors": { "$ref": "#/definitions/manaSelection" },
+    "deckId": {
+      "description": "Referência a data/decks/<id>.json. É a forma nova de dizer com que deck se jogou. Quando existe, manda sobre deckName/deckColors.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "deckName": {
+      "description": "Nome do deck escrito à mão. Legado: os eventos anteriores à Fase 2 só têm isto, e continuam a ler-se. Eventos novos usam deckId.",
+      "type": "string",
+      "minLength": 1
+    },
+    "deckColors": {
+      "description": "Cores do deck escritas à mão. Legado, como o deckName.",
+      "$ref": "#/definitions/manaSelection"
+    },
     "deckThumbnailCardId": {
       "description": "Scryfall id da carta que ilustra o deck. Fase 3.",
       "type": "string",

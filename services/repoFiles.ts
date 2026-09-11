@@ -13,7 +13,7 @@
  * indentação e uma linha em branco no fim, como todos os ficheiros de `data/`; e as chaves sempre
  * pela mesma ordem, que é a ordem do schema.
  */
-import type { Event, Game, ManaSelection, Match, Opponent } from '../types';
+import type { Deck, DeckCard, Event, Game, ManaSelection, Match, Opponent } from '../types';
 
 /** Dois espaços e uma linha no fim, como todos os ficheiros de `data/`. */
 function serialize(value: unknown): string {
@@ -72,6 +72,7 @@ export function serializeEvent(event: Event): string {
     status: event.status,
     rank: trimmed(event.rank),
     playersCount: event.playersCount,
+    deckId: trimmed(event.deckId),
     deckName: trimmed(event.deckName),
     deckColors: colors(event.deckColors),
     deckThumbnailCardId: trimmed(event.deckThumbnailCardId),
@@ -79,6 +80,45 @@ export function serializeEvent(event: Event): string {
     matches: [...event.matches]
       .sort((a, b) => a.round - b.round)
       .map(serializeMatch),
+  });
+}
+
+function serializeDeckCard(card: DeckCard) {
+  return {
+    name: card.name.trim(),
+    quantity: card.quantity,
+    // `main` é o valor por omissão do schema: escrevê-lo dava ruído em todas as linhas do diff.
+    board: card.board === 'side' ? 'side' : undefined,
+    scryfallId: trimmed(card.scryfallId),
+    manaCost: trimmed(card.manaCost),
+    cmc: card.cmc,
+    typeLine: trimmed(card.typeLine),
+    colors: card.colors && card.colors.length > 0 ? [...card.colors] : undefined,
+  };
+}
+
+/**
+ * Um deck, com as cartas por board e depois por nome.
+ *
+ * A ordem é fixa e não a de introdução: acrescentar uma carta ao deck tem de dar uma linha no diff,
+ * não uma lista inteira reordenada.
+ */
+export function serializeDeck(deck: Deck): string {
+  const cards = [...(deck.cards ?? [])].sort((a, b) => {
+    const boardA = a.board === 'side' ? 1 : 0;
+    const boardB = b.board === 'side' ? 1 : 0;
+    return boardA - boardB || a.name.localeCompare(b.name, 'pt');
+  });
+
+  return serialize({
+    id: deck.id,
+    name: deck.name.trim(),
+    colors: colors(deck.colors) ?? { main: [], splash: [] },
+    format: deck.format,
+    archetype: trimmed(deck.archetype),
+    thumbnailCardId: trimmed(deck.thumbnailCardId),
+    cards: cards.length > 0 ? cards.map(serializeDeckCard) : undefined,
+    notes: trimmed(deck.notes),
   });
 }
 
@@ -112,6 +152,16 @@ export function parseEvent(raw: unknown, namesById: Map<string, string>): Event 
       ...match,
       opponent: namesById.get(match.opponentId) ?? match.opponentId,
     })),
+  };
+}
+
+export function parseDeck(raw: unknown): Deck {
+  const data = raw as Deck;
+  return {
+    ...data,
+    // `colors` é obrigatório no schema, mas um ficheiro editado à mão pode não o ter: um deck sem
+    // cores desenha-se sem pips, e é melhor do que a lista de decks não abrir.
+    colors: data.colors ?? { main: [], splash: [] },
   };
 }
 

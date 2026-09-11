@@ -45,11 +45,13 @@ commit → bundle → restauro não está provada ponta a ponta.
 
 ### Écrans
 - [x] **Home** — empty state e variante com dados (StatsBlock + evento activo)
-- [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider
+- [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
+      nome do evento, local e adversário (`domain/search.ts`)
 - [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
       (rank + nº de jogadores), apagar evento e apagar match com confirmação
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
-- [x] **Add Event** — selector de formato (7 tipos), nome, data e local
+- [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
+      lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
       agora, restauro a partir do GitHub
@@ -77,6 +79,11 @@ commit → bundle → restauro não está provada ponta a ponta.
 - [x] `services/repoFiles.ts` — serializadores validados contra o schema verdadeiro
 - [x] `services/sync.ts` — restauro a partir do bundle publicado
 - [x] `domain/base64.ts` — base64 UTF-8 que bate certo com o Node byte a byte
+- [x] `services/scryfall.ts` — lista de sets da Scryfall, com cache própria em AsyncStorage
+      (`mtgrecall.scryfall.sets`, validade de 7 dias) fora da outbox e do `localStore`
+- [x] `domain/sets.ts` (puro) — filtra os tipos jogáveis, ordena por data e valida o código
+      contra o padrão do schema
+- [x] `domain/search.ts` (puro) — predicado da procura de eventos
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
 - [x] 46 testes nos módulos puros
 

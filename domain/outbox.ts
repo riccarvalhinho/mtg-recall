@@ -129,5 +129,6 @@ export function outboxStatus(queue: OutboxEntry[]): OutboxStatus {
 /** Caminhos dos ficheiros que a app sabe escrever. Um sítio só, para não os espalhar em strings. */
 export const repoPaths = {
   event: (id: string) => `data/events/${id}.json`,
+  deck: (id: string) => `data/decks/${id}.json`,
   opponents: 'data/taxonomies/opponents.json',
 } as const;

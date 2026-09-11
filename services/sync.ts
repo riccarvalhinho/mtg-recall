@@ -12,10 +12,12 @@ import type { Opponent } from '../types';
 import { bundleUrl } from './config';
 
 /** Sobe quando a forma do bundle mudar. Tem de bater certo com tools/build-bundle.mts. */
-const SUPPORTED_FORMAT = 1;
+const SUPPORTED_FORMAT = 2;
 
 export interface RemoteData {
   events: unknown[];
+  /** Ausente num bundle do formato 1, que não conhecia decks. */
+  decks?: unknown[];
   opponents: Opponent[];
   generatedAt?: string;
 }
@@ -41,5 +43,10 @@ export async function fetchBundle(): Promise<RemoteData> {
     );
   }
 
-  return { events: bundle.events ?? [], opponents: bundle.opponents ?? [], generatedAt: bundle.generatedAt };
+  return {
+    events: bundle.events ?? [],
+    decks: bundle.decks ?? [],
+    opponents: bundle.opponents ?? [],
+    generatedAt: bundle.generatedAt,
+  };
 }

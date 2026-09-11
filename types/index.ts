@@ -67,12 +67,53 @@ export interface Event {
   /** Classificação final, introduzida à mão (ex.: "1st", "Top 8"). */
   rank?: string;
   playersCount?: number;
+  /** Referência a `data/decks/<id>.json`. Quando existe, manda sobre deckName/deckColors. */
+  deckId?: string;
+  /** Legado: eventos anteriores à Fase 2 só têm isto. Continuam a ler-se. */
   deckName?: string;
+  /** Legado, como o deckName. */
   deckColors?: ManaSelection;
   /** Scryfall id da carta que ilustra o deck — Fase 3. */
   deckThumbnailCardId?: string;
   notes?: string;
   matches: Match[];
+}
+
+// ─── Decks ───────────────────────────────────────────────────────────────────
+
+/** Deck principal ou sideboard. Ausente no ficheiro significa `main`. */
+export type DeckBoard = 'main' | 'side';
+
+/**
+ * Uma entrada da lista de cartas.
+ *
+ * Os campos vindos da Scryfall são copiados para o ficheiro de propósito: os dados de uma impressão
+ * não mudam, e copiá-los deixa o Deck Analyser funcionar sem rede (regra 3). O que muda com o tempo
+ * são os preços, e esses ficam de fora — Fase 4.
+ */
+export interface DeckCard {
+  name: string;
+  quantity: number;
+  board?: DeckBoard;
+  scryfallId?: string;
+  manaCost?: string;
+  cmc?: number;
+  typeLine?: string;
+  colors?: ManaColor[];
+}
+
+/** Um deck. Um ficheiro por deck em `data/decks/<id>.json`. */
+export interface Deck {
+  /** Slug, igual ao nome do ficheiro. */
+  id: string;
+  name: string;
+  colors: ManaSelection;
+  format?: EventType;
+  archetype?: string;
+  thumbnailCardId?: string;
+  /** Opcional: um deck sem cartas já serve para saber com que deck se ganha mais. */
+  cards?: DeckCard[];
+  notes?: string;
 }
 
 // Um adversário na taxonomia

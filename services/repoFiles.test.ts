@@ -9,8 +9,16 @@ import path from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { describe, expect, it } from 'vitest';
-import { opponentNames, parseEvent, parseOpponents, serializeEvent, serializeOpponents } from './repoFiles.ts';
-import type { Event, Opponent } from '../types';
+import {
+  opponentNames,
+  parseDeck,
+  parseEvent,
+  parseOpponents,
+  serializeDeck,
+  serializeEvent,
+  serializeOpponents,
+} from './repoFiles.ts';
+import type { Deck, Event, Opponent } from '../types';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
@@ -20,6 +28,7 @@ const schema = (name: string) =>
 
 const validateEvent = ajv.compile(schema('event.schema.json'));
 const validateOpponents = ajv.compile(schema('opponents.schema.json'));
+const validateDeck = ajv.compile(schema('deck.schema.json'));
 
 const fullEvent: Event = {
   id: '2026-04-12-fnm-sealed-aetherdrift',
@@ -31,6 +40,7 @@ const fullEvent: Event = {
   status: 'completed',
   rank: '3rd',
   playersCount: 16,
+  deckId: 'selesnya-midrange',
   deckName: 'Selesnya Midrange',
   deckColors: { main: ['G', 'W'], splash: ['U'] },
   notes: 'Pool fraco de removal.',
@@ -155,5 +165,85 @@ describe('leitura', () => {
   it('lê a taxonomia que ela própria escreveu', () => {
     const opponents: Opponent[] = [{ id: 'ana-costa', name: 'Ana Costa' }];
     expect(parseOpponents(JSON.parse(serializeOpponents(opponents)))).toEqual(opponents);
+  });
+});
+
+
+// ─── Decks ───────────────────────────────────────────────────────────────────
+
+const fullDeck: Deck = {
+  id: 'izzet-prowess',
+  name: 'Izzet Prowess',
+  colors: { main: ['U', 'R'], splash: [] },
+  format: 'Modern',
+  archetype: 'Prowess aggro',
+  notes: 'Contra controlo, entra o pacote de counters.',
+  cards: [
+    {
+      name: 'Ragavan, Nimble Pilferer',
+      quantity: 4,
+      scryfallId: 'a9738cda-adb1-47fb-9f4c-ecd930228c4d',
+      manaCost: '{R}',
+      cmc: 1,
+      typeLine: 'Legendary Creature — Monkey Pirate',
+      colors: ['R'],
+    },
+    { name: 'Consider', quantity: 4, manaCost: '{U}', cmc: 1, typeLine: 'Instant', colors: ['U'] },
+    { name: 'Blood Moon', quantity: 2, board: 'side', manaCost: '{2}{R}', cmc: 3, typeLine: 'Enchantment', colors: ['R'] },
+  ],
+};
+
+/** O mínimo: um deck acabado de criar, sem cartas nem formato. */
+const minimalDeck: Deck = {
+  id: 'mono-red',
+  name: 'Mono Red',
+  colors: { main: ['R'], splash: [] },
+};
+
+describe('serializeDeck', () => {
+  it('um deck completo passa no schema verdadeiro', () => {
+    const written = JSON.parse(serializeDeck(fullDeck));
+    expect(validateDeck(written), JSON.stringify(validateDeck.errors)).toBe(true);
+  });
+
+  it('um deck sem cartas passa no schema — a lista é opcional de propósito', () => {
+    const written = JSON.parse(serializeDeck(minimalDeck));
+    expect(validateDeck(written), JSON.stringify(validateDeck.errors)).toBe(true);
+    expect(written.cards).toBeUndefined();
+  });
+
+  it('não escreve board: "main", que é o valor por omissão do schema', () => {
+    const written = JSON.parse(serializeDeck(fullDeck));
+    const consider = written.cards.find((card: { name: string }) => card.name === 'Consider');
+    expect(consider.board).toBeUndefined();
+  });
+
+  it('ordena o sideboard depois do main e cada um por nome', () => {
+    const written = JSON.parse(serializeDeck(fullDeck));
+    expect(written.cards.map((card: { name: string }) => card.name)).toEqual([
+      'Consider',
+      'Ragavan, Nimble Pilferer',
+      'Blood Moon',
+    ]);
+  });
+
+  it('dois espaços e uma linha em branco no fim, como os ficheiros de data/', () => {
+    const text = serializeDeck(minimalDeck);
+    expect(text.endsWith('}\n')).toBe(true);
+    expect(text).toContain('\n  "id"');
+  });
+});
+
+describe('parseDeck', () => {
+  it('a ida e volta não perde nada', () => {
+    const roundTrip = parseDeck(JSON.parse(serializeDeck(fullDeck)));
+    expect(roundTrip.id).toBe(fullDeck.id);
+    expect(roundTrip.cards).toHaveLength(3);
+    expect(roundTrip.format).toBe('Modern');
+  });
+
+  it('um deck sem cores não deita a lista abaixo', () => {
+    const deck = parseDeck({ id: 'x', name: 'X' });
+    expect(deck.colors).toEqual({ main: [], splash: [] });
   });
 });

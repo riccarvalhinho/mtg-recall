@@ -12,6 +12,10 @@
  *   completeEvent(id, rank, count)  — fecha o torneio
  *   deleteEvent(id)                 — apaga o evento e o seu ficheiro
  *   deleteMatch(eventId, round)     — apaga uma ronda e renumera as seguintes
+ *   createDeck(data)                — cria um deck e devolve o id
+ *   updateDeck(id, data)            — altera um deck sem lhe mexer no id
+ *   deleteDeck(id)                  — apaga, se nenhum evento o usar
+ *   setEventDeck(eventId, deckId)   — liga um deck a um evento
  *   restoreFromGitHub()             — repõe tudo a partir do bundle publicado
  */
 import { create } from 'zustand';
@@ -21,13 +25,15 @@ import * as localStore from '../services/localStore';
 import * as outbox from '../services/outbox';
 import {
   opponentNames,
+  parseDeck,
   parseEvent,
   parseOpponents,
+  serializeDeck,
   serializeEvent,
   serializeOpponents,
 } from '../services/repoFiles';
 import { fetchBundle } from '../services/sync';
-import type { Event, EventType, Game, ManaSelection, MatchResult, Opponent } from '../types';
+import type { Deck, DeckCard, Event, EventType, Game, ManaSelection, MatchResult, Opponent } from '../types';
 
 export interface NewEventData {
   name: string;
@@ -47,8 +53,18 @@ export interface NewMatchData {
   notes?: string;
 }
 
+export interface NewDeckData {
+  name: string;
+  colors: ManaSelection;
+  format?: EventType;
+  archetype?: string;
+  cards?: DeckCard[];
+  notes?: string;
+}
+
 interface EventsStore {
   events: Event[];
+  decks: Deck[];
   opponents: Opponent[];
   isLoading: boolean;
 
@@ -56,6 +72,10 @@ interface EventsStore {
   createEvent: (data: NewEventData) => Promise<string | null>;
   addMatch: (eventId: string, data: NewMatchData) => Promise<void>;
   updateMatch: (eventId: string, round: number, data: NewMatchData) => Promise<boolean>;
+  createDeck: (data: NewDeckData) => Promise<string>;
+  updateDeck: (deckId: string, data: NewDeckData) => Promise<boolean>;
+  deleteDeck: (deckId: string) => Promise<{ ok: true } | { ok: false; usedBy: number }>;
+  setEventDeck: (eventId: string, deckId: string | undefined) => Promise<boolean>;
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
@@ -72,6 +92,11 @@ export type RestoreResult =
   | { ok: true; events: number }
   | { ok: false; kind: 'pending'; pending: number }
   | { ok: false; kind: 'error'; reason: string };
+
+/** Decks por nome — não há data por onde os ordenar, e a ordem de criação não diz nada a ninguém. */
+function byName(a: Deck, b: Deck): number {
+  return a.name.localeCompare(b.name, 'pt');
+}
 
 /** Mais recentes primeiro. O desempate pelo id existe para dois torneios no mesmo dia não trocarem de sítio. */
 function byDateDesc(a: Event, b: Event): number {
@@ -110,6 +135,13 @@ function resolveOpponent(
   };
 }
 
+async function persistDeck(deck: Deck, message: string): Promise<void> {
+  const path = repoPaths.deck(deck.id);
+  const content = serializeDeck(deck);
+  await localStore.writeFile(path, content);
+  await outbox.enqueueFile({ path, content, message });
+}
+
 async function persistOpponents(opponents: Opponent[], message: string): Promise<void> {
   const path = repoPaths.opponents;
   const content = serializeOpponents(opponents);
@@ -119,6 +151,7 @@ async function persistOpponents(opponents: Opponent[], message: string): Promise
 
 export const useEventsStore = create<EventsStore>((set, get) => ({
   events: [],
+  decks: [],
   opponents: [],
   isLoading: false,
 
@@ -134,17 +167,23 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     const names = opponentNames(opponents);
 
     const events: Event[] = [];
+    const decks: Deck[] = [];
     for (const [path, content] of Object.entries(files)) {
-      if (!path.startsWith('data/events/')) continue;
       try {
-        events.push(parseEvent(JSON.parse(content), names));
+        if (path.startsWith('data/events/')) events.push(parseEvent(JSON.parse(content), names));
+        else if (path.startsWith('data/decks/')) decks.push(parseDeck(JSON.parse(content)));
       } catch (error) {
         // Um ficheiro estragado não pode levar os outros atrás. Fica de fora e diz-se porquê.
         console.warn(`[store] ${path} ilegível:`, error);
       }
     }
 
-    set({ events: events.sort(byDateDesc), opponents, isLoading: false });
+    set({
+      events: events.sort(byDateDesc),
+      decks: decks.sort(byName),
+      opponents,
+      isLoading: false,
+    });
   },
 
   // ─── createEvent ───────────────────────────────────────────────────────────
@@ -257,6 +296,90 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     return true;
   },
 
+  // ─── decks ─────────────────────────────────────────────────────────────────
+
+  /** Cria um deck e devolve o id. O slug vem do nome, com sufixo se já existir. */
+  createDeck: async (data) => {
+    const taken = get().decks.map(deck => deck.id);
+    const id = uniqueId(slugify(data.name) || 'deck', taken);
+
+    const deck: Deck = {
+      id,
+      name: data.name.trim(),
+      colors: data.colors,
+      format: data.format,
+      archetype: data.archetype,
+      cards: data.cards,
+      notes: data.notes,
+    };
+
+    set(state => ({ decks: [...state.decks, deck].sort(byName) }));
+    await persistDeck(deck, `Create deck ${deck.name}`);
+    return id;
+  },
+
+  /**
+   * Altera um deck sem lhe mexer no id.
+   *
+   * O id fica como está mesmo quando o nome muda: é a referência que os eventos guardam, e
+   * renomeá-lo obrigaria a reescrever todos os eventos que apontam para ele — muitos ficheiros e
+   * muitos commits para uma gralha no nome.
+   */
+  updateDeck: async (deckId, data) => {
+    const deck = get().decks.find(d => d.id === deckId);
+    if (!deck) return false;
+
+    const updated: Deck = {
+      ...deck,
+      name: data.name.trim(),
+      colors: data.colors,
+      format: data.format,
+      archetype: data.archetype,
+      cards: data.cards,
+      notes: data.notes,
+    };
+
+    set(state => ({ decks: state.decks.map(d => (d.id === deckId ? updated : d)).sort(byName) }));
+    await persistDeck(updated, `Update deck ${updated.name}`);
+    return true;
+  },
+
+  /**
+   * Apaga um deck — mas só se nenhum evento apontar para ele.
+   *
+   * Um evento com um `deckId` que já não existe passa no schema e é chumbado pelo `npm run
+   * validate`, ou seja, só daria erro **depois** do commit. Recusar aqui é mais honesto do que
+   * limpar o campo em silêncio em cinco eventos antigos, que é reescrever história que o utilizador
+   * não pediu para reescrever.
+   */
+  deleteDeck: async (deckId) => {
+    const usedBy = get().events.filter(event => event.deckId === deckId).length;
+    if (usedBy > 0) return { ok: false, usedBy };
+
+    const deck = get().decks.find(d => d.id === deckId);
+    if (!deck) return { ok: true };
+
+    set(state => ({ decks: state.decks.filter(d => d.id !== deckId) }));
+
+    const path = repoPaths.deck(deckId);
+    await localStore.removeFile(path);
+    await outbox.enqueueFile({ path, content: null, message: `Delete deck ${deck.name}` });
+    return { ok: true };
+  },
+
+  /** Liga (ou desliga) um deck a um evento. */
+  setEventDeck: async (eventId, deckId) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+    if (deckId && !get().decks.some(deck => deck.id === deckId)) return false;
+
+    const updated: Event = { ...event, deckId };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    await persistEvent(updated, `Set deck of ${event.name}`);
+    return true;
+  },
+
   // ─── completeEvent ─────────────────────────────────────────────────────────
 
   completeEvent: async (eventId, rank, playersCount) => {
@@ -328,10 +451,12 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       const names = opponentNames(remote.opponents);
 
       const events = remote.events.map(raw => parseEvent(raw, names));
+      const decks = (remote.decks ?? []).map(parseDeck);
       const files: Record<string, string> = {
         [repoPaths.opponents]: serializeOpponents(remote.opponents),
       };
       for (const event of events) files[repoPaths.event(event.id)] = serializeEvent(event);
+      for (const deck of decks) files[repoPaths.deck(deck.id)] = serializeDeck(deck);
 
       // Limpar antes de substituir: se alguma coisa falhar a meio, fica-se sem a fila mas com os
       // ficheiros locais intactos — que é o lado seguro, porque a próxima alteração volta a
@@ -341,7 +466,7 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       // Substitui a cópia local sem passar pela outbox: isto veio do repositório, reenviá-lo seria
       // commitar o que já lá está.
       await localStore.replaceAll(files);
-      set({ events: events.sort(byDateDesc), opponents: remote.opponents });
+      set({ events: events.sort(byDateDesc), decks: decks.sort(byName), opponents: remote.opponents });
 
       return { ok: true, events: events.length };
     } catch (error) {

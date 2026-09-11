@@ -28,6 +28,7 @@ addFormats(ajv);
 
 const validators = {
   event: ajv.compile(readJson(path.join(paths.schemas, 'event.schema.json')).data as object),
+  deck: ajv.compile(readJson(path.join(paths.schemas, 'deck.schema.json')).data as object),
   opponents: ajv.compile(readJson(path.join(paths.schemas, 'opponents.schema.json')).data as object),
 };
 
@@ -42,6 +43,7 @@ function checkSchema(kind: keyof typeof validators, entry: LoadedFile) {
 const data = loadAll();
 
 for (const event of data.events) checkSchema('event', event);
+for (const deck of data.decks) checkSchema('deck', deck);
 checkSchema('opponents', data.opponents);
 
 // ------------------------------------------------------------- camada 2: coerência
@@ -63,8 +65,16 @@ interface EventShape {
   id: string;
   date: string;
   status: string;
+  deckId?: string;
   deckColors?: ManaSelection;
   matches?: MatchShape[];
+}
+
+interface DeckShape {
+  id: string;
+  name: string;
+  colors?: ManaSelection;
+  cards?: { name: string; quantity: number; board?: string }[];
 }
 
 interface OpponentsShape {
@@ -99,6 +109,38 @@ function checkColors(where: string, label: string, colors: ManaSelection | undef
   }
 }
 
+// ------------------------------------------------------------------ decks
+
+const deckIds = new Set<string>();
+
+for (const entry of data.decks) {
+  const deck = entry.data as DeckShape;
+  if (typeof deck.id !== 'string') continue; // já reportado pela camada 1
+
+  if (deck.id !== entry.stem) {
+    fail(entry.name, `o campo id ("${deck.id}") tem de ser igual ao nome do ficheiro ("${entry.stem}")`);
+  }
+  if (deckIds.has(deck.id)) fail(entry.name, `id duplicado: ${deck.id}`);
+  deckIds.add(deck.id);
+
+  checkColors(entry.name, 'colors', deck.colors);
+
+  // Uma carta repetida na mesma board é quase sempre duas entradas em vez de uma quantidade, e
+  // partia a curva de mana ao contá-la duas vezes.
+  const seen = new Map<string, number>();
+  for (const card of deck.cards ?? []) {
+    if (typeof card.name !== 'string') continue;
+    const key = `${card.board ?? 'main'}:${card.name.trim().toLowerCase()}`;
+    seen.set(key, (seen.get(key) ?? 0) + 1);
+  }
+  for (const [key, count] of seen) {
+    if (count > 1) {
+      const [board, name] = key.split(':');
+      fail(entry.name, `"${name}" aparece ${count} vezes no ${board} — junta-as numa quantidade`);
+    }
+  }
+}
+
 let activeEvents = 0;
 let totalMatches = 0;
 
@@ -115,6 +157,11 @@ for (const entry of data.events) {
   if (event.status === 'active') activeEvents += 1;
 
   checkColors(entry.name, 'deckColors', event.deckColors);
+
+  // O mesmo problema do adversário desconhecido: passa no schema e parte as estatísticas por deck.
+  if (event.deckId && !deckIds.has(event.deckId)) {
+    fail(entry.name, `deck desconhecido "${event.deckId}" — acrescentar a data/decks/${event.deckId}.json`);
+  }
 
   const rounds = new Set<number>();
   (event.matches ?? []).forEach((match, index) => {
@@ -171,7 +218,7 @@ if (problems.length > 0) {
 
 console.log(
   `✓ dados válidos — ${data.events.length} evento(s), ${totalMatches} match(es), ` +
-    `${opponentIds.size} adversário(s)`,
+    `${deckIds.size} deck(s), ${opponentIds.size} adversário(s)`,
 );
 
 for (const warning of warnings) console.log(`  ⚠ ${warning}`);

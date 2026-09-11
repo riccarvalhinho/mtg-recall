@@ -68,9 +68,10 @@ conhecimento prévio de padrões ou convenções.
   event/[id].tsx            Event Detail (push, sem tab bar)
 
 /components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, ConfirmModal
-/domain                     lógica pura, sem I/O e testável (outbox, slug, base64)
-/services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles
+                            CardThumbnailPlaceholder, ConfirmModal, SetSelector
+/domain                     lógica pura, sem I/O e testável (outbox, slug, base64, sets, search)
+/services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
+                            scryfall
 /store                      useEventsStore (Zustand)
 /theme                      colors, typography, mana
 /types                      tipos TypeScript — derivam dos schemas
@@ -198,7 +199,13 @@ Params de navegação para match-registration: `{ eventId, round, eventName }`
 
 ### Scryfall
 - Base URL: `https://api.scryfall.com`
-- Rate limit: 50–100 ms entre requests (respeitar sempre)
+- Rate limit: 50–100 ms entre requests (respeitar sempre), e nunca pedidos em paralelo
+- Tudo o que fala com a Scryfall vive em `services/scryfall.ts`. O que decide — filtrar, ordenar,
+  validar — vive em `domain/sets.ts` e tem testes.
+- `GET /sets` alimenta o selector de set do evento. Fica em cache em `mtgrecall.scryfall.sets`
+  (AsyncStorage, validade de 7 dias). **É cache, não são dados nossos**: não passa pela outbox nem
+  pelo `localStore`, e por isso nunca aparece num commit. Sem cache e sem rede, o selector deixa
+  escrever o código à mão.
 
 ### GitHub
 - Contents API para escrever; `bundle.json` em GitHub Pages para ler

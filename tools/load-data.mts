@@ -36,6 +36,7 @@ export function readJsonDir<T = unknown>(dir: string): LoadedFile<T>[] {
 export function loadAll() {
   return {
     events: readJsonDir(paths.events),
+    decks: readJsonDir(paths.decks),
     opponents: readJson(path.join(paths.taxonomies, 'opponents.json')),
   };
 }
