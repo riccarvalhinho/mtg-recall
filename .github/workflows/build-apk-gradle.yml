@@ -1,0 +1,104 @@
+name: Gerar APK (Gradle)
+
+# Compila o APK aqui dentro, sem EAS e sem conta na Expo, e publica-o numa Release.
+#
+# A Release existe por causa do telemóvel: um artefacto de Action é um ZIP que obriga a ter sessão
+# iniciada e a descompactar à mão. Uma Release dá um link directo para o .apk — abre-se a página,
+# toca-se no ficheiro, instala. Ver docs/adr/0008-apk-compilado-no-github-actions.md.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: build-apk-gradle
+  cancel-in-progress: false
+
+# Necessário para criar a Release.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compilar e publicar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci --legacy-peer-deps
+
+      # O mesmo que o CI corre. Compilar durante 15 minutos código que não passa nos testes é
+      # tempo deitado fora duas vezes: aqui e no telemóvel.
+      - name: Validar antes de compilar
+        run: npm run check
+
+      # O versionCode tem de subir sempre. O Android recusa instalar por cima um APK com um
+      # versionCode menor, e dois builds com o mesmo número são ambiguidade à espera de dar chatice.
+      # O número da execução é monótono e nunca se repete.
+      - name: Fixar o versionCode
+        run: |
+          node -e "
+            const fs = require('fs');
+            const app = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+            app.expo.android = app.expo.android || {};
+            app.expo.android.versionCode = ${{ github.run_number }};
+            fs.writeFileSync('app.json', JSON.stringify(app, null, 2) + '\n');
+          "
+
+      # O projecto é managed: a pasta android/ não está no repositório e é gerada aqui. Mantém o
+      # repositório limpo e obriga a que o app.json continue a ser a única fonte de configuração.
+      - name: Gerar o projecto nativo
+        run: npx expo prebuild --platform android --no-install
+
+      # A chave vive num segredo e nunca no repositório, que é público (ADR 0005). É sempre a
+      # mesma: assinar com uma chave diferente faria o Android recusar a instalação por cima e
+      # obrigaria a desinstalar, perdendo os dados locais.
+      - name: Repor a keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/mtgrecall.jks"
+
+      - name: Compilar o APK assinado
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/mtgrecall.jks" \
+            -Pandroid.injected.signing.store.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias=mtgrecall \
+            -Pandroid.injected.signing.key.password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"
+
+      # Confirmar que saiu mesmo assinado com a nossa chave, e não com a de debug que o Gradle usa
+      # por omissão. Um APK assinado com a chave errada instala na mesma à primeira — e só dá erro
+      # na actualização seguinte, quando já é tarde.
+      - name: Confirmar a assinatura
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name '*.apk' | head -1)
+          echo "APK: $APK"
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$APK" | grep -i 'SHA-256\|Subject' || true
+          cp "$APK" "$RUNNER_TEMP/mtg-recall-v${{ github.run_number }}.apk"
+
+      - name: Publicar a Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-v${{ github.run_number }}
+          name: MTG Recall — build ${{ github.run_number }}
+          body: |
+            APK assinado, pronto a instalar por sideload.
+
+            **No telemóvel:** tocar no ficheiro `.apk` aqui em baixo. O Android avisa que a origem
+            é desconhecida — é uma app própria, autorizar.
+
+            Instalar por cima da versão anterior **mantém os dados** (eventos, decks, colecção e o
+            token), porque a assinatura é sempre a mesma. Ainda assim, convém abrir Settings e
+            confirmar que a sincronização está a zero antes de actualizar.
+
+            Commit: ${{ github.sha }}
+          files: ${{ runner.temp }}/mtg-recall-v${{ github.run_number }}.apk

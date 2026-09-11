@@ -27,7 +27,8 @@ que interessa a seguir.
 O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em nenhum destes.
 
 - [ ] Ligar o GitHub Pages — Settings → Pages → Source: GitHub Actions
-- [ ] `eas init` e o primeiro `eas build --profile preview --platform android`
+- [ ] Guardar a keystore nos segredos (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`)
+- [ ] Correr o workflow **Gerar APK (Gradle)** e instalar a partir da Release
 - [ ] Criar o token fine-grained e colá-lo no écran de Settings
 - [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
 
@@ -42,6 +43,8 @@ proxy do ambiente de desenvolvimento recusa ligações à Scryfall.
 - [ ] O primeiro pedido verdadeiro a `GET /sets` (selector de set do evento)
 - [ ] O primeiro pedido verdadeiro a `GET /cards/search` (procura de cartas)
 - [ ] A primeira execução do workflow `refresh-prices.yml` com colecção a sério
+- [ ] O primeiro build com Gradle — o `expo prebuild` e a injecção da assinatura
+      (`android.injected.signing.*`) nunca correram neste projecto
 
 ---
 

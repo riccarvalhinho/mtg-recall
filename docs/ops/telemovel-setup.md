@@ -38,50 +38,49 @@ revogar (não basta apagar o ficheiro: fica no histórico).
 
 ## 3. Gerar o APK — sem computador
 
-O build corre no GitHub Actions e dispara-se a partir do browser do telemóvel. O computador deixa de
-ser preciso.
+O APK é compilado pelo próprio GitHub e publicado numa Release. Não é preciso computador nem conta
+na Expo. O porquê está no `docs/adr/0008-apk-compilado-no-github-actions.md`.
 
-### 3.1. Uma vez: conta Expo e token
+### 3.1. Uma vez: guardar a chave de assinatura
 
-Tudo isto se faz no browser do telemóvel.
+O Android só deixa instalar um APK por cima de outro se os dois estiverem assinados com a **mesma
+chave**. É isso que faz uma actualização manter os dados em vez de obrigar a desinstalar. A chave
+vive em segredos do repositório e nunca no código — o repositório é público (ADR 0005).
 
-1. Criar conta em **expo.dev** (gratuita).
-2. **Account settings → Access tokens → Create token**. Copiar — só aparece uma vez.
-3. No GitHub: **Settings → Secrets and variables → Actions → New repository secret**
-   - Name: `EXPO_TOKEN`
-   - Secret: o token do passo 2
+No GitHub, **Settings → Secrets and variables → Actions → New repository secret**, dois segredos:
 
-O `EXPO_TOKEN` é o que deixa a Action falar com a Expo em teu nome. Não é o mesmo token do ponto 2
-deste guia — aquele é do GitHub e serve para a app escrever no repositório; este é da Expo e serve
-para pedir builds.
+| Nome | Conteúdo |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | a keystore em base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | a palavra-passe da keystore |
 
-### 3.2. Sempre que for preciso um APK novo
+> **Guardar a keystore fora do GitHub também.** Se se perder, deixa de ser possível assinar com a
+> mesma identidade: a partir daí, cada APK novo obriga a desinstalar a app antes de instalar, e os
+> dados locais vão com ela. Os eventos e decks sobrevivem no repositório e voltam com o _Restore
+> from GitHub_, mas o token tem de ser colado outra vez.
 
-1. GitHub → separador **Actions** → **Gerar APK** → **Run workflow**
-2. Escolher o perfil (`preview` serve para tudo o que não seja uma versão a sério)
-3. A Action valida o código e pede o build à Expo. Demora um minuto.
-4. O build em si corre na nuvem da Expo, ~15 minutos. Ver em **expo.dev → Projects → mtg-recall →
-   Builds**.
-5. Quando acabar, abrir a página do build **no telemóvel** e carregar em **Install**. O Android
-   avisa que a origem é desconhecida — é sideload de uma app própria, autorizar.
+### 3.2. Sempre que quiseres um APK novo
 
-### 3.3. Da segunda vez em diante, quase nunca é preciso APK novo
+1. GitHub → separador **Actions** → **Gerar APK (Gradle)** → **Run workflow**
+2. Esperar (~15 min). O workflow valida o código, compila e assina.
+3. Ir a **Releases** no repositório e abrir a mais recente.
+4. Tocar no ficheiro `.apk`. O Android avisa que a origem é desconhecida — é uma app própria,
+   autorizar.
 
-O EAS Update entrega alterações de JavaScript sem APK nenhum: a app vai buscá-las ao arrancar. Só é
-preciso um APK novo quando muda alguma coisa nativa — uma dependência nova com código nativo, uma
-permissão, o ícone, a versão do Expo SDK.
+Instalar por cima **mantém tudo**: eventos, decks, colecção e o token. Não é preciso desinstalar.
 
-Para tudo o resto, basta o update:
+> Antes de actualizar, vale a pena abrir **Settings** e confirmar que a sincronização está a zero.
+> O que estiver na fila por enviar é a única coisa que não está no GitHub — e portanto a única que
+> um problema na instalação faria perder.
 
-```
-Actions → Publicar update → Run workflow
-```
+### 3.3. Quando é preciso um APK novo
 
-> **Nota de estado:** o primeiro build ainda não foi feito. Até correr uma vez, há um detalhe por
-> confirmar: o `app.json` não tem `extra.eas.projectId` (o `eas init` nunca correu). O workflow
-> tenta criá-lo sozinho, mas o id fica só naquela execução. Depois do primeiro build, copiar o id
-> de **expo.dev → Project settings** e escrevê-lo no `app.json` — passa a ser permanente e o passo
-> deixa de ter nada que fazer.
+Sempre que alguma coisa mudar. Ao contrário do EAS Update, não há entrega de JavaScript pelo ar: uma
+correcção num écran só chega ao telemóvel com um APK novo.
+
+É o preço assumido no ADR 0008, e é suportável porque instalar por cima não perde nada. Se um dia
+incomodar, os workflows do EAS ficaram no repositório (`build-apk.yml` e `publish-update.yml`) e
+bastam um `EXPO_TOKEN` para voltarem a servir.
 
 ---
 

@@ -45,7 +45,7 @@ conhecimento prévio de padrões ou convenções.
 | Persistência local | AsyncStorage — uma chave por caminho de ficheiro |
 | Sincronização | GitHub Contents API, por outbox (ADR 0004) |
 | Segredos | `expo-secure-store` (token do GitHub) |
-| Distribuição | EAS Build (APK) + EAS Update |
+| Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
 | Card data | Scryfall API |
 | Card prices | Scryfall (`prices.eur`), por workflow agendado — ADR 0007 |
 | Mana symbols | SVG locais em `assets/mana/symbols.ts` |
@@ -245,14 +245,19 @@ consulta-se de vez em quando, não entre rondas.
 
 ## Distribuição
 
-APK gerado pelo EAS Build e instalado por sideload; alterações de JavaScript chegam por EAS Update
-sem APK novo. Os passos todos — token, Pages, build, restauro — estão em
-`docs/ops/telemovel-setup.md`.
+O APK é compilado pelo GitHub Actions (`expo prebuild` + Gradle) e publicado como ficheiro de uma
+**Release** — ver `docs/adr/0008-apk-compilado-no-github-actions.md`. Sem EAS, sem conta na Expo.
 
-**Sem computador:** os builds e os updates disparam-se do separador Actions do GitHub, que abre no
-browser do telemóvel — workflows `build-apk.yml` e `publish-update.yml`. Precisam de um segredo
-`EXPO_TOKEN` (expo.dev → Account settings → Access tokens), que é diferente do token do GitHub
-usado pela app para escrever no repositório.
+- Gerar: separador **Actions → Gerar APK (Gradle) → Run workflow**. Abre no browser do telemóvel.
+- Instalar: **Releases** → tocar no `.apk`.
+- **Instalar por cima mantém os dados** (eventos, decks, colecção, token), porque a assinatura é
+  sempre a mesma chave, guardada nos segredos `ANDROID_KEYSTORE_BASE64` e
+  `ANDROID_KEYSTORE_PASSWORD`. Assinar com outra chave faria o Android recusar e obrigaria a
+  desinstalar.
+- **Não há entrega de JavaScript pelo ar.** Qualquer alteração exige APK novo. É o custo assumido
+  no ADR 0008; os workflows do EAS ficaram no repositório caso um dia se queira voltar atrás.
+
+Os passos todos — token, Pages, build, restauro — estão em `docs/ops/telemovel-setup.md`.
 
 ---
 
