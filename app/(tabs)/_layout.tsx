@@ -46,6 +46,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="decks"
+        options={{
+          title: 'Decks',
+          tabBarIcon: ({ color }) => (
+            <Feather name="layers" size={22} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="stats"
         options={{
           title: 'Stats',

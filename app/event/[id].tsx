@@ -10,6 +10,8 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { calcEventStats, isActive } from '../../types';
+import type { Deck, Event } from '../../types';
+import { deckPerformance } from '../../domain/deck';
 import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -116,53 +118,232 @@ const statsBar = StyleSheet.create({
   },
 });
 
-// ─── DeckSection (colapsável) ─────────────────────────────────────────────────
+// ─── DeckSection ──────────────────────────────────────────────────────────────
 
-function DeckSection({ deckName, deckColors }: {
-  deckName?: string;
-  deckColors?: { main: any[]; splash: any[] };
-}) {
-  const [expanded, setExpanded] = useState(false);
+/**
+ * O deck com que se jogou este torneio.
+ *
+ * Três casos, por ordem de preferência:
+ *  1. `deckId` — a forma da Fase 2. Mostra o deck a sério e abre-o ao toque.
+ *  2. `deckName`/`deckColors` — legado, eventos anteriores à Fase 2. Continuam a ver-se, e dá para
+ *     ligá-los a um deck de verdade sem perder o que lá está.
+ *  3. Nada — convida a escolher.
+ */
+function DeckSection({ event }: { event: Event }) {
+  const decks = useEventsStore(s => s.decks);
+  const events = useEventsStore(s => s.events);
+  const setEventDeck = useEventsStore(s => s.setEventDeck);
 
-  if (!deckName) return null;
+  const [picking, setPicking] = useState(false);
+
+  const linked = decks.find(d => d.id === event.deckId);
+  const legacyName = event.deckName;
+
+  const performance = linked ? deckPerformance(linked.id, events) : null;
+
+  function choose(deckId: string | undefined) {
+    setPicking(false);
+    void setEventDeck(event.id, deckId);
+  }
 
   return (
     <View style={deck.card}>
       <Pressable
         style={deck.header}
-        onPress={() => setExpanded(v => !v)}
+        onPress={() => (linked ? router.push({ pathname: '/deck/[id]', params: { id: linked.id } }) : setPicking(true))}
       >
         <CardThumbnailPlaceholder width={38} height={52} />
+
         <View style={deck.info}>
           <Text style={deck.label}>Deck</Text>
-          <Text style={deck.name}>{deckName}</Text>
-          {deckColors && (
-            <View style={deck.pips}>
-              {deckColors.main.map((c: any) => <ManaPip key={`m-${c}`} color={c} size={14} />)}
-              {deckColors.splash.map((c: any) => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
-            </View>
+
+          {linked ? (
+            <>
+              <Text style={deck.name}>{linked.name}</Text>
+              <View style={deck.pips}>
+                {linked.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+                {linked.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+                {performance && performance.events > 1 && (
+                  <Text style={deck.meta}>
+                    {performance.winRate}% over {performance.events} events
+                  </Text>
+                )}
+              </View>
+            </>
+          ) : legacyName ? (
+            <>
+              <Text style={deck.name}>{legacyName}</Text>
+              <View style={deck.pips}>
+                {(event.deckColors?.main ?? []).map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+                {(event.deckColors?.splash ?? []).map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+                <Text style={deck.meta}>not linked to a deck</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={deck.empty}>Tap to choose a deck</Text>
           )}
         </View>
-        <Feather
-          name={expanded ? 'chevron-up' : 'chevron-right'}
-          size={16}
-          color={colors.textDim}
-          style={{ opacity: 0.5 }}
-        />
+
+        <Feather name="chevron-right" size={16} color={colors.textDim} style={{ opacity: 0.5 }} />
       </Pressable>
 
-      {expanded && (
-        <View style={deck.expanded}>
-          <Text style={deck.expandedText}>
-            Deck details available in Phase 2 →
-          </Text>
-        </View>
+      {(linked || legacyName) && (
+        <Pressable style={deck.changeRow} onPress={() => setPicking(true)}>
+          <Feather name="repeat" size={13} color={colors.textDim} />
+          <Text style={deck.changeText}>{linked ? 'Change deck' : 'Link to a deck'}</Text>
+        </Pressable>
       )}
+
+      <DeckPicker
+        visible={picking}
+        currentId={event.deckId}
+        decks={decks}
+        onPick={choose}
+        onCancel={() => setPicking(false)}
+      />
     </View>
   );
 }
 
+/** Escolher entre os decks que existem. Criar um novo é trabalho do tab Decks, não daqui. */
+function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
+  visible: boolean;
+  currentId: string | undefined;
+  decks: Deck[];
+  onPick: (deckId: string | undefined) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onCancel}>
+      <Pressable style={picker.overlay} onPress={onCancel}>
+        <Pressable style={picker.card} onPress={e => e.stopPropagation()}>
+          <Text style={picker.title}>Deck</Text>
+
+          {decks.length === 0 ? (
+            <Text style={picker.empty}>
+              No decks yet. Create one in the Decks tab and it shows up here.
+            </Text>
+          ) : (
+            <ScrollView style={{ maxHeight: 320 }}>
+              {decks.map(item => (
+                <Pressable
+                  key={item.id}
+                  style={({ pressed }) => [picker.row, pressed && { opacity: 0.7 }]}
+                  onPress={() => onPick(item.id)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={picker.rowName}>{item.name}</Text>
+                    {item.format && <Text style={picker.rowMeta}>{item.format}</Text>}
+                  </View>
+                  <View style={picker.rowPips}>
+                    {item.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={13} />)}
+                    {item.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={13} isSplash />)}
+                  </View>
+                  {currentId === item.id && <Feather name="check" size={15} color={colors.gold} />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+
+          <View style={picker.actions}>
+            <Pressable style={picker.actionBtn} onPress={onCancel}>
+              <Text style={picker.cancelText}>Cancel</Text>
+            </Pressable>
+            {currentId && (
+              <Pressable style={picker.actionBtn} onPress={() => onPick(undefined)}>
+                <Text style={picker.clearText}>Remove</Text>
+              </Pressable>
+            )}
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const picker = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
+  card: {
+    width: '100%',
+    backgroundColor: '#252019',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+    gap: 10,
+  },
+  title: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 17,
+    color: colors.textPrim,
+    textAlign: 'center',
+  },
+  empty: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.textSec,
+    textAlign: 'center',
+    lineHeight: 21,
+    paddingVertical: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 52,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '66',
+  },
+  rowName: { fontFamily: fonts.bodyMed, fontSize: 15, color: colors.textPrim },
+  rowMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim },
+  rowPips: { flexDirection: 'row', gap: 3 },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  actionBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelText: { fontFamily: fonts.body, fontSize: 15, color: colors.textSec },
+  clearText: { fontFamily: fonts.body, fontSize: 15, color: colors.loss },
+});
+
 const deck = StyleSheet.create({
+  meta: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
+    color: colors.textDim,
+    marginLeft: 4,
+  },
+  empty: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.textDim,
+  },
+  changeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 44,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  changeText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textDim,
+  },
   card: {
     backgroundColor: colors.bgCard,
     borderRadius: 12,
@@ -371,8 +552,7 @@ export default function EventDetailScreen() {
 
         {/* Deck Section */}
         <DeckSection
-          deckName={event.deckName}
-          deckColors={event.deckColors}
+          event={event}
         />
 
         {/* Matches */}

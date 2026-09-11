@@ -48,8 +48,9 @@ export default function RootLayout() {
         {/* Tabs (écrans principais) */}
         <Stack.Screen name="(tabs)" />
 
-        {/* Event Detail — fora do tab group, sem tab bar */}
+        {/* Detalhe — fora do tab group, sem tab bar */}
         <Stack.Screen name="event/[id]" />
+        <Stack.Screen name="deck/[id]" />
 
         {/* Modais — sobem desde baixo */}
         <Stack.Screen
@@ -58,6 +59,10 @@ export default function RootLayout() {
         />
         <Stack.Screen
           name="add-event"
+          options={{ presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="deck-editor"
           options={{ presentation: 'modal' }}
         />
       </Stack>

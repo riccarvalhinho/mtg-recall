@@ -1,0 +1,454 @@
+// Deck Detail Screen — Fase 2
+//
+// O que um deck responde: com que frequência ganha, em que torneios foi jogado, e de que é feito.
+// Os gráficos são desenhados com Views em vez de uma biblioteca — a app tem de abrir sem rede e sem
+// surpresas de bundle, e três gráficos de barras não justificam uma dependência.
+
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { colors } from '../../theme/colors';
+import { fonts } from '../../theme/typography';
+import { useEventsStore } from '../../store/useEventsStore';
+import { ManaPip } from '../../components/ManaPip';
+import { TypeBadge } from '../../components/TypeBadge';
+import {
+  canAnalyse,
+  cardCount,
+  colorDistribution,
+  deckPerformance,
+  manaCurve,
+  typeCounts,
+} from '../../domain/deck';
+import { manaColors } from '../../theme/mana';
+import type { DeckCard } from '../../types';
+
+// ─── Blocos ───────────────────────────────────────────────────────────────────
+
+function Section({ label, children, action }: {
+  label: string;
+  children: React.ReactNode;
+  action?: { label: string; onPress: () => void };
+}) {
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionLabel}>{label}</Text>
+        {action && (
+          <Pressable onPress={action.onPress} hitSlop={10}>
+            <Text style={styles.sectionAction}>{action.label}</Text>
+          </Pressable>
+        )}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+/** Curva de mana. A barra mais alta manda na escala — o eixo é relativo, não absoluto. */
+function ManaCurveChart({ buckets }: { buckets: ReturnType<typeof manaCurve> }) {
+  const tallest = Math.max(...buckets.map(bucket => bucket.count), 1);
+
+  return (
+    <View style={curve.row}>
+      {buckets.map(bucket => (
+        <View key={bucket.cmc} style={curve.column}>
+          <Text style={curve.count}>{bucket.count > 0 ? bucket.count : ''}</Text>
+          <View style={curve.track}>
+            <View
+              style={[
+                curve.bar,
+                {
+                  height: `${Math.max((bucket.count / tallest) * 100, bucket.count > 0 ? 6 : 0)}%`,
+                },
+              ]}
+            />
+          </View>
+          <Text style={curve.axis}>{bucket.isTop ? `${bucket.cmc}+` : bucket.cmc}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Distribuição de cores, como uma barra só repartida.
+ *
+ * Uma carta de duas cores conta nas duas (ver domain/deck.ts), portanto isto mostra proporção
+ * relativa entre cores e não uma fatia de um total — o que é a pergunta certa para um deck.
+ */
+function ColorBar({ slices }: { slices: ReturnType<typeof colorDistribution> }) {
+  const total = slices.reduce((sum, slice) => sum + slice.count, 0);
+  if (total === 0) return null;
+
+  return (
+    <View style={{ gap: 10 }}>
+      <View style={colorChart.bar}>
+        {slices.map(slice => (
+          <View
+            key={slice.color}
+            style={{ flex: slice.count, backgroundColor: manaColors[slice.color].bg }}
+          />
+        ))}
+      </View>
+      <View style={colorChart.legend}>
+        {slices.map(slice => (
+          <View key={slice.color} style={colorChart.legendItem}>
+            <ManaPip color={slice.color} size={15} />
+            <Text style={colorChart.legendText}>{slice.count}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** Contagem por tipo, em linhas com barra proporcional. */
+function TypeBreakdown({ counts }: { counts: ReturnType<typeof typeCounts> }) {
+  const tallest = Math.max(...counts.map(entry => entry.count), 1);
+
+  return (
+    <View style={{ gap: 8 }}>
+      {counts.map(entry => (
+        <View key={entry.type} style={types.row}>
+          <Text style={types.name}>{entry.type}</Text>
+          <View style={types.track}>
+            <View style={[types.bar, { width: `${(entry.count / tallest) * 100}%` }]} />
+          </View>
+          <Text style={types.count}>{entry.count}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** A lista de cartas, agrupada por board. */
+function CardList({ cards }: { cards: DeckCard[] }) {
+  const main = cards.filter(card => card.board !== 'side');
+  const side = cards.filter(card => card.board === 'side');
+
+  return (
+    <View style={{ gap: 14 }}>
+      {[
+        { label: 'Main', list: main },
+        { label: 'Sideboard', list: side },
+      ]
+        .filter(group => group.list.length > 0)
+        .map(group => (
+          <View key={group.label} style={{ gap: 4 }}>
+            <Text style={cardList.groupLabel}>
+              {group.label} · {group.list.reduce((sum, card) => sum + card.quantity, 0)}
+            </Text>
+            {group.list.map(card => (
+              <View key={`${group.label}-${card.name}`} style={cardList.row}>
+                <Text style={cardList.quantity}>{card.quantity}×</Text>
+                <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
+                {card.manaCost && <Text style={cardList.cost}>{card.manaCost}</Text>}
+              </View>
+            ))}
+          </View>
+        ))}
+    </View>
+  );
+}
+
+// ─── Écran ────────────────────────────────────────────────────────────────────
+
+export default function DeckDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const deck = useEventsStore(s => s.decks.find(d => d.id === id));
+  const events = useEventsStore(s => s.events);
+
+  if (!deck) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.navBar}>
+          <Pressable onPress={() => router.back()} hitSlop={10}>
+            <Feather name="chevron-left" size={24} color={colors.textSec} />
+          </Pressable>
+        </View>
+        <View style={styles.missing}>
+          <Text style={styles.missingText}>This deck no longer exists.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const performance = deckPerformance(deck.id, events);
+  const playedIn = events.filter(event => event.deckId === deck.id);
+  const total = cardCount(deck.cards, 'main');
+  const sideTotal = cardCount(deck.cards, 'side');
+
+  const curve = manaCurve(deck.cards);
+  const slices = colorDistribution(deck.cards);
+  const counts = typeCounts(deck.cards);
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.navBar}>
+        <Pressable onPress={() => router.back()} hitSlop={10}>
+          <Feather name="chevron-left" size={24} color={colors.textSec} />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push({ pathname: '/deck-editor', params: { deckId: deck.id } })}
+          hitSlop={10}
+        >
+          <Text style={styles.editBtn}>Edit</Text>
+        </Pressable>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Cabeçalho */}
+        <View style={styles.header}>
+          <Text style={styles.name}>{deck.name}</Text>
+
+          <View style={styles.pips}>
+            {deck.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={20} />)}
+            {deck.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={20} isSplash />)}
+          </View>
+
+          <View style={styles.badges}>
+            {deck.format && <TypeBadge type={deck.format} />}
+            {deck.archetype && <Text style={styles.archetype}>{deck.archetype}</Text>}
+          </View>
+        </View>
+
+        {/* Desempenho */}
+        <View style={stats.bar}>
+          <View style={stats.cell}>
+            <Text style={stats.record}>
+              {performance.wins} – {performance.losses} – {performance.draws}
+            </Text>
+            <Text style={stats.label}>W – L – D</Text>
+          </View>
+          <View style={stats.divider} />
+          <View style={stats.cell}>
+            <Text style={stats.big}>{performance.winRate}%</Text>
+            <Text style={stats.label}>Win Rate</Text>
+          </View>
+          <View style={stats.divider} />
+          <View style={stats.cell}>
+            <Text style={stats.big}>{performance.events}</Text>
+            <Text style={stats.label}>Events</Text>
+          </View>
+        </View>
+
+        {performance.events === 0 && (
+          <Text style={styles.hint}>
+            Not played yet. Link it to an event from that event's screen.
+          </Text>
+        )}
+
+        {/* Eventos jogados com este deck */}
+        {playedIn.length > 0 && (
+          <Section label="Played in">
+            {playedIn.map(event => (
+              <Pressable
+                key={event.id}
+                style={({ pressed }) => [played.row, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={played.name} numberOfLines={1}>{event.name}</Text>
+                  <Text style={played.date}>{event.date}{event.rank ? ` · ${event.rank}` : ''}</Text>
+                </View>
+                <Feather name="chevron-right" size={14} color={colors.textDim} />
+              </Pressable>
+            ))}
+          </Section>
+        )}
+
+        {/* Análise — só quando há material para ela */}
+        {canAnalyse(deck) ? (
+          <>
+            {curve.length > 0 && (
+              <Section label="Mana curve">
+                <ManaCurveChart buckets={curve} />
+                <Text style={styles.chartNote}>Lands excluded.</Text>
+              </Section>
+            )}
+
+            {slices.length > 0 && (
+              <Section label="Colors">
+                <ColorBar slices={slices} />
+              </Section>
+            )}
+
+            {counts.length > 0 && (
+              <Section label="Types">
+                <TypeBreakdown counts={counts} />
+              </Section>
+            )}
+          </>
+        ) : (
+          <Section label="Decklist">
+            <Text style={styles.hint}>
+              No cards yet. Card search arrives in Phase 3 — until then this deck still tracks its
+              record across events.
+            </Text>
+          </Section>
+        )}
+
+        {/* Lista de cartas */}
+        {deck.cards && deck.cards.length > 0 && (
+          <Section label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}>
+            <CardList cards={deck.cards} />
+          </Section>
+        )}
+
+        {deck.notes && (
+          <Section label="Notes">
+            <Text style={styles.notes}>{deck.notes}</Text>
+          </Section>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Estilos ──────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  editBtn: { fontFamily: fonts.body, fontSize: 16, color: colors.gold },
+  content: { paddingBottom: 48 },
+  header: { paddingHorizontal: 20, gap: 10, marginBottom: 20 },
+  name: { fontFamily: fonts.display, fontSize: 27, color: colors.textPrim, lineHeight: 34 },
+  pips: { flexDirection: 'row', gap: 5 },
+  badges: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  archetype: { fontFamily: fonts.bodyItal, fontSize: 14, color: colors.textSec },
+  hint: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.textDim,
+    lineHeight: 21,
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  chartNote: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
+    color: colors.textDim,
+    marginTop: 8,
+  },
+  notes: { fontFamily: fonts.body, fontSize: 15, color: colors.textSec, lineHeight: 23 },
+  section: { paddingHorizontal: 20, marginBottom: 26 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    color: colors.textDim,
+  },
+  sectionAction: { fontFamily: fonts.body, fontSize: 13, color: colors.gold },
+  missing: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  missingText: { fontFamily: fonts.body, fontSize: 15, color: colors.textSec },
+});
+
+const stats = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bgCard,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 16,
+    marginBottom: 24,
+  },
+  cell: { flex: 1, alignItems: 'center', gap: 3 },
+  divider: { width: 1, height: 32, backgroundColor: colors.border },
+  record: { fontFamily: fonts.displaySemi, fontSize: 19, color: colors.textPrim },
+  big: { fontFamily: fonts.display, fontSize: 22, color: colors.gold },
+  label: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.textDim,
+  },
+});
+
+const curve = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 150 },
+  column: { flex: 1, alignItems: 'center', gap: 4 },
+  count: { fontFamily: fonts.body, fontSize: 11, color: colors.textDim, height: 14 },
+  track: { flex: 1, width: '100%', justifyContent: 'flex-end' },
+  bar: { width: '100%', backgroundColor: colors.gold, borderRadius: 3, minHeight: 2 },
+  axis: { fontFamily: fonts.displayMed, fontSize: 12, color: colors.textSec },
+});
+
+const colorChart = StyleSheet.create({
+  bar: {
+    flexDirection: 'row',
+    height: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  legend: { flexDirection: 'row', gap: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  legendText: { fontFamily: fonts.bodyMed, fontSize: 13, color: colors.textSec },
+});
+
+const types = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  name: { fontFamily: fonts.body, fontSize: 13, color: colors.textSec, width: 92 },
+  track: { flex: 1, height: 8, backgroundColor: colors.border + '55', borderRadius: 4 },
+  bar: { height: 8, backgroundColor: colors.goldDim, borderRadius: 4 },
+  count: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textPrim, width: 26, textAlign: 'right' },
+});
+
+const cardList = StyleSheet.create({
+  groupLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.goldDim,
+    marginBottom: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 30,
+  },
+  quantity: {
+    fontFamily: fonts.displayMed,
+    fontSize: 13,
+    color: colors.textDim,
+    width: 26,
+  },
+  name: { flex: 1, fontFamily: fonts.body, fontSize: 14, color: colors.textPrim },
+  cost: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim },
+});
+
+const played = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 52,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border + '66',
+  },
+  name: { fontFamily: fonts.bodyMed, fontSize: 15, color: colors.textPrim },
+  date: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim },
+});

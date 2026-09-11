@@ -12,9 +12,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { Game, GameResult, ManaColor, ManaSelection, MatchResult } from '../types';
+import { Game, GameResult, ManaColor, MatchResult } from '../types';
 import { useEventsStore } from '../store/useEventsStore';
 import { ManaPip } from '../components/ManaPip';
+import {
+  MANA_ORDER,
+  type ManaState,
+  type ManaStates,
+  cycleManaState,
+  emptyManaStates,
+  hasAnyMana,
+  manaSelectionFrom,
+  manaStatesFrom,
+} from '../domain/manaSelection';
 import {
   MAX_GAMES,
   addGame,
@@ -24,10 +34,6 @@ import {
   resultFromGames,
   setGameResult,
 } from '../domain/match';
-
-const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
-
-type ManaState = 0 | 1 | 2; // 0: off, 1: principal, 2: splash
 
 // ─── Seletor de Resultado ─────────────────────────────────────────────────────
 
@@ -298,15 +304,6 @@ const gamesSel = StyleSheet.create({
   addText: { fontFamily: fonts.body, fontSize: 13, color: colors.textSec },
 });
 
-/** As cores de um match já gravado, de volta aos três estados por pip do selector. */
-function colorStatesFrom(selection: ManaSelection | undefined): Record<ManaColor, ManaState> {
-  const base: Record<ManaColor, ManaState> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
-  if (!selection) return base;
-  for (const color of selection.main) base[color] = 1;
-  for (const color of selection.splash) base[color] = 2;
-  return base;
-}
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function MatchRegistrationScreen() {
@@ -330,8 +327,8 @@ export default function MatchRegistrationScreen() {
 
   const [opponent, setOpponent]   = useState(existing?.opponent ?? '');
   const [result, setResult]       = useState<MatchResult | null>(existing?.result ?? null);
-  const [colorStates, setColorStates] = useState<Record<ManaColor, ManaState>>(
-    colorStatesFrom(existing?.opponentColors),
+  const [colorStates, setColorStates] = useState<ManaStates>(
+    manaStatesFrom(existing?.opponentColors),
   );
   const [games, setGames]         = useState<Game[]>(existing?.games ?? []);
   const [gamesOpen, setGamesOpen] = useState((existing?.games?.length ?? 0) > 0);
@@ -351,28 +348,22 @@ export default function MatchRegistrationScreen() {
 
   // Cicla estado de cor: 0 → 1 → 2 → 0
   function cycleColor(color: ManaColor) {
-    setColorStates(prev => ({
-      ...prev,
-      [color]: ((prev[color] + 1) % 3) as ManaState,
-    }));
+    setColorStates(prev => cycleManaState(prev, color));
   }
 
   function clearColors() {
-    setColorStates({ W: 0, U: 0, B: 0, R: 0, G: 0 });
+    setColorStates(emptyManaStates());
   }
 
-  const hasAnyColor = Object.values(colorStates).some(s => s > 0);
+  const hasAnyColor = hasAnyMana(colorStates);
 
   async function handleSave() {
     if (!canSave || !eventId || effectiveResult === null) return;
     setSaving(true);
 
-    const main   = MANA_ORDER.filter(c => colorStates[c] === 1);
-    const splash = MANA_ORDER.filter(c => colorStates[c] === 2);
-
     const payload = {
       opponent:       opponent.trim(),
-      opponentColors: { main, splash },
+      opponentColors: manaSelectionFrom(colorStates),
       result:         effectiveResult,
       // Com games, quem jogou primeiro no match é quem jogou primeiro no game 1 — dois sítios a
       // dizerem coisas diferentes sobre o mesmo facto era um bug à espera de acontecer.
