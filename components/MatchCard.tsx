@@ -22,6 +22,13 @@ interface MatchCardProps {
   onLongPress?: () => void;
 }
 
+/** "2-1" quando os games foram registados, nada quando não foram. */
+function gameRecord(match: MatchCardProps['match']): string | null {
+  if (!match.games || match.games.length === 0) return null;
+  const wins = match.games.filter(game => game.result === 'W').length;
+  return `${wins}-${match.games.length - wins}`;
+}
+
 export function MatchCard({ match, onPress, onLongPress }: MatchCardProps) {
   const rs = RESULT_STYLES[match.result];
 
@@ -41,7 +48,13 @@ export function MatchCard({ match, onPress, onLongPress }: MatchCardProps) {
 
       {/* Info */}
       <View style={styles.info}>
-        <Text style={styles.round}>Round {match.round}</Text>
+        <Text style={styles.round}>
+          Round {match.round}
+          {gameRecord(match) && <Text style={styles.gameRecord}>{'  ' + gameRecord(match)}</Text>}
+          {match.wentFirst !== undefined && (
+            <Text style={styles.playDraw}>{match.wentFirst ? '  play' : '  draw'}</Text>
+          )}
+        </Text>
         <Text style={styles.opponent} numberOfLines={1}>
           {match.opponent}
         </Text>
@@ -104,6 +117,14 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  gameRecord: {
+    fontFamily: fonts.displayMed,
+    color: colors.gold,
+  },
+  playDraw: {
+    fontFamily: fonts.bodyItal,
+    color: colors.textDim,
   },
   opponent: {
     fontFamily: fonts.displayMed,

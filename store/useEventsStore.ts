@@ -55,6 +55,7 @@ interface EventsStore {
   load: () => Promise<void>;
   createEvent: (data: NewEventData) => Promise<string | null>;
   addMatch: (eventId: string, data: NewMatchData) => Promise<void>;
+  updateMatch: (eventId: string, round: number, data: NewMatchData) => Promise<boolean>;
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
@@ -83,6 +84,30 @@ async function persistEvent(event: Event, message: string): Promise<void> {
   const content = serializeEvent(event);
   await localStore.writeFile(path, content);
   await outbox.enqueueFile({ path, content, message });
+}
+
+/**
+ * Resolve o nome escrito no écran numa referência da taxonomia.
+ *
+ * O adversário nunca é texto livre dentro do evento (ver CLAUDE.md): ou já existe em
+ * `opponents.json`, ou passa a existir agora. Partilhado entre registar e editar um match, porque
+ * editar pode trocar o adversário e teria o mesmo problema.
+ */
+function resolveOpponent(
+  known: Opponent[],
+  rawName: string,
+): { opponentId: string; displayName: string; opponents: Opponent[]; isNew: boolean } {
+  const name = rawName.trim();
+  const opponentId = slugify(name) || 'desconhecido';
+  const existing = known.find(opponent => opponent.id === opponentId);
+
+  return {
+    opponentId,
+    // O nome que manda é o da taxonomia: é lá que se troca um nome por uma alcunha (ADR 0005).
+    displayName: existing?.name ?? name,
+    opponents: existing ? known : [...known, { id: opponentId, name }],
+    isNew: !existing,
+  };
 }
 
 async function persistOpponents(opponents: Opponent[], message: string): Promise<void> {
@@ -150,11 +175,10 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     const event = get().events.find(e => e.id === eventId);
     if (!event) return;
 
-    // O adversário é uma referência: ou já existe na taxonomia, ou passa a existir agora.
-    const name = data.opponent.trim();
-    const opponentId = slugify(name) || 'desconhecido';
-    const known = get().opponents.find(opponent => opponent.id === opponentId);
-    const opponents = known ? get().opponents : [...get().opponents, { id: opponentId, name }];
+    const { opponentId, displayName, opponents, isNew } = resolveOpponent(
+      get().opponents,
+      data.opponent,
+    );
 
     const round = event.matches.length + 1;
     const updated: Event = {
@@ -164,7 +188,7 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
         {
           round,
           opponentId,
-          opponent: known?.name ?? name,
+          opponent: displayName,
           opponentColors: data.opponentColors,
           result: data.result,
           wentFirst: data.wentFirst,
@@ -179,8 +203,58 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       opponents,
     }));
 
-    if (!known) await persistOpponents(opponents, `Add opponent ${name}`);
+    if (isNew) await persistOpponents(opponents, `Add opponent ${displayName}`);
     await persistEvent(updated, `Register round ${round} of ${event.name}`);
+  },
+
+  // ─── updateMatch ───────────────────────────────────────────────────────────
+
+  /**
+   * Corrige um match já registado, sem lhe mexer na ronda.
+   *
+   * A ronda é a identidade do match dentro do evento e a ordem da lista tem de bater certo com ela
+   * (a validação recusa saltos), portanto editar substitui no sítio em vez de remover e voltar a
+   * acrescentar. O adversário pode mudar — um nome mal escrito na loja é a razão mais provável para
+   * se estar aqui.
+   */
+  updateMatch: async (eventId, round, data) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    const target = event.matches.find(match => match.round === round);
+    if (!target) return false;
+
+    const { opponentId, displayName, opponents, isNew } = resolveOpponent(
+      get().opponents,
+      data.opponent,
+    );
+
+    const updated: Event = {
+      ...event,
+      matches: event.matches.map(match =>
+        match.round === round
+          ? {
+              round,
+              opponentId,
+              opponent: displayName,
+              opponentColors: data.opponentColors,
+              result: data.result,
+              wentFirst: data.wentFirst,
+              games: data.games,
+              notes: data.notes,
+            }
+          : match,
+      ),
+    };
+
+    set(state => ({
+      events: state.events.map(e => (e.id === eventId ? updated : e)),
+      opponents,
+    }));
+
+    if (isNew) await persistOpponents(opponents, `Add opponent ${displayName}`);
+    await persistEvent(updated, `Edit round ${round} of ${event.name}`);
+    return true;
   },
 
   // ─── completeEvent ─────────────────────────────────────────────────────────

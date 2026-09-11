@@ -301,6 +301,19 @@ export default function EventDetailScreen() {
     });
   }
 
+  /** Toque num match abre-o para corrigir; o toque longo continua a apagar. */
+  function goToMatchEdit(round: number) {
+    router.push({
+      pathname: '/match-registration',
+      params: {
+        eventId: event!.id,
+        round: String(round),
+        eventName: event!.name,
+        mode: 'edit',
+      },
+    });
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* NavBar */}
@@ -372,6 +385,7 @@ export default function EventDetailScreen() {
           <MatchCard
             key={match.round}
             match={match}
+            onPress={() => goToMatchEdit(match.round)}
             onLongPress={() => setDeleteMatchModal({ round: match.round, opponent: match.opponent })}
           />
         ))}

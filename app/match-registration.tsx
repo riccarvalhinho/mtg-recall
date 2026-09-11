@@ -12,9 +12,18 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { ManaColor, MatchResult } from '../types';
+import { Game, GameResult, ManaColor, ManaSelection, MatchResult } from '../types';
 import { useEventsStore } from '../store/useEventsStore';
 import { ManaPip } from '../components/ManaPip';
+import {
+  MAX_GAMES,
+  addGame,
+  cycleGameWentFirst,
+  matchWentFirst,
+  removeGame,
+  resultFromGames,
+  setGameResult,
+} from '../domain/match';
 
 const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
 
@@ -28,9 +37,11 @@ const RESULT_CONFIG: Record<MatchResult, { label: string; bg: string; border: st
   D: { label: 'Draw', bg: colors.drawBg, border: colors.drawBorder, color: colors.draw },
 };
 
-function ResultSelector({ value, onChange }: {
+function ResultSelector({ value, onChange, derived }: {
   value: MatchResult | null;
   onChange: (r: MatchResult) => void;
+  /** Com games registados o resultado vem deles e deixa de se poder escolher à mão. */
+  derived?: boolean;
 }) {
   return (
     <View style={resultSel.row}>
@@ -41,11 +52,13 @@ function ResultSelector({ value, onChange }: {
           <Pressable
             key={r}
             onPress={() => onChange(r)}
+            disabled={derived}
             style={({ pressed }) => [
               resultSel.btn,
               { backgroundColor: cfg.bg, borderColor: cfg.border },
               active && resultSel.btnActive,
-              pressed && { transform: [{ scale: 0.95 }] },
+              derived && !active && resultSel.btnMuted,
+              pressed && !derived && { transform: [{ scale: 0.95 }] },
             ]}
           >
             <Text style={[resultSel.letter, { color: active ? cfg.color : cfg.color + '88' }]}>
@@ -78,6 +91,9 @@ const resultSel = StyleSheet.create({
   btnActive: {
     transform: [{ scale: 1.02 }],
   },
+  btnMuted: {
+    opacity: 0.35,
+  },
   letter: {
     fontFamily: fonts.display,
     fontSize: 26,
@@ -92,28 +108,246 @@ const resultSel = StyleSheet.create({
   },
 });
 
+// ─── Play / Draw ──────────────────────────────────────────────────────────────
+
+/**
+ * Quem jogou primeiro. Três estados, não dois: "não registei" não é o mesmo que "joguei segundo",
+ * e gravar `false` por omissão seria inventar um dado que ninguém introduziu. Tocar no que já está
+ * activo limpa-o.
+ */
+function PlayDrawToggle({ value, onChange }: {
+  value: boolean | undefined;
+  onChange: (next: boolean | undefined) => void;
+}) {
+  const options: { label: string; state: boolean }[] = [
+    { label: 'On the play', state: true },
+    { label: 'On the draw', state: false },
+  ];
+
+  return (
+    <View style={playDraw.row}>
+      {options.map(option => {
+        const active = value === option.state;
+        return (
+          <Pressable
+            key={option.label}
+            onPress={() => onChange(active ? undefined : option.state)}
+            style={({ pressed }) => [
+              playDraw.btn,
+              active && playDraw.btnActive,
+              pressed && { opacity: 0.75 },
+            ]}
+          >
+            <Text style={[playDraw.label, active && playDraw.labelActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const playDraw = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 10 },
+  btn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnActive: {
+    backgroundColor: colors.gold + '22',
+    borderColor: colors.gold + '88',
+  },
+  label: { fontFamily: fonts.body, fontSize: 14, color: colors.textDim },
+  labelActive: { color: colors.gold },
+});
+
+// ─── Games ────────────────────────────────────────────────────────────────────
+
+/**
+ * Registo game a game. Opcional — entre rondas o que se quer é um toque no resultado e seguir.
+ *
+ * Quando há games o resultado do match deixa de ser escolhido e passa a ser derivado deles. É o que
+ * garante que a app nunca escreve um ficheiro que o `npm run validate` vai chumbar.
+ */
+function GamesSection({ games, onChange }: {
+  games: Game[];
+  onChange: (next: Game[]) => void;
+}) {
+  return (
+    <View style={gamesSel.list}>
+      {games.map(game => (
+        <View key={game.number} style={gamesSel.row}>
+          <Text style={gamesSel.number}>G{game.number}</Text>
+
+          <View style={gamesSel.resultPair}>
+            {(['W', 'L'] as GameResult[]).map(option => {
+              const active = game.result === option;
+              const cfg = RESULT_CONFIG[option];
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => onChange(setGameResult(games, game.number, option))}
+                  style={({ pressed }) => [
+                    gamesSel.resultBtn,
+                    active && { backgroundColor: cfg.bg, borderColor: cfg.border },
+                    pressed && { opacity: 0.75 },
+                  ]}
+                >
+                  <Text style={[gamesSel.resultText, { color: active ? cfg.color : colors.textDim }]}>
+                    {option}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Pressable
+            onPress={() => onChange(cycleGameWentFirst(games, game.number))}
+            style={({ pressed }) => [gamesSel.playBtn, pressed && { opacity: 0.75 }]}
+          >
+            <Text style={[gamesSel.playText, game.wentFirst !== undefined && { color: colors.gold }]}>
+              {game.wentFirst === undefined ? 'play?' : game.wentFirst ? 'play' : 'draw'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => onChange(removeGame(games, game.number))}
+            style={({ pressed }) => [gamesSel.removeBtn, pressed && { opacity: 0.75 }]}
+          >
+            <Text style={gamesSel.removeText}>×</Text>
+          </Pressable>
+        </View>
+      ))}
+
+      {games.length < MAX_GAMES && (
+        <View style={gamesSel.addRow}>
+          {(['W', 'L'] as GameResult[]).map(option => (
+            <Pressable
+              key={option}
+              onPress={() => onChange(addGame(games, option))}
+              style={({ pressed }) => [gamesSel.addBtn, pressed && { opacity: 0.75 }]}
+            >
+              <Text style={gamesSel.addText}>
+                + Game {games.length + 1} {option === 'W' ? 'won' : 'lost'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const gamesSel = StyleSheet.create({
+  list: { gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  number: {
+    fontFamily: fonts.displayMed,
+    fontSize: 14,
+    color: colors.textSec,
+    width: 26,
+  },
+  resultPair: { flexDirection: 'row', gap: 6 },
+  resultBtn: {
+    width: 46,
+    height: 42,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultText: { fontFamily: fonts.displaySemi, fontSize: 16 },
+  playBtn: {
+    flex: 1,
+    height: 42,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textDim,
+    textTransform: 'lowercase',
+  },
+  removeBtn: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeText: { fontFamily: fonts.body, fontSize: 22, color: colors.textDim },
+  addRow: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  addBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addText: { fontFamily: fonts.body, fontSize: 13, color: colors.textSec },
+});
+
+/** As cores de um match já gravado, de volta aos três estados por pip do selector. */
+function colorStatesFrom(selection: ManaSelection | undefined): Record<ManaColor, ManaState> {
+  const base: Record<ManaColor, ManaState> = { W: 0, U: 0, B: 0, R: 0, G: 0 };
+  if (!selection) return base;
+  for (const color of selection.main) base[color] = 1;
+  for (const color of selection.splash) base[color] = 2;
+  return base;
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function MatchRegistrationScreen() {
-  const { eventId, round, eventName } = useLocalSearchParams<{
+  const { eventId, round, eventName, mode } = useLocalSearchParams<{
     eventId: string;
     round: string;
     eventName: string;
+    /** 'edit' corrige a ronda indicada; sem isto, regista uma nova. */
+    mode?: string;
   }>();
 
-  const [opponent, setOpponent]   = useState('');
-  const [result, setResult]       = useState<MatchResult | null>(null);
-  const [colorStates, setColorStates] = useState<Record<ManaColor, ManaState>>({
-    W: 0, U: 0, B: 0, R: 0, G: 0,
-  });
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [notes, setNotes]         = useState('');
+  const isEdit = mode === 'edit';
+  const roundNum = Number(round ?? '1');
+
+  // Em edição, o match que se vai corrigir. O estado abaixo arranca a partir dele.
+  const existing = useEventsStore(s =>
+    isEdit
+      ? s.events.find(e => e.id === eventId)?.matches.find(m => m.round === roundNum)
+      : undefined,
+  );
+
+  const [opponent, setOpponent]   = useState(existing?.opponent ?? '');
+  const [result, setResult]       = useState<MatchResult | null>(existing?.result ?? null);
+  const [colorStates, setColorStates] = useState<Record<ManaColor, ManaState>>(
+    colorStatesFrom(existing?.opponentColors),
+  );
+  const [games, setGames]         = useState<Game[]>(existing?.games ?? []);
+  const [gamesOpen, setGamesOpen] = useState((existing?.games?.length ?? 0) > 0);
+  const [wentFirst, setWentFirst] = useState<boolean | undefined>(existing?.wentFirst);
+  const [notesOpen, setNotesOpen] = useState((existing?.notes ?? '').length > 0);
+  const [notes, setNotes]         = useState(existing?.notes ?? '');
   const [saving, setSaving]       = useState(false);
   const [saved, setSaved]         = useState(false);
-  const addMatch = useEventsStore(s => s.addMatch);
+  const addMatch    = useEventsStore(s => s.addMatch);
+  const updateMatch = useEventsStore(s => s.updateMatch);
 
-  const canSave = opponent.trim().length > 0 && result !== null && !saving;
-  const roundNum = round ?? '1';
+  // Com games registados, o resultado vem deles — nunca do que estivesse escolhido à mão.
+  const derivedResult = resultFromGames(games);
+  const effectiveResult = derivedResult ?? result;
+
+  const canSave = opponent.trim().length > 0 && effectiveResult !== null && !saving;
 
   // Cicla estado de cor: 0 → 1 → 2 → 0
   function cycleColor(color: ManaColor) {
@@ -130,18 +364,25 @@ export default function MatchRegistrationScreen() {
   const hasAnyColor = Object.values(colorStates).some(s => s > 0);
 
   async function handleSave() {
-    if (!canSave || !eventId) return;
+    if (!canSave || !eventId || effectiveResult === null) return;
     setSaving(true);
 
     const main   = MANA_ORDER.filter(c => colorStates[c] === 1);
     const splash = MANA_ORDER.filter(c => colorStates[c] === 2);
 
-    await addMatch(eventId, {
+    const payload = {
       opponent:       opponent.trim(),
       opponentColors: { main, splash },
-      result:         result!,
+      result:         effectiveResult,
+      // Com games, quem jogou primeiro no match é quem jogou primeiro no game 1 — dois sítios a
+      // dizerem coisas diferentes sobre o mesmo facto era um bug à espera de acontecer.
+      wentFirst:      matchWentFirst(games, wentFirst),
+      games:          games.length > 0 ? games : undefined,
       notes:          notes.trim() || undefined,
-    });
+    };
+
+    if (isEdit) await updateMatch(eventId, roundNum, payload);
+    else await addMatch(eventId, payload);
 
     setSaving(false);
     setSaved(true);
@@ -164,7 +405,7 @@ export default function MatchRegistrationScreen() {
           </Pressable>
 
           <View style={styles.navCenter}>
-            <Text style={styles.navTitle}>New Match</Text>
+            <Text style={styles.navTitle}>{isEdit ? 'Edit Match' : 'New Match'}</Text>
             <View style={styles.roundBadge}>
               <Text style={styles.roundBadgeText}>Round {roundNum}</Text>
             </View>
@@ -175,7 +416,7 @@ export default function MatchRegistrationScreen() {
             disabled={!canSave}
             style={({ pressed }) => [pressed && { opacity: 0.85 }]}
           >
-            {opponent.trim().length > 0 && result !== null ? (
+            {opponent.trim().length > 0 && effectiveResult !== null ? (
               <LinearGradient
                 colors={[colors.gold, '#A07840']}
                 start={{ x: 0, y: 0 }}
@@ -263,8 +504,49 @@ export default function MatchRegistrationScreen() {
 
           {/* Seletor de resultado */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Result</Text>
-            <ResultSelector value={result} onChange={setResult} />
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Result</Text>
+              {derivedResult !== null && (
+                <Text style={styles.derivedHint}>from games</Text>
+              )}
+            </View>
+            <ResultSelector
+              value={effectiveResult}
+              onChange={setResult}
+              derived={derivedResult !== null}
+            />
+          </View>
+
+          {/* Quem jogou primeiro — só quando não há games, senão o game 1 é que manda */}
+          {games.length === 0 && (
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Who played first</Text>
+              <PlayDrawToggle value={wentFirst} onChange={setWentFirst} />
+            </View>
+          )}
+
+          {/* Registo game a game, opcional */}
+          <View style={styles.field}>
+            <Pressable
+              style={styles.notesToggle}
+              onPress={() => setGamesOpen(v => !v)}
+            >
+              <View style={[styles.notesToggleCircle, gamesOpen && styles.notesToggleCircleActive]}>
+                <Text style={styles.notesToggleIcon}>{gamesOpen ? '−' : '+'}</Text>
+              </View>
+              <Text style={[styles.notesToggleText, gamesOpen && { color: colors.textSec }]}>
+                Game by game{games.length > 0 ? ` · ${games.filter(g => g.result === 'W').length}-${games.filter(g => g.result === 'L').length}` : ''}
+              </Text>
+            </Pressable>
+
+            {gamesOpen && (
+              <View style={{ marginTop: 12 }}>
+                <GamesSection games={games} onChange={setGames} />
+                <Text style={styles.colorHint}>
+                  The match result follows the games. Tap play/draw to record who started each one.
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Notas opcionais */}
@@ -385,6 +667,11 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+  },
+  derivedHint: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
+    color: colors.gold,
   },
   clearBtn: {
     fontFamily: fonts.bodyItal,
