@@ -18,9 +18,9 @@ import { loadAll } from './load-data.mts';
  * Sobe quando a forma do bundle mudar de maneira que uma app antiga não saiba ler.
  * A app recusa um formato que não conhece em vez de adivinhar.
  */
-// A versão 2 acrescenta os decks (Fase 2). Uma app da versão 1 recusa este bundle em vez de o ler
-// a meio e ficar sem decks sem dizer nada.
-const FORMAT_VERSION = 2;
+// 2 acrescentou os decks (Fase 2); 3 acrescenta a colecção, os preços e o histórico de valor
+// (Fases 3 e 4). Uma app antiga recusa um formato que não conhece em vez de o ler a meio.
+const FORMAT_VERSION = 3;
 
 const data = loadAll();
 
@@ -30,6 +30,10 @@ const bundle = {
   events: data.events.map((entry) => entry.data),
   decks: data.decks.map((entry) => entry.data),
   opponents: (data.opponents.data as { items: unknown[] }).items,
+  // Ausentes enquanto a colecção não for usada — a app trata os três como opcionais.
+  collection: (data.collection?.data as { items?: unknown[] } | undefined)?.items ?? [],
+  prices: (data.prices?.data as { items?: unknown[] } | undefined)?.items ?? [],
+  valueHistory: (data.valueHistory?.data as { entries?: unknown[] } | undefined)?.entries ?? [],
 };
 
 fs.mkdirSync(paths.bundleDir, { recursive: true });
@@ -39,5 +43,5 @@ fs.writeFileSync(target, `${JSON.stringify(bundle, null, 2)}\n`, 'utf8');
 const size = (fs.statSync(target).size / 1024).toFixed(1);
 console.log(
   `✓ ${rel(target)} — ${bundle.events.length} evento(s), ${bundle.decks.length} deck(s), ` +
-    `${bundle.opponents.length} adversário(s), ${size} kB`,
+    `${bundle.opponents.length} adversário(s), ${bundle.collection.length} carta(s), ${size} kB`,
 );

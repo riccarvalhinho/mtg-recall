@@ -14,11 +14,13 @@ import {
   parseDeck,
   parseEvent,
   parseOpponents,
+  parseCollection,
+  serializeCollection,
   serializeDeck,
   serializeEvent,
   serializeOpponents,
 } from './repoFiles.ts';
-import type { Deck, Event, Opponent } from '../types';
+import type { CollectionCard, Deck, Event, Opponent } from '../types';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
@@ -29,6 +31,7 @@ const schema = (name: string) =>
 const validateEvent = ajv.compile(schema('event.schema.json'));
 const validateOpponents = ajv.compile(schema('opponents.schema.json'));
 const validateDeck = ajv.compile(schema('deck.schema.json'));
+const validateCollection = ajv.compile(schema('collection.schema.json'));
 
 const fullEvent: Event = {
   id: '2026-04-12-fnm-sealed-aetherdrift',
@@ -245,5 +248,68 @@ describe('parseDeck', () => {
   it('um deck sem cores não deita a lista abaixo', () => {
     const deck = parseDeck({ id: 'x', name: 'X' });
     expect(deck.colors).toEqual({ main: [], splash: [] });
+  });
+});
+
+// ─── Colecção ────────────────────────────────────────────────────────────────
+
+const collection: CollectionCard[] = [
+  {
+    scryfallId: 'a9738cda-adb1-47fb-9f4c-ecd930228c4d',
+    name: 'Ragavan, Nimble Pilferer',
+    setCode: 'mh2',
+    collectorNumber: '138',
+    quantity: 2,
+    condition: 'NM',
+    acquiredAt: '2026-03-04',
+  },
+  {
+    scryfallId: 'a9738cda-adb1-47fb-9f4c-ecd930228c4d',
+    name: 'Ragavan, Nimble Pilferer',
+    setCode: 'mh2',
+    collectorNumber: '138',
+    quantity: 1,
+    foil: true,
+  },
+  { name: 'Consider', quantity: 4 },
+];
+
+describe('serializeCollection', () => {
+  it('passa no schema verdadeiro', () => {
+    const written = JSON.parse(serializeCollection(collection));
+    expect(validateCollection(written), JSON.stringify(validateCollection.errors)).toBe(true);
+  });
+
+  it('uma colecção vazia continua a ser uma colecção válida', () => {
+    const written = JSON.parse(serializeCollection([]));
+    expect(validateCollection(written), JSON.stringify(validateCollection.errors)).toBe(true);
+    expect(written.items).toEqual([]);
+  });
+
+  it('não escreve foil: false, que é o valor por omissão do schema', () => {
+    const written = JSON.parse(serializeCollection(collection));
+    const naoFoil = written.items.find(
+      (card: { name: string; foil?: boolean }) => card.name === 'Consider',
+    );
+    expect(naoFoil.foil).toBeUndefined();
+  });
+
+  it('ordena por nome — o diff tem de mostrar a carta acrescentada, não a lista reordenada', () => {
+    const written = JSON.parse(serializeCollection(collection));
+    expect(written.items[0].name).toBe('Consider');
+  });
+
+  it('a versão foil e a normal ficam ambas, como entradas separadas', () => {
+    const written = JSON.parse(serializeCollection(collection));
+    const ragavans = written.items.filter(
+      (card: { name: string }) => card.name === 'Ragavan, Nimble Pilferer',
+    );
+    expect(ragavans).toHaveLength(2);
+  });
+
+  it('a ida e volta não perde nada', () => {
+    const roundTrip = parseCollection(JSON.parse(serializeCollection(collection)));
+    expect(roundTrip).toHaveLength(3);
+    expect(roundTrip.find(card => card.foil)?.quantity).toBe(1);
   });
 });

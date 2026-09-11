@@ -32,11 +32,19 @@ export function readJsonDir<T = unknown>(dir: string): LoadedFile<T>[] {
     .map((entry) => readJson<T>(path.join(dir, entry)));
 }
 
+/** Um ficheiro que pode não existir ainda. A colecção só aparece quando for usada. */
+export function readJsonIfExists<T = unknown>(file: string): LoadedFile<T> | undefined {
+  return fs.existsSync(file) ? readJson<T>(file) : undefined;
+}
+
 /** Lê tudo o que está em data/, sem validar. Validar é trabalho do validate-data.mts. */
 export function loadAll() {
   return {
     events: readJsonDir(paths.events),
     decks: readJsonDir(paths.decks),
     opponents: readJson(path.join(paths.taxonomies, 'opponents.json')),
+    collection: readJsonIfExists(path.join(paths.collection, 'cards.json')),
+    prices: readJsonIfExists(path.join(paths.collection, 'prices.json')),
+    valueHistory: readJsonIfExists(path.join(paths.collection, 'value-history.json')),
   };
 }

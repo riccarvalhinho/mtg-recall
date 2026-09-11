@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riccarvalhinho/mtg-recall/data/schema/collection.schema.json",
+  "title": "Colecção",
+  "description": "As cartas que o autor tem, em data/collection/cards.json. Um ficheiro só e não um por carta: ao contrário dos eventos, uma colecção altera-se aos poucos e sempre no mesmo sítio, e mil ficheiros de duas linhas não davam diff melhor nenhum. Os preços NÃO estão aqui — ver docs/adr/0007.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "items"],
+  "properties": {
+    "kind": { "const": "collection" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/collectionCard" }
+    }
+  },
+  "definitions": {
+    "collectionCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "quantity"],
+      "properties": {
+        "scryfallId": {
+          "description": "Id da impressão concreta na Scryfall. Sem isto o preço é do nome da carta e não da cópia que se tem — ver a secção 'Fica difícil' do ADR 0007.",
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "description": "Nome da carta, como aparece na Scryfall.",
+          "type": "string",
+          "minLength": 1
+        },
+        "setCode": {
+          "description": "Set da impressão. Duas impressões da mesma carta valem coisas diferentes.",
+          "type": "string",
+          "pattern": "^[a-z0-9]{3,6}$"
+        },
+        "collectorNumber": {
+          "description": "Número do coleccionador dentro do set. É o que distingue variantes com o mesmo nome e set.",
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9999
+        },
+        "foil": {
+          "description": "Ausente significa não-foil. Uma carta que se tenha nas duas versões são duas entradas.",
+          "type": "boolean"
+        },
+        "condition": {
+          "description": "Estado da carta, na escala da Cardmarket. Ausente significa que não foi registado — e não que está impecável.",
+          "type": "string",
+          "enum": ["M", "NM", "EX", "GD", "LP", "PL", "PO"]
+        },
+        "language": {
+          "description": "Código de idioma da Scryfall (en, pt, ja...). Ausente significa inglês.",
+          "type": "string",
+          "pattern": "^[a-z]{2,3}$"
+        },
+        "acquiredAt": {
+          "description": "Quando entrou na colecção. Opcional: uma colecção antiga não tem esta informação e inventá-la seria pior do que não a ter.",
+          "type": "string",
+          "format": "date"
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

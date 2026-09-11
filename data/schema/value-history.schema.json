@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riccarvalhinho/mtg-recall/data/schema/value-history.schema.json",
+  "title": "Histórico de valor",
+  "description": "Uma entrada por actualização de preços, em data/collection/value-history.json. É append-only e cresce devagar — uma linha por semana. Parece contrariar a regra de não guardar campos calculados, e é de propósito: uma entrada destas não é derivável do estado actual, é a medição de um momento que já passou. Ver docs/adr/0007.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "entries"],
+  "properties": {
+    "kind": { "const": "value-history" },
+    "entries": {
+      "description": "Por ordem cronológica, a mais antiga primeiro.",
+      "type": "array",
+      "items": { "$ref": "#/definitions/entry" }
+    }
+  },
+  "definitions": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date", "totalEur", "cards"],
+      "properties": {
+        "date": {
+          "description": "Dia da medição. Uma só por dia: correr o workflow duas vezes no mesmo dia substitui em vez de acrescentar.",
+          "type": "string",
+          "format": "date"
+        },
+        "totalEur": {
+          "description": "Valor de toda a colecção nesse dia, já a contar quantidades e foils.",
+          "type": "number",
+          "minimum": 0
+        },
+        "cards": {
+          "description": "Quantas cartas havia. Sem isto, uma subida no total não se distingue de ter comprado mais cartas.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "priced": {
+          "description": "Quantas dessas tinham preço conhecido. Um total baseado em metade da colecção não é o mesmo número.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

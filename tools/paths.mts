@@ -8,6 +8,7 @@ export const paths = {
   events: path.join(repoRoot, 'data', 'events'),
   decks: path.join(repoRoot, 'data', 'decks'),
   taxonomies: path.join(repoRoot, 'data', 'taxonomies'),
+  collection: path.join(repoRoot, 'data', 'collection'),
   /** Onde o bundle é gerado. Não é commitado — o CI gera-o e publica-o no Pages. */
   bundleDir: path.join(repoRoot, 'site', 'data'),
 } as const;

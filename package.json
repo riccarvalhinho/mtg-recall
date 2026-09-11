@@ -11,7 +11,8 @@
     "bundle": "tsx tools/build-bundle.mts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "check": "npm run validate && npm run typecheck && npm run test"
+    "check": "npm run validate && npm run typecheck && npm run test",
+    "prices": "tsx tools/refresh-prices.mts"
   },
   "dependencies": {
     "@expo-google-fonts/eb-garamond": "^0.4.2",

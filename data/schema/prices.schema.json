@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/riccarvalhinho/mtg-recall/data/schema/prices.schema.json",
+  "title": "Preços",
+  "description": "Preços em euros das cartas da colecção, em data/collection/prices.json. Escrito por um workflow agendado (tools/refresh-prices.mts), NUNCA pelo telemóvel. Vive à parte da colecção porque um preço muda todas as semanas e não tem que sujar o diff de onde está registado o que se tem — ver docs/adr/0007.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "source", "updatedAt", "items"],
+  "properties": {
+    "kind": { "const": "prices" },
+    "source": {
+      "description": "De onde vieram. Fica escrito no ficheiro para que daqui a dois anos ninguém tenha de adivinhar.",
+      "const": "scryfall"
+    },
+    "currency": {
+      "description": "Sempre euros: é a moeda da Cardmarket, que é o mercado onde estes preços fazem sentido.",
+      "const": "EUR"
+    },
+    "updatedAt": {
+      "description": "Quando o workflow correu.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/price" }
+    }
+  },
+  "definitions": {
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scryfallId"],
+      "properties": {
+        "scryfallId": {
+          "description": "A impressão a que este preço pertence. É a chave: o preço é da cópia concreta, não do nome da carta.",
+          "type": "string",
+          "minLength": 1
+        },
+        "eur": {
+          "description": "Preço não-foil. Ausente quando a Scryfall não tem preço para esta impressão — o que acontece, e é melhor do que escrever zero.",
+          "type": "number",
+          "minimum": 0
+        },
+        "eurFoil": {
+          "description": "Preço foil. Ausente pela mesma razão.",
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

@@ -16,6 +16,8 @@
  *   updateDeck(id, data)            — altera um deck sem lhe mexer no id
  *   deleteDeck(id)                  — apaga, se nenhum evento o usar
  *   setEventDeck(eventId, deckId)   — liga um deck a um evento
+ *   addToCollection(card)           — acrescenta uma carta (soma se já lá estiver)
+ *   setCardQuantity(card, n)        — muda a quantidade; 0 tira da colecção
  *   restoreFromGitHub()             — repõe tudo a partir do bundle publicado
  */
 import { create } from 'zustand';
@@ -25,15 +27,31 @@ import * as localStore from '../services/localStore';
 import * as outbox from '../services/outbox';
 import {
   opponentNames,
+  parseCollection,
   parseDeck,
   parseEvent,
   parseOpponents,
+  parsePrices,
+  parseValueHistory,
+  serializeCollection,
   serializeDeck,
   serializeEvent,
   serializeOpponents,
 } from '../services/repoFiles';
 import { fetchBundle } from '../services/sync';
-import type { Deck, DeckCard, Event, EventType, Game, ManaSelection, MatchResult, Opponent } from '../types';
+import type {
+  CollectionCard,
+  Deck,
+  DeckCard,
+  Event,
+  EventType,
+  Game,
+  ManaSelection,
+  MatchResult,
+  Opponent,
+  PriceEntry,
+  ValueEntry,
+} from '../types';
 
 export interface NewEventData {
   name: string;
@@ -66,6 +84,10 @@ interface EventsStore {
   events: Event[];
   decks: Deck[];
   opponents: Opponent[];
+  collection: CollectionCard[];
+  /** Escritos pelo CI, lidos do bundle. A app nunca lhes toca — ADR 0007. */
+  prices: PriceEntry[];
+  valueHistory: ValueEntry[];
   isLoading: boolean;
 
   load: () => Promise<void>;
@@ -76,6 +98,8 @@ interface EventsStore {
   updateDeck: (deckId: string, data: NewDeckData) => Promise<boolean>;
   deleteDeck: (deckId: string) => Promise<{ ok: true } | { ok: false; usedBy: number }>;
   setEventDeck: (eventId: string, deckId: string | undefined) => Promise<boolean>;
+  addToCollection: (card: CollectionCard) => Promise<void>;
+  setCardQuantity: (card: CollectionCard, quantity: number) => Promise<void>;
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
@@ -142,6 +166,31 @@ async function persistDeck(deck: Deck, message: string): Promise<void> {
   await outbox.enqueueFile({ path, content, message });
 }
 
+async function persistCollection(items: CollectionCard[], message: string): Promise<void> {
+  const path = repoPaths.collection;
+  const content = serializeCollection(items);
+  await localStore.writeFile(path, content);
+  await outbox.enqueueFile({ path, content, message });
+}
+
+/**
+ * Duas entradas são a mesma carta se forem a mesma impressão e a mesma versão.
+ *
+ * Foil e não-foil são entradas separadas de propósito: valem preços diferentes (ADR 0007). Sem
+ * `scryfallId` cai-se para nome + set + número, que é o melhor que há quando a carta foi escrita à
+ * mão. A validação chumba duplicados por esta mesma chave — juntar aqui é o que evita escrever um
+ * ficheiro que o próprio CI recusa.
+ */
+function sameCard(a: CollectionCard, b: CollectionCard): boolean {
+  if (Boolean(a.foil) !== Boolean(b.foil)) return false;
+  if (a.scryfallId && b.scryfallId) return a.scryfallId === b.scryfallId;
+  return (
+    a.name.trim().toLowerCase() === b.name.trim().toLowerCase() &&
+    (a.setCode ?? '') === (b.setCode ?? '') &&
+    (a.collectorNumber ?? '') === (b.collectorNumber ?? '')
+  );
+}
+
 async function persistOpponents(opponents: Opponent[], message: string): Promise<void> {
   const path = repoPaths.opponents;
   const content = serializeOpponents(opponents);
@@ -153,6 +202,9 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
   events: [],
   decks: [],
   opponents: [],
+  collection: [],
+  prices: [],
+  valueHistory: [],
   isLoading: false,
 
   // ─── load ──────────────────────────────────────────────────────────────────
@@ -178,10 +230,15 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       }
     }
 
+    const collection = files[repoPaths.collection]
+      ? parseCollection(JSON.parse(files[repoPaths.collection]))
+      : [];
+
     set({
       events: events.sort(byDateDesc),
       decks: decks.sort(byName),
       opponents,
+      collection,
       isLoading: false,
     });
   },
@@ -380,6 +437,40 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     return true;
   },
 
+  // ─── colecção ──────────────────────────────────────────────────────────────
+
+  /** Acrescenta uma carta. Se já lá estiver a mesma versão, soma à quantidade em vez de duplicar. */
+  addToCollection: async (card) => {
+    const existing = get().collection.find(item => sameCard(item, card));
+
+    const collection = existing
+      ? get().collection.map(item =>
+          sameCard(item, card)
+            ? { ...item, quantity: Math.min(item.quantity + card.quantity, 9999) }
+            : item,
+        )
+      : [...get().collection, card];
+
+    set({ collection });
+    await persistCollection(collection, `Add ${card.name} to collection`);
+  },
+
+  /** Muda a quantidade. Zero ou menos tira a carta da colecção — o schema exige mínimo de 1. */
+  setCardQuantity: async (card, quantity) => {
+    const collection =
+      quantity <= 0
+        ? get().collection.filter(item => !sameCard(item, card))
+        : get().collection.map(item =>
+            sameCard(item, card) ? { ...item, quantity: Math.min(quantity, 9999) } : item,
+          );
+
+    set({ collection });
+    await persistCollection(
+      collection,
+      quantity <= 0 ? `Remove ${card.name} from collection` : `Update ${card.name} quantity`,
+    );
+  },
+
   // ─── completeEvent ─────────────────────────────────────────────────────────
 
   completeEvent: async (eventId, rank, playersCount) => {
@@ -458,6 +549,9 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       for (const event of events) files[repoPaths.event(event.id)] = serializeEvent(event);
       for (const deck of decks) files[repoPaths.deck(deck.id)] = serializeDeck(deck);
 
+      const collection = parseCollection({ items: remote.collection ?? [] });
+      if (collection.length > 0) files[repoPaths.collection] = serializeCollection(collection);
+
       // Limpar antes de substituir: se alguma coisa falhar a meio, fica-se sem a fila mas com os
       // ficheiros locais intactos — que é o lado seguro, porque a próxima alteração volta a
       // enfileirá-los. Ao contrário, uma fila viva sobre ficheiros novos enviava dados velhos.
@@ -466,7 +560,16 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       // Substitui a cópia local sem passar pela outbox: isto veio do repositório, reenviá-lo seria
       // commitar o que já lá está.
       await localStore.replaceAll(files);
-      set({ events: events.sort(byDateDesc), decks: decks.sort(byName), opponents: remote.opponents });
+      set({
+        events: events.sort(byDateDesc),
+        decks: decks.sort(byName),
+        opponents: remote.opponents,
+        collection,
+        // Preços e histórico vêm do bundle e ficam só em memória: são escritos pelo CI e a app não
+        // tem nada que os guardar na cópia local nem que os reenviar (ADR 0007).
+        prices: parsePrices(remote.prices ?? []),
+        valueHistory: parseValueHistory(remote.valueHistory ?? []),
+      });
 
       return { ok: true, events: events.length };
     } catch (error) {

@@ -1,0 +1,54 @@
+name: Actualizar preços da colecção
+
+# Os preços vêm da Scryfall e são actualizados aqui, nunca pelo telemóvel — ver
+# docs/adr/0007-precos-pela-scryfall-em-vez-da-cardmarket.md.
+#
+# Semanalmente e não diariamente: o preço de uma carta não se mexe o suficiente num dia para
+# justificar um commit por dia, e o histórico de valor fica legível com uma entrada por semana.
+on:
+  schedule:
+    # Segundas às 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+# Uma de cada vez. Duas a escrever o mesmo ficheiro dariam um conflito garantido.
+concurrency:
+  group: refresh-prices
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Pedir preços e registar o valor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      - name: Actualizar preços
+        run: npm run prices
+
+      # Escrever dados inválidos seria pior do que não os actualizar: o bundle é gerado a partir
+      # daqui e a app acredita nele.
+      - name: Validar
+        run: npm run validate
+
+      - name: Commitar se alguma coisa mudou
+        run: |
+          if [ -z "$(git status --porcelain data/collection)" ]; then
+            echo "Preços iguais aos da semana passada — nada a commitar."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/collection
+          git commit -m "chore(prices): actualizar preços da colecção"
+          git push

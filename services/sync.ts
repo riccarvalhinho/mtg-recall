@@ -8,17 +8,21 @@
  * Lê o `bundle.json` publicado em GitHub Pages: um ficheiro estático, sem token e sem limite de
  * rate, gerado pelo CI a partir de `data/`.
  */
-import type { Opponent } from '../types';
+import type { CollectionCard, Opponent, PriceEntry, ValueEntry } from '../types';
 import { bundleUrl } from './config';
 
 /** Sobe quando a forma do bundle mudar. Tem de bater certo com tools/build-bundle.mts. */
-const SUPPORTED_FORMAT = 2;
+const SUPPORTED_FORMAT = 3;
 
 export interface RemoteData {
   events: unknown[];
   /** Ausente num bundle do formato 1, que não conhecia decks. */
   decks?: unknown[];
   opponents: Opponent[];
+  /** Ausentes enquanto a colecção não for usada. */
+  collection?: CollectionCard[];
+  prices?: PriceEntry[];
+  valueHistory?: ValueEntry[];
   generatedAt?: string;
 }
 
@@ -47,6 +51,9 @@ export async function fetchBundle(): Promise<RemoteData> {
     events: bundle.events ?? [],
     decks: bundle.decks ?? [],
     opponents: bundle.opponents ?? [],
+    collection: bundle.collection ?? [],
+    prices: bundle.prices ?? [],
+    valueHistory: bundle.valueHistory ?? [],
     generatedAt: bundle.generatedAt,
   };
 }

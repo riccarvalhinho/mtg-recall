@@ -13,7 +13,18 @@
  * indentação e uma linha em branco no fim, como todos os ficheiros de `data/`; e as chaves sempre
  * pela mesma ordem, que é a ordem do schema.
  */
-import type { Deck, DeckCard, Event, Game, ManaSelection, Match, Opponent } from '../types';
+import type {
+  CollectionCard,
+  Deck,
+  DeckCard,
+  Event,
+  Game,
+  ManaSelection,
+  Match,
+  Opponent,
+  PriceEntry,
+  ValueEntry,
+} from '../types';
 
 /** Dois espaços e uma linha no fim, como todos os ficheiros de `data/`. */
 function serialize(value: unknown): string {
@@ -135,6 +146,39 @@ export function serializeOpponents(opponents: Opponent[]): string {
   return serialize({ kind: 'opponents', items });
 }
 
+/**
+ * A colecção, ordenada por nome e depois por versão.
+ *
+ * A ordem é fixa e não a de introdução, pela mesma razão dos decks: acrescentar uma carta tem de dar
+ * uma linha no diff e não um ficheiro inteiro reordenado.
+ */
+export function serializeCollection(items: CollectionCard[]): string {
+  const sorted = [...items].sort(
+    (a, b) =>
+      a.name.localeCompare(b.name, 'pt') ||
+      (a.setCode ?? '').localeCompare(b.setCode ?? '') ||
+      (a.collectorNumber ?? '').localeCompare(b.collectorNumber ?? '') ||
+      Number(a.foil ?? false) - Number(b.foil ?? false),
+  );
+
+  return serialize({
+    kind: 'collection',
+    items: sorted.map((card) => ({
+      scryfallId: trimmed(card.scryfallId),
+      name: card.name.trim(),
+      setCode: trimmed(card.setCode),
+      collectorNumber: trimmed(card.collectorNumber),
+      quantity: card.quantity,
+      // `false` é o valor por omissão do schema: escrevê-lo dava ruído em todas as linhas.
+      foil: card.foil ? true : undefined,
+      condition: card.condition,
+      language: trimmed(card.language),
+      acquiredAt: trimmed(card.acquiredAt),
+      notes: trimmed(card.notes),
+    })),
+  });
+}
+
 // ─── Leitura ─────────────────────────────────────────────────────────────────
 
 /**
@@ -163,6 +207,22 @@ export function parseDeck(raw: unknown): Deck {
     // cores desenha-se sem pips, e é melhor do que a lista de decks não abrir.
     colors: data.colors ?? { main: [], splash: [] },
   };
+}
+
+export function parseCollection(raw: unknown): CollectionCard[] {
+  const data = raw as { items?: CollectionCard[] };
+  return data.items ?? [];
+}
+
+/** Os preços vêm do bundle, escritos pelo CI. A app lê-os e nunca lhes toca (ADR 0007). */
+export function parsePrices(raw: unknown): PriceEntry[] {
+  if (Array.isArray(raw)) return raw as PriceEntry[];
+  return ((raw as { items?: PriceEntry[] }).items ?? []);
+}
+
+export function parseValueHistory(raw: unknown): ValueEntry[] {
+  if (Array.isArray(raw)) return raw as ValueEntry[];
+  return ((raw as { entries?: ValueEntry[] }).entries ?? []);
 }
 
 export function parseOpponents(raw: unknown): Opponent[] {

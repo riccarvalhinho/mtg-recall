@@ -30,6 +30,9 @@ const validators = {
   event: ajv.compile(readJson(path.join(paths.schemas, 'event.schema.json')).data as object),
   deck: ajv.compile(readJson(path.join(paths.schemas, 'deck.schema.json')).data as object),
   opponents: ajv.compile(readJson(path.join(paths.schemas, 'opponents.schema.json')).data as object),
+  collection: ajv.compile(readJson(path.join(paths.schemas, 'collection.schema.json')).data as object),
+  prices: ajv.compile(readJson(path.join(paths.schemas, 'prices.schema.json')).data as object),
+  valueHistory: ajv.compile(readJson(path.join(paths.schemas, 'value-history.schema.json')).data as object),
 };
 
 function checkSchema(kind: keyof typeof validators, entry: LoadedFile) {
@@ -45,6 +48,9 @@ const data = loadAll();
 for (const event of data.events) checkSchema('event', event);
 for (const deck of data.decks) checkSchema('deck', deck);
 checkSchema('opponents', data.opponents);
+if (data.collection) checkSchema('collection', data.collection);
+if (data.prices) checkSchema('prices', data.prices);
+if (data.valueHistory) checkSchema('valueHistory', data.valueHistory);
 
 // ------------------------------------------------------------- camada 2: coerência
 
@@ -141,6 +147,7 @@ for (const entry of data.decks) {
   }
 }
 
+const warnings: string[] = [];
 let activeEvents = 0;
 let totalMatches = 0;
 
@@ -202,9 +209,54 @@ for (const entry of data.events) {
 // aparece para sempre na Home como se estivesse a decorrer. Mas chumbar aqui seria pior: a app cria
 // eventos sem verificar isto, e o CI recusaria um commit que ela própria acabou de fazer, sem
 // ninguém poder corrigir a partir do telemóvel. Ver open-questions Q6.
-const warnings: string[] = [];
 if (activeEvents > 1) {
   warnings.push(`${activeEvents} eventos com status "active" — só devia haver um a decorrer`);
+}
+
+// ------------------------------------------------------------------ colecção
+
+interface CollectionShape {
+  items?: { scryfallId?: string; name: string; quantity: number; foil?: boolean; setCode?: string; collectorNumber?: string }[];
+}
+
+let collectionCards = 0;
+
+if (data.collection) {
+  const collection = data.collection.data as CollectionShape;
+  const seen = new Set<string>();
+
+  for (const card of collection.items ?? []) {
+    if (typeof card.name !== 'string') continue;
+    collectionCards += card.quantity ?? 0;
+
+    // A mesma impressão na mesma versão duas vezes são duas entradas em vez de uma quantidade, e
+    // contaria a dobrar no valor. Foil e não-foil SÃO entradas separadas de propósito.
+    const key = [
+      card.scryfallId ?? `${card.name.trim().toLowerCase()}|${card.setCode ?? ''}|${card.collectorNumber ?? ''}`,
+      card.foil ? 'foil' : 'normal',
+    ].join('#');
+
+    if (seen.has(key)) {
+      fail(data.collection.name, `"${card.name}" aparece duas vezes na mesma versão — junta as quantidades`);
+    }
+    seen.add(key);
+  }
+}
+
+// Um preço sem carta na colecção é lixo que ficou de uma carta vendida. Aviso, não erro: o próximo
+// refresh limpa-o sozinho, e chumbar o CI por causa disto seria travar um commit por nada.
+if (data.prices && data.collection) {
+  const owned = new Set(
+    ((data.collection.data as CollectionShape).items ?? [])
+      .map((card) => card.scryfallId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const orphans = ((data.prices.data as { items?: { scryfallId: string }[] }).items ?? []).filter(
+    (entry) => !owned.has(entry.scryfallId),
+  );
+  if (orphans.length > 0) {
+    warnings.push(`${orphans.length} preço(s) de cartas que já não estão na colecção — o próximo refresh limpa`);
+  }
 }
 
 // ------------------------------------------------------------------------- resultado
@@ -218,7 +270,8 @@ if (problems.length > 0) {
 
 console.log(
   `✓ dados válidos — ${data.events.length} evento(s), ${totalMatches} match(es), ` +
-    `${deckIds.size} deck(s), ${opponentIds.size} adversário(s)`,
+    `${deckIds.size} deck(s), ${opponentIds.size} adversário(s)` +
+    (collectionCards > 0 ? `, ${collectionCards} carta(s) na colecção` : ''),
 );
 
 for (const warning of warnings) console.log(`  ⚠ ${warning}`);

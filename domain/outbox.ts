@@ -130,5 +130,13 @@ export function outboxStatus(queue: OutboxEntry[]): OutboxStatus {
 export const repoPaths = {
   event: (id: string) => `data/events/${id}.json`,
   deck: (id: string) => `data/decks/${id}.json`,
+  /**
+   * A colecção é um ficheiro só, ao contrário dos eventos: altera-se aos poucos e sempre no mesmo
+   * sítio, e mil ficheiros de duas linhas não davam diff melhor nenhum.
+   *
+   * Os preços NÃO estão aqui de propósito — quem os escreve é o workflow agendado, não o telemóvel
+   * (ADR 0007). Se a app os enfileirasse, sobrepor-se-iam ao que o CI acabou de calcular.
+   */
+  collection: 'data/collection/cards.json',
   opponents: 'data/taxonomies/opponents.json',
 } as const;

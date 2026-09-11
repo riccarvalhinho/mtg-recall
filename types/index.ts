@@ -116,6 +116,48 @@ export interface Deck {
   notes?: string;
 }
 
+// ─── Colecção e preços ───────────────────────────────────────────────────────
+
+/** Estado da carta, na escala da Cardmarket. Ausente = não registado, não "impecável". */
+export type CardCondition = 'M' | 'NM' | 'EX' | 'GD' | 'LP' | 'PL' | 'PO';
+
+/** Uma carta que o autor tem. Ver data/schema/collection.schema.json. */
+export interface CollectionCard {
+  /** Id da impressão concreta. Sem isto não há preço possível — ver ADR 0007. */
+  scryfallId?: string;
+  name: string;
+  setCode?: string;
+  collectorNumber?: string;
+  quantity: number;
+  /** Ausente = não-foil. Ter as duas versões são duas entradas. */
+  foil?: boolean;
+  condition?: CardCondition;
+  /** Código de idioma da Scryfall. Ausente = inglês. */
+  language?: string;
+  acquiredAt?: string;
+  notes?: string;
+}
+
+/**
+ * O preço de uma impressão, em euros.
+ *
+ * Vive à parte da colecção (ADR 0007) e é escrito por um workflow agendado, nunca pelo telemóvel.
+ * Os campos são opcionais porque a Scryfall nem sempre tem preço — e ausente é diferente de zero.
+ */
+export interface PriceEntry {
+  scryfallId: string;
+  eur?: number;
+  eurFoil?: number;
+}
+
+/** Uma medição do valor da colecção num dia. Append-only — ver ADR 0007. */
+export interface ValueEntry {
+  date: string;
+  totalEur: number;
+  cards: number;
+  priced?: number;
+}
+
 // Um adversário na taxonomia
 export interface Opponent {
   id: string;
