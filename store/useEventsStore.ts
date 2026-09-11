@@ -58,8 +58,19 @@ interface EventsStore {
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
-  restoreFromGitHub: () => Promise<{ ok: true; events: number } | { ok: false; reason: string }>;
+  restoreFromGitHub: (options?: { discardPending?: boolean }) => Promise<RestoreResult>;
 }
+
+/**
+ * O resultado de um restauro.
+ *
+ * `pending` não é um erro — é o restauro a recusar-se a correr por cima de trabalho que ainda não
+ * chegou ao repositório. Quem chama decide: enviar primeiro, ou insistir e perder.
+ */
+export type RestoreResult =
+  | { ok: true; events: number }
+  | { ok: false; kind: 'pending'; pending: number }
+  | { ok: false; kind: 'error'; reason: string };
 
 /** Mais recentes primeiro. O desempate pelo id existe para dois torneios no mesmo dia não trocarem de sítio. */
 function byDateDesc(a: Event, b: Event): number {
@@ -228,8 +239,17 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
   // ─── restoreFromGitHub ─────────────────────────────────────────────────────
 
-  restoreFromGitHub: async () => {
+  restoreFromGitHub: async (options) => {
+    // A fila não sobrevive a um restauro. O que está por enviar ainda não existe no repositório,
+    // portanto não vem no bundle: deixá-la viva significava vê-la ser enviada logo a seguir, por
+    // cima do que acabou de ser restaurado, e ficar com o telemóvel e o GitHub a discordar.
+    const pending = await outbox.pendingCount();
+    if (pending > 0 && !options?.discardPending) {
+      return { ok: false, kind: 'pending', pending };
+    }
+
     try {
+      // A rede primeiro: se o bundle não vier, nada foi tocado e não há nada a desfazer.
       const remote = await fetchBundle();
       const names = opponentNames(remote.opponents);
 
@@ -239,6 +259,11 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       };
       for (const event of events) files[repoPaths.event(event.id)] = serializeEvent(event);
 
+      // Limpar antes de substituir: se alguma coisa falhar a meio, fica-se sem a fila mas com os
+      // ficheiros locais intactos — que é o lado seguro, porque a próxima alteração volta a
+      // enfileirá-los. Ao contrário, uma fila viva sobre ficheiros novos enviava dados velhos.
+      await outbox.clear();
+
       // Substitui a cópia local sem passar pela outbox: isto veio do repositório, reenviá-lo seria
       // commitar o que já lá está.
       await localStore.replaceAll(files);
@@ -246,7 +271,7 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
       return { ok: true, events: events.length };
     } catch (error) {
-      return { ok: false, reason: (error as Error).message };
+      return { ok: false, kind: 'error', reason: (error as Error).message };
     }
   },
 }));

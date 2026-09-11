@@ -131,6 +131,32 @@ troca-se o `name` por uma alcunha e nenhum evento precisa de ser tocado.
 
 ---
 
+## Ciclo de vida dos registos
+
+As regras que decidem o que acontece quando alguma coisa é apagada ou colide. Todas já estão
+implementadas e validadas — estão aqui porque são o tipo de decisão que se esquece e se reabre.
+
+**Apagar apaga mesmo.** Um evento apagado desaparece de `data/events/`; não fica com um
+`status: "deleted"`. O histórico do Git é a rede de segurança, e um ficheiro marcado como apagado
+voltaria na mesma no próximo restauro, porque o bundle é gerado a partir do que está no repositório.
+(Era a Q1.)
+
+**Slugs que colidem levam sufixo.** Dois eventos no mesmo dia com o mesmo nome dariam o mesmo
+`id`. O segundo fica `-2`, o terceiro `-3`, como em qualquer sistema de ficheiros. O `id` é o nome do
+ficheiro, portanto não pode haver dois. (Era a Q4.)
+
+**Apagar um match renumera os seguintes.** A `round` é a identidade do match dentro do evento e a
+validação recusa saltos na sequência. Apagar a ronda 2 de quatro deixa 1, 2, 3 — não 1, 3, 4. O custo
+assumido é que a ronda 3 de um torneio real passa a estar guardada como ronda 2; o registo é de
+resultados, não de actas. (Era a Q5.)
+
+**Um restauro descarta a fila por enviar.** O que está na outbox ainda não chegou ao repositório e
+portanto não vem no bundle. Deixá-lo vivo durante um restauro significava vê-lo ser enviado logo a
+seguir, por cima do que tinha acabado de ser restaurado. A app recusa restaurar com fila pendente e
+pede que seja enviada primeiro; se o utilizador insistir, a fila é mesmo deitada fora. (Era a Q7.)
+
+---
+
 ## Campos calculados (nunca guardados)
 
 | Campo | Cálculo | Usado em |

@@ -164,6 +164,25 @@ export async function start(): Promise<void> {
   void flush();
 }
 
+/** Quantos ficheiros estão à espera de ser enviados. */
+export async function pendingCount(): Promise<number> {
+  await load();
+  return queue.length;
+}
+
+/**
+ * Deita a fila fora sem a enviar.
+ *
+ * Só o restauro chama isto, e só depois de o utilizador confirmar que quer perder o que está por
+ * enviar. Existe porque o `replaceAll` do localStore não lhe tocava: a fila sobrevivia ao restauro e
+ * era enviada logo a seguir, por cima do que tinha acabado de ser restaurado.
+ */
+export async function clear(): Promise<void> {
+  await load();
+  queue = [];
+  await persist();
+}
+
 /** Depois de mudar o token nas Definições, vale a pena tentar outra vez sem esperar. */
 export async function tokenChanged(): Promise<void> {
   hasToken = Boolean(await readToken());

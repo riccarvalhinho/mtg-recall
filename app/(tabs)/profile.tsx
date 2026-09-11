@@ -117,7 +117,8 @@ export default function SettingsScreen() {
   const [checking, setChecking] = useState(false);
   const [tokenMessage, setTokenMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const [restoreModal, setRestoreModal] = useState(false);
+  // 'clean' = nada por enviar; 'pending' = há fila e restaurar significa perdê-la.
+  const [restoreModal, setRestoreModal] = useState<'none' | 'clean' | 'pending'>('none');
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -160,15 +161,24 @@ export default function SettingsScreen() {
     setTokenMessage({ ok: true, text: 'Token removed. Nothing is sent until a new one is added.' });
   }
 
-  async function restore() {
+  async function restore(discardPending: boolean) {
     setRestoring(true);
     setRestoreMessage(null);
-    const result = await restoreFromGitHub();
-    setRestoreMessage(
-      result.ok
-        ? { ok: true, text: `Restored ${result.events} event(s) from GitHub.` }
-        : { ok: false, text: result.reason },
-    );
+
+    const result = await restoreFromGitHub({ discardPending });
+
+    if (result.ok) {
+      setRestoreMessage({ ok: true, text: `Restored ${result.events} event(s) from GitHub.` });
+    } else if (result.kind === 'pending') {
+      // A fila cresceu entre abrir o modal e confirmar. Recusar é melhor do que apagar por engano.
+      setRestoreMessage({
+        ok: false,
+        text: `${result.pending} change(s) are still waiting. Push them with Sync now, or restore again to discard them.`,
+      });
+    } else {
+      setRestoreMessage({ ok: false, text: result.reason });
+    }
+
     setRestoring(false);
   }
 
@@ -255,12 +265,13 @@ export default function SettingsScreen() {
         <Section label="Restore">
           <Text style={styles.hint}>
             Replaces everything on this phone with what is published on GitHub. For a new phone, or
-            when something goes wrong.
+            when something goes wrong. Anything still waiting to be pushed has to go out first —
+            it is not on GitHub yet, so it is not in what comes back.
           </Text>
           <ActionButton
             label="Restore from GitHub"
             icon="download-cloud"
-            onPress={() => setRestoreModal(true)}
+            onPress={() => setRestoreModal(sync.pending > 0 ? 'pending' : 'clean')}
             busy={restoring}
             destructive
           />
@@ -277,20 +288,21 @@ export default function SettingsScreen() {
       </ScrollView>
 
       <ConfirmModal
-        visible={restoreModal}
-        title="Restore from GitHub"
+        visible={restoreModal !== 'none'}
+        title={restoreModal === 'pending' ? 'Discard and restore' : 'Restore from GitHub'}
         message={
-          sync.pending > 0
-            ? `${sync.pending} change(s) have not been pushed yet and will be lost. Restore anyway?`
+          restoreModal === 'pending'
+            ? `${sync.pending} change(s) have never reached GitHub, so they are not in what comes back. Restoring throws them away for good. Use Sync now first to keep them.`
             : 'This replaces everything stored on this phone with what is on GitHub. Continue?'
         }
-        confirmLabel="Restore"
+        confirmLabel={restoreModal === 'pending' ? 'Discard and restore' : 'Restore'}
         confirmDestructive
         onConfirm={() => {
-          setRestoreModal(false);
-          void restore();
+          const discardPending = restoreModal === 'pending';
+          setRestoreModal('none');
+          void restore(discardPending);
         }}
-        onCancel={() => setRestoreModal(false)}
+        onCancel={() => setRestoreModal('none')}
       />
     </SafeAreaView>
   );
