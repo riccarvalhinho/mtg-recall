@@ -31,6 +31,19 @@ import {
 import { cardCount } from '../domain/deck';
 import { useEventsStore } from '../store/useEventsStore';
 import { ManaPip } from '../components/ManaPip';
+import { CardSearchModal } from '../components/CardSearchModal';
+import { toDeckCard } from '../domain/cards';
+import {
+  addCard,
+  cardKey,
+  cardsForBoard,
+  changeQuantity,
+  normalizeDeckCards,
+  removeCard,
+  setBoard,
+  toStoredCards,
+} from '../domain/deckList';
+import type { DeckBoard, DeckCard } from '../types';
 import { ConfirmModal } from '../components/ConfirmModal';
 
 // A mesma ordem do add-event, para os dois écrans não apresentarem os formatos ao contrário
@@ -54,13 +67,15 @@ export default function DeckEditorScreen() {
   const [archetype, setArchetype] = useState(deck?.archetype ?? '');
   const [notes, setNotes]         = useState(deck?.notes ?? '');
   const [saving, setSaving]       = useState(false);
+  const [cardList, setCardList]   = useState<DeckCard[]>(normalizeDeckCards(deck?.cards));
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   /** Quantos eventos impedem o apagar. `null` enquanto ninguém tentou. */
   const [blockedBy, setBlockedBy] = useState<number | null>(null);
 
   const canSave = name.trim().length > 0 && !saving;
-  const cards = cardCount(deck?.cards);
+  const cards = cardCount(cardList);
 
   function cycleColor(color: ManaColor) {
     setColorStates(prev => cycleManaState(prev, color));
@@ -80,8 +95,7 @@ export default function DeckEditorScreen() {
       colors:    manaSelectionFrom(colorStates),
       format,
       archetype: archetype.trim() || undefined,
-      // A lista de cartas passa intacta: este écran não lhe mexe (ver o cabeçalho)
-      cards:     deck?.cards,
+      cards:     toStoredCards(cardList),
       notes:     notes.trim() || undefined,
     };
 
@@ -255,13 +269,80 @@ export default function DeckEditorScreen() {
             />
           </View>
 
-          {/* A lista de cartas ainda não se edita — dizê-lo evita procurá-la por todo o écran */}
-          <View style={styles.listNotice}>
-            <Feather name="layers" size={15} color={colors.textDim} />
+          {/* Lista de cartas */}
+          <View style={styles.field}>
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Decklist</Text>
+              <Text style={styles.fieldHint}>{cards} card{cards === 1 ? '' : 's'}</Text>
+            </View>
+
+            {(['main', 'side'] as DeckBoard[]).map(board => {
+              const list = cardsForBoard(cardList, board);
+              if (list.length === 0) return null;
+              return (
+                <View key={board} style={{ marginBottom: 10 }}>
+                  <Text style={styles.boardLabel}>
+                    {board === 'main' ? 'Main' : 'Sideboard'} · {cardCount(list)}
+                  </Text>
+                  {list.map(card => {
+                    const key = cardKey(card);
+                    return (
+                      <View key={key} style={styles.cardRow}>
+                        <Pressable
+                          onPress={() =>
+                            setCardList(current =>
+                              setBoard(current, key, board === 'main' ? 'side' : 'main'),
+                            )
+                          }
+                          hitSlop={6}
+                          style={({ pressed }) => [styles.boardBtn, pressed && { opacity: 0.6 }]}
+                        >
+                          <Text style={styles.boardBtnText}>{board === 'main' ? 'M' : 'S'}</Text>
+                        </Pressable>
+
+                        <Text style={styles.cardName} numberOfLines={1}>{card.name}</Text>
+
+                        {/* +/− em vez de teclado: 60 cartas com o polegar tem de ser suportável */}
+                        <Pressable
+                          onPress={() => setCardList(current => changeQuantity(current, key, -1))}
+                          hitSlop={6}
+                          style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.6 }]}
+                        >
+                          <Feather name="minus" size={14} color={colors.textSec} />
+                        </Pressable>
+                        <Text style={styles.quantity}>{card.quantity}</Text>
+                        <Pressable
+                          onPress={() => setCardList(current => changeQuantity(current, key, 1))}
+                          hitSlop={6}
+                          style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.6 }]}
+                        >
+                          <Feather name="plus" size={14} color={colors.textSec} />
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => setCardList(current => removeCard(current, key))}
+                          hitSlop={6}
+                          style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.6 }]}
+                        >
+                          <Feather name="x" size={14} color={colors.textDim} />
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+                </View>
+              );
+            })}
+
+            <Pressable
+              onPress={() => setSearchOpen(true)}
+              style={({ pressed }) => [styles.addCardBtn, pressed && { opacity: 0.75 }]}
+            >
+              <Feather name="plus" size={15} color={colors.gold} />
+              <Text style={styles.addCardText}>Add card</Text>
+            </Pressable>
+
             <Text style={styles.listNoticeText}>
-              {cards > 0
-                ? `Card list: ${cards} cards, kept as it is. Editing it arrives with card search.`
-                : 'Card list editing arrives with card search. A deck works without one.'}
+              A deck works without a list — it still tracks its record across events.
             </Text>
           </View>
 
@@ -291,6 +372,17 @@ export default function DeckEditorScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CardSearchModal
+        visible={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onPick={card => {
+          setSearchOpen(false);
+          // addCard junta quantidades quando a carta já lá está na mesma board — é o que impede
+          // escrever duas entradas iguais, que o npm run validate chumba.
+          setCardList(current => addCard(current, toDeckCard(card, 1, 'main')));
+        }}
+      />
 
       <ConfirmModal
         visible={confirmDelete}
@@ -479,6 +571,60 @@ const styles = StyleSheet.create({
   },
 
   // Aviso da lista de cartas
+  fieldHint: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.textDim,
+  },
+  boardLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.goldDim,
+    marginBottom: 6,
+  },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+  boardBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boardBtnText: { fontFamily: fonts.displayMed, fontSize: 11, color: colors.textSec },
+  cardName: { flex: 1, fontFamily: fonts.body, fontSize: 14, color: colors.textPrim },
+  stepBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantity: {
+    fontFamily: fonts.displayMed,
+    fontSize: 14,
+    color: colors.textPrim,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  addCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: colors.gold + '66',
+    marginTop: 4,
+  },
+  addCardText: { fontFamily: fonts.body, fontSize: 14, color: colors.gold },
   listNotice: {
     flexDirection: 'row',
     gap: 10,

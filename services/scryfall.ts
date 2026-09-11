@@ -18,6 +18,20 @@
  * um motivo — quem chama trata isso mostrando o campo de escrever o código à mão, como era antes.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  emptyCardCache,
+  isCardCache,
+  readCachedQuery,
+  rememberQuery,
+  searchCachedCards,
+  type CardCache,
+} from '../domain/cardCache';
+import {
+  isSearchableQuery,
+  normalizeCardSearch,
+  normalizeQuery,
+  type ScryfallCard,
+} from '../domain/cards';
 import { normalizeSets, type MtgSet } from '../domain/sets';
 
 const SETS_KEY = 'mtgrecall.scryfall.sets';
@@ -38,6 +52,9 @@ const CACHE_VERSION = 1;
 const MIN_INTERVAL_MS = 100;
 
 let lastRequestAt = 0;
+
+/** A cauda da fila de pedidos. Ver scryfallFetch. */
+let pending: Promise<void> = Promise.resolve();
 
 /** Pedido em curso. Dois écrans a pedir a lista ao mesmo tempo partilham-no — nunca dois pedidos em paralelo. */
 let inFlight: Promise<MtgSet[]> | null = null;
@@ -88,27 +105,48 @@ async function writeCache(sets: MtgSet[]): Promise<void> {
   }
 }
 
-/** Um pedido de cada vez, com o intervalo mínimo respeitado. */
-async function fetchSetsFromNetwork(): Promise<MtgSet[]> {
-  if (inFlight) return inFlight;
-
-  inFlight = (async () => {
+/**
+ * Todos os pedidos à Scryfall passam por aqui.
+ *
+ * Espera o intervalo mínimo e serializa: nunca há dois pedidos em voo ao mesmo tempo, venham dos
+ * sets ou da procura de cartas. Ter uma fila só é o que faz o rate limit ser real — duas filas
+ * independentes respeitariam 100 ms cada uma e mandariam o dobro dos pedidos.
+ */
+async function scryfallFetch(url: string, what: string): Promise<unknown> {
+  const run = async () => {
     const since = Date.now() - lastRequestAt;
     if (since < MIN_INTERVAL_MS) await wait(MIN_INTERVAL_MS - since);
     lastRequestAt = Date.now();
 
     // A Scryfall pede um User-Agent que a identifique — é a única forma de ela saber quem está a
     // bater à porta quando alguma coisa corre mal do lado dela.
-    const response = await fetch(SETS_URL, {
+    const response = await fetch(url, {
       headers: { Accept: 'application/json', 'User-Agent': 'MTGRecall/1.0' },
     });
 
+    // 404 numa procura significa "não há cartas assim", que não é uma avaria.
+    if (response.status === 404) return { data: [] };
+
     if (!response.ok) {
-      throw new Error(`A Scryfall respondeu ${response.status} ao pedir os sets.`);
+      throw new Error(`A Scryfall respondeu ${response.status} ao pedir ${what}.`);
     }
 
-    return normalizeSets(await response.json());
-  })();
+    return response.json();
+  };
+
+  // Encadeia no pedido anterior em vez de o substituir.
+  const queued = pending.then(run, run);
+  pending = queued.then(
+    () => undefined,
+    () => undefined,
+  );
+  return queued;
+}
+
+async function fetchSetsFromNetwork(): Promise<MtgSet[]> {
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => normalizeSets(await scryfallFetch(SETS_URL, 'os sets')))();
 
   try {
     return await inFlight;
@@ -160,4 +198,89 @@ export async function loadSets(options: { force?: boolean } = {}): Promise<SetsR
 /** Esquece a cache. Existe para o Settings e para os testes manuais; a app não precisa dela no dia a dia. */
 export async function clearSetsCache(): Promise<void> {
   await AsyncStorage.removeItem(SETS_KEY);
+}
+
+// ─── Procura de cartas (Fase 3) ──────────────────────────────────────────────
+
+const CARDS_KEY = 'mtgrecall.scryfall.cards';
+
+/**
+ * Validade de uma procura em cache.
+ *
+ * Um dia e não sete como os sets: ao contrário da lista de sets, o que uma procura devolve muda
+ * quando sai uma colecção nova, e o custo de errar é não encontrar uma carta acabada de sair.
+ */
+const CARD_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+export type CardsSource = 'network' | 'cache' | 'none';
+
+export interface CardSearchResult {
+  cards: ScryfallCard[];
+  source: CardsSource;
+  /** O que dizer ao utilizador quando não veio da rede. `undefined` quando correu tudo bem. */
+  message?: string;
+}
+
+async function readCardCache(): Promise<CardCache> {
+  try {
+    const raw = await AsyncStorage.getItem(CARDS_KEY);
+    if (!raw) return emptyCardCache();
+    const parsed = JSON.parse(raw);
+    return isCardCache(parsed) ? parsed : emptyCardCache();
+  } catch {
+    // Uma cache ilegível é o mesmo que não haver cache — nunca uma razão para a procura falhar.
+    return emptyCardCache();
+  }
+}
+
+async function writeCardCache(cache: CardCache): Promise<void> {
+  try {
+    await AsyncStorage.setItem(CARDS_KEY, JSON.stringify(cache));
+  } catch (error) {
+    // Sem cache a app funciona, só volta a pedir à rede. Não vale a pena estragar a procura por isto.
+    console.warn('[scryfall] Não foi possível guardar a cache de cartas:', error);
+  }
+}
+
+/**
+ * Procura cartas pelo nome.
+ *
+ * **Nunca atira.** Sem rede devolve o que houver em cache e diz que está offline; sem cache devolve
+ * vazio com uma mensagem. Acrescentar uma carta escrevendo o nome à mão continua a funcionar sempre
+ * — o schema só exige `name` e `quantity` — e é isso que mantém a app utilizável numa loja sem sinal.
+ */
+export async function searchCards(query: string): Promise<CardSearchResult> {
+  if (!isSearchableQuery(query)) return { cards: [], source: 'none' };
+
+  const normalized = normalizeQuery(query);
+  const cache = await readCardCache();
+
+  const cached = readCachedQuery(cache, normalized, CARD_MAX_AGE_MS);
+  if (cached) return { cards: cached, source: 'cache' };
+
+  try {
+    const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(normalized)}&unique=cards`;
+    const cards = normalizeCardSearch(await scryfallFetch(url, 'a procura de cartas'));
+
+    await writeCardCache(rememberQuery(cache, normalized, cards));
+    return { cards, source: 'network' };
+  } catch (error) {
+    // Sem rede, o que já foi procurado antes continua a servir. Procura por substring sobre as
+    // cartas que a cache já tem, que é o melhor que dá para fazer sem sinal.
+    const offline = searchCachedCards(cache, normalized);
+    return offline.length > 0
+      ? { cards: offline, source: 'cache', message: 'Offline — showing cards you looked up before.' }
+      : {
+          cards: [],
+          source: 'none',
+          message:
+            error instanceof Error && /respondeu/.test(error.message)
+              ? 'Scryfall is not answering. You can still add the card by name.'
+              : 'No connection. You can still add the card by name.',
+        };
+  }
+}
+
+export async function clearCardCache(): Promise<void> {
+  await AsyncStorage.removeItem(CARDS_KEY);
 }
