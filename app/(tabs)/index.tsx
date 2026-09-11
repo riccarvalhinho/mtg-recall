@@ -243,10 +243,33 @@ function HistoryEntryPoint() {
   return (
     <View style={history.row}>
       <Text style={history.label}>Tournament History</Text>
-      <Pressable onPress={() => router.push('/(tabs)/events')}>
+      <Pressable onPress={() => router.push('/(tabs)/events')} hitSlop={8}>
         <Text style={history.seeAll}>See all →</Text>
       </Pressable>
     </View>
+  );
+}
+
+/**
+ * Entrada para a colecção.
+ *
+ * Aqui e não num tab: cinco tabs num telemóvel já é o limite, e a colecção consulta-se de vez em
+ * quando — não entre rondas de um torneio, que é para o que a tab bar existe.
+ */
+function CollectionEntryPoint() {
+  const collection = useEventsStore(s => s.collection);
+  const total = collection.reduce((sum, card) => sum + card.quantity, 0);
+
+  return (
+    <Pressable
+      style={({ pressed }) => [history.row, pressed && { opacity: 0.7 }]}
+      onPress={() => router.push('/collection')}
+    >
+      <Text style={history.label}>Collection</Text>
+      <Text style={history.seeAll}>
+        {total > 0 ? `${total} cards →` : 'Set up →'}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -346,6 +369,7 @@ export default function HomeScreen() {
             <ActiveEventSection event={activeEvent} />
           )}
           <HistoryEntryPoint />
+          <CollectionEntryPoint />
         </ScrollView>
       )}
     </SafeAreaView>
