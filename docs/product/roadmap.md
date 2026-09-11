@@ -10,42 +10,17 @@ está aqui assume isso.
 
 ## Onde estamos
 
-A reestruturação está **feita no código**. O Supabase saiu do projecto e das dependências, a app
-escreve ficheiros JSON no repositório por outbox, os schemas são validados em CI e o écran de
-Settings liga o telemóvel ao GitHub. `npm run check` passa: dados válidos, typecheck limpo, 46 testes
-verdes.
+As Fases 0 a 4 estão **implementadas**. `npm run check` passa: dados válidos, typecheck limpo, 219
+testes verdes.
 
-O que falta para a app ser **usada** não é arquitectura — é uma correcção no restauro e quatro passos
-manuais que só o autor pode dar, porque dependem das contas dele.
-
-`data/events/` está vazio. Enquanto não houver lá um torneio a sério, nada disto está provado
-ponta a ponta.
+O que falta não é código — são quatro passos manuais que dependem das contas do autor, e usar a app
+a sério uma vez. **`data/events/` está vazio**: enquanto não houver lá um torneio verdadeiro, a
+cadeia telemóvel → commit → bundle → restauro não está provada ponta a ponta, e é essa a única coisa
+que interessa a seguir.
 
 ---
 
-## Fase 0 — Repurpose (quase fechada)
-
-Tirar o Supabase do caminho e pôr a app a escrever no repositório. Nenhuma funcionalidade nova; o
-objectivo é ficar com uma app que se usa a sério num torneio, instalada no telemóvel.
-
-### Código — feito
-
-- [x] Decisões registadas em `docs/adr/` (0001 a 0006)
-- [x] `data-model.md` reescrito para ficheiros
-- [x] Schemas em `data/schema/` e `npm run validate` a correr em CI
-- [x] `bundle.json` gerado e publicado em GitHub Pages
-- [x] Camada de dados: `services/github.ts`, `domain/outbox.ts`, `services/repoFiles.ts`, `services/localStore.ts`
-- [x] Store local-first; Supabase removido do código e das dependências
-- [x] Écran de Settings: token, estado da sincronização, sincronizar agora, puxar do GitHub
-
-### Código — a corrigir antes do primeiro torneio
-
-- [ ] **O restauro não descarta a outbox.** O modal avisa que as alterações por enviar "will be
-      lost", mas `localStore.replaceAll` só limpa as chaves `mtgrecall.file:*` e `mtgrecall.files` —
-      a fila vive em `mtgrecall.outbox` e sobrevive ao restauro. O worker envia-a a seguir, por cima
-      do que acabou de ser restaurado. O telemóvel e o GitHub ficam a dizer coisas diferentes, que é
-      exactamente o que o restauro existia para resolver. Ver Q7 em `open-questions.md`: ou a fila é
-      descartada (e o aviso passa a ser verdade), ou o restauro esvazia-a primeiro e só depois puxa.
+## O que falta mesmo
 
 ### Passos manuais — só o autor os pode dar
 
@@ -59,47 +34,80 @@ O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em ne
 **Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
 com o evento completo.
 
+### Por confirmar no telemóvel
+
+Coisas escritas e testadas contra payloads sintéticos, mas nunca corridas contra o mundo real — o
+proxy do ambiente de desenvolvimento recusa ligações à Scryfall.
+
+- [ ] O primeiro pedido verdadeiro a `GET /sets` (selector de set do evento)
+- [ ] O primeiro pedido verdadeiro a `GET /cards/search` (procura de cartas)
+- [ ] A primeira execução do workflow `refresh-prices.yml` com colecção a sério
+
 ---
 
-## Fase 1 — Fechar o registo de torneio
+## Fase 0 — Repurpose ✅
 
-O que falta para o registo ser completo em vez de suficiente. É a fase que mais depende de usar a app
-a sério primeiro — a ordem aqui dentro deve mudar conforme o que incomodar no primeiro torneio.
+Tirar o Supabase do caminho e pôr a app a escrever no repositório.
 
-- [ ] Games por match (2-0, 2-1) — já no schema, falta na interface
-- [ ] `wentFirst` por match e por game — quem jogou primeiro
-- [ ] Editar um match já registado (hoje só se apaga e volta a registar)
-- [ ] Set do evento a partir da Scryfall API, em vez de escrito à mão
-- [ ] Écran de histórico de eventos com procura
+- [x] Decisões em `docs/adr/` (0001 a 0007)
+- [x] Schemas em `data/schema/` e `npm run validate` em CI
+- [x] `bundle.json` gerado e publicado em GitHub Pages
+- [x] Camada de dados: `services/github.ts`, `domain/outbox.ts`, `services/repoFiles.ts`, `services/localStore.ts`
+- [x] Store local-first; Supabase fora do código e das dependências
+- [x] Écran de Settings: token, estado da sincronização, sincronizar agora, restaurar
+- [x] O restauro deixou de ser desfeito pela fila que não limpava (Q7)
 
-## Fase 2 — Decks
+## Fase 1 — Fechar o registo de torneio ✅
 
-Hoje um deck é só `deckName` e `deckColors` dentro do evento: texto livre, que não se reutiliza entre
-torneios e sobre o qual não se consegue calcular nada. Esta fase transforma-o numa entidade própria,
-pelo mesmo padrão dos adversários — um ficheiro e uma referência.
+- [x] Games por match (2-0, 2-1) — o resultado passa a ser derivado deles
+- [x] `wentFirst` por match e por game, com três estados
+- [x] Editar um match já registado
+- [x] Set do evento a partir da Scryfall API, com cache offline
+- [x] Histórico de eventos com procura
 
-- [ ] `data/schema/deck.schema.json` **antes** do código (convenção do CLAUDE.md)
-- [ ] `data/decks/<slug>.json` e Deck Manager
-- [ ] `deckId` no evento, mantendo `deckName`/`deckColors` para os eventos antigos continuarem a ler
-- [ ] Win rate por deck — a pergunta que justifica a fase toda
-- [ ] Deck Analyser: curva de mana, distribuição de cores, contagem por tipo
+## Fase 2 — Decks ✅
 
-## Fase 3 — Cartas e colecção
+- [x] `data/schema/deck.schema.json` e `data/decks/<slug>.json`
+- [x] `deckId` no evento, mantendo `deckName`/`deckColors` para os eventos antigos
+- [x] Tab Decks, editor e écran de detalhe
+- [x] Win rate por deck — a pergunta que justificava a fase
+- [x] Deck Analyser: curva de mana, distribuição de cores, contagem por tipo
 
-- [ ] Card Search sobre a Scryfall API, com cache local
-- [ ] Thumbnail do deck a partir de uma carta escolhida (`deckThumbnailCardId`, já no schema)
-- [ ] `data/collection/cards.json` — colecção pessoal com quantidade, condição e foil
-- [ ] Estatísticas por adversário
+## Fase 3 — Cartas e colecção ✅
 
-## Fase 4 — Valor da colecção
+- [x] Card Search sobre a Scryfall API, com cache local e escrita à mão como recurso
+- [x] Edição da decklist: quantidades, main/sideboard
+- [x] `data/collection/cards.json` — colecção com quantidade, condição e foil
+- [x] Estatísticas por adversário, com nemesis e melhor matchup
+- [ ] Thumbnail do deck a partir de uma carta escolhida (`thumbnailCardId` está no schema, falta a
+      interface para o escolher)
 
-- [ ] Preços por carta, actualizados por GitHub Actions e não no telemóvel
-- [ ] Evolução do valor da colecção ao longo do tempo — que o Git dá quase de graça
+## Fase 4 — Valor da colecção ✅
 
-**A fonte dos preços está por decidir (Q8).** A Cardmarket API obriga a uma app aprovada e a
-assinatura OAuth, que é precisamente o tipo de dependência online que o ADR 0006 existe para evitar.
-A Scryfall já devolve `prices.eur` em cada carta, sem conta e sem autenticação, e publica bulk data
-diário — que encaixa num workflow agendado sem nada de novo.
+- [x] ADR 0007 — os preços vêm da Scryfall e não da Cardmarket API
+- [x] `tools/refresh-prices.mts` e o workflow `refresh-prices.yml`, semanal
+- [x] Evolução do valor ao longo do tempo, append-only
+
+---
+
+## Dívida conhecida
+
+Coisas que ficaram por fazer de propósito, com a razão à frente. Não são bugs — são decisões
+adiadas, e estão aqui para não se perderem.
+
+- **A entrada da colecção só aparece na Home depois do primeiro evento.** Quem queira montar a
+  colecção antes do primeiro torneio não tem por onde lá chegar.
+- **Uma carta acrescentada só pelo nome nunca tem preço.** Sem a impressão concreta não se sabe de
+  que carta se está a falar (ADR 0007). Falta uma forma de, mais tarde, ligar uma carta escrita à
+  mão a uma impressão da Scryfall.
+- **Um adversário deixado órfão por uma edição não é removido da taxonomia.** Corrigir o nome de um
+  adversário num match deixa a entrada antiga em `opponents.json`. É barato e não parte nada, mas
+  suja a lista com o tempo.
+- **Não há écran de detalhe por adversário.** O head-to-head vive expandido dentro da lista das
+  Stats. `headToHead` e `opponentRecord` já servem um `opponent/[id]` se um dia valer a pena.
+- **O `TrendChart` das Stats ainda formata datas com `new Date`**, que interpreta `2026-02-14` em
+  UTC e num fuso negativo dá o dia anterior. O resto do écran já usa `split('-')`.
+- **O `setCode` de um evento não se edita depois de criado**, e não aparece no Event Detail.
 
 ---
 

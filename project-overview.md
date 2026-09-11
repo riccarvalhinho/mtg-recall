@@ -15,18 +15,19 @@ project documentation (`docs/`, ADRs) are written in Portuguese.
 
 ## Estado Actual
 
-**Fase 0 — Repurpose, feita no código.** A app deixou de depender do Supabase e guarda os dados como
-ficheiros JSON no próprio repositório, escritos através da Contents API do GitHub. Utilizador único,
-sem contas. As decisões estão em `docs/adr/`.
+**Fases 0 a 4 implementadas.** A app deixou de depender do Supabase e guarda tudo — eventos, decks,
+colecção — como ficheiros JSON no próprio repositório, escritos pela Contents API do GitHub.
+Utilizador único, sem contas. As decisões estão em `docs/adr/` (0001 a 0007).
 
-`npm run check` passa — dados válidos, typecheck limpo, 46 testes verdes.
+`npm run check` passa: dados válidos, typecheck limpo, **219 testes verdes**.
 
-Falta uma correcção (o restauro não descarta a outbox, Q7) e quatro passos manuais que dependem das
-contas do autor: ligar o Pages, correr o `eas build`, criar o token e registar o primeiro torneio. O
-detalhe está em `docs/product/roadmap.md` e o guia em `docs/ops/telemovel-setup.md`.
+O que falta não é código. São quatro passos manuais que dependem das contas do autor — ligar o
+Pages, correr o `eas build`, criar o token, registar o primeiro torneio — e estão em
+`docs/ops/telemovel-setup.md`.
 
 **`data/events/` está vazio.** Enquanto não houver lá um torneio a sério, a cadeia telemóvel →
-commit → bundle → restauro não está provada ponta a ponta.
+commit → bundle → restauro não está provada ponta a ponta, e é a única coisa que interessa a seguir.
+A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.md`.
 
 ---
 
@@ -92,14 +93,7 @@ commit → bundle → restauro não está provada ponta a ponta.
 
 ---
 
-## O que falta (Fase 0)
-
-**A corrigir:**
-
-- [ ] O restauro não descarta a outbox. `localStore.replaceAll` limpa `mtgrecall.file:*` e
-      `mtgrecall.files`, mas a fila vive em `mtgrecall.outbox` e sobrevive — o worker envia-a a
-      seguir, por cima do que acabou de ser restaurado. O modal promete o contrário. Ver Q7 em
-      `docs/product/open-questions.md`
+## O que falta
 
 **Passos manuais**, com o guia em `docs/ops/telemovel-setup.md`:
 
@@ -108,7 +102,13 @@ commit → bundle → restauro não está provada ponta a ponta.
 - [ ] Criar o token e colá-lo no écran de Settings
 - [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
 
-O detalhe das fases seguintes está em `docs/product/roadmap.md`.
+**Por confirmar contra o mundo real** — escrito e testado contra payloads sintéticos, mas o proxy do
+ambiente de desenvolvimento recusa ligações à Scryfall:
+
+- [ ] `GET /sets` e `GET /cards/search` no telemóvel
+- [ ] A primeira execução do workflow `refresh-prices.yml`
+
+A dívida conhecida está listada em `docs/product/roadmap.md`.
 
 ---
 
@@ -123,6 +123,9 @@ O detalhe das fases seguintes está em `docs/product/roadmap.md`.
 | Visibilidade do repo | Público | ADR 0005 — Pages gratuito; a saída para privacidade são alcunhas |
 | State management | Zustand | Simples e reactivo |
 | Dados de cartas | Scryfall API | Gratuita, completa, bem documentada |
+| Preços das cartas | Scryfall, por workflow semanal | ADR 0007 — a Cardmarket API exigia app aprovada e OAuth |
+| Decks | Entidade própria com `deckId` | Fase 2 — texto livre não se somava entre torneios |
+| Lista de cartas do deck | Campos da Scryfall copiados para o ficheiro | Uma impressão não muda; copiar deixa a análise funcionar sem rede |
 | Mana symbols | SVG locais | Offline e sem dependência de CDN |
 | Design tokens | `theme/` (não `constants/`) | Separação clara design/código |
 | Tipos | `types/index.ts` centralizado, derivado dos schemas | Uma fonte de verdade |

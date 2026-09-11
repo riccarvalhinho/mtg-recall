@@ -47,7 +47,7 @@ conhecimento prévio de padrões ou convenções.
 | Segredos | `expo-secure-store` (token do GitHub) |
 | Distribuição | EAS Build (APK) + EAS Update |
 | Card data | Scryfall API |
-| Card prices | Por decidir (Fase 4) — ver Q8 em `docs/product/open-questions.md` |
+| Card prices | Scryfall (`prices.eur`), por workflow agendado — ADR 0007 |
 | Mana symbols | SVG locais em `assets/mana/symbols.ts` |
 
 ---
@@ -59,17 +59,23 @@ conhecimento prévio de padrões ou convenções.
   _layout.tsx               root layout (fontes + Stack)
   match-registration.tsx    modal: registo de match
   add-event.tsx             modal: criar evento
+  deck-editor.tsx           modal: criar/editar deck
+  collection.tsx            a colecção (push, entra pela Home)
   (tabs)/
-    _layout.tsx             tab bar (Home/Events/Stats/Settings)
+    _layout.tsx             tab bar (Home/Events/Decks/Stats/Settings)
     index.tsx               Home
     events.tsx              Events List
+    decks.tsx               Decks
     stats.tsx               Stats
     profile.tsx             Settings (token + sincronização)
   event/[id].tsx            Event Detail (push, sem tab bar)
+  deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
 
 /components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, ConfirmModal, SetSelector
-/domain                     lógica pura, sem I/O e testável (outbox, slug, base64, sets, search)
+                            CardThumbnailPlaceholder, ConfirmModal, SetSelector, CardSearchModal
+/domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
+                            match, manaSelection, deck, deckList, cards, cardCache, collection,
+                            opponents
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
                             scryfall
 /store                      useEventsStore (Zustand)
@@ -80,9 +86,11 @@ conhecimento prévio de padrões ou convenções.
 /data                       OS DADOS (ADR 0002)
   schema/                   o contrato, validado em CI
   events/                   um evento por ficheiro
+  decks/                    um deck por ficheiro
+  collection/cards.json     a colecção; prices.json e value-history.json são escritos pelo CI
   taxonomies/opponents.json adversários, por referência
 
-/tools                      validate-data.mts, build-bundle.mts
+/tools                      validate-data.mts, build-bundle.mts, refresh-prices.mts
 /site                       o que vai para o GitHub Pages (o bundle é gerado, não commitado)
 /docs
   adr/                      decisões estruturais
@@ -109,8 +117,9 @@ Comandos na raiz:
 ```bash
 npm run validate    # valida data/**/*.json contra data/schema/*.json
 npm run bundle      # gera o bundle.json que a app lê ao instalar/restaurar
-npm run test        # testes dos módulos puros (outbox, serializadores, slugs, base64)
+npm run test        # testes dos módulos puros — 219 neste momento
 npm run check       # validate + typecheck + test, o que o CI corre
+npm run prices      # actualiza preços da colecção (corre no CI, não à mão)
 npm start           # Expo em desenvolvimento
 ```
 
@@ -180,18 +189,28 @@ mal formado só daria erro **depois** do commit.
 
 ```
 Stack principal:
-  (tabs)/index        ← Home
+  (tabs)/index        ← Home (entra também para /collection)
   (tabs)/events       ← Events List
+  (tabs)/decks        ← Decks
   (tabs)/stats        ← Stats
   (tabs)/profile      ← Settings
   event/[id]          ← Event Detail (push, sem tab bar)
+  deck/[id]           ← Deck Detail + analisador (push, sem tab bar)
+  collection          ← Colecção (push)
 
 Modals (presentation: 'modal'):
   match-registration  ← a partir de Event Detail
   add-event           ← a partir de Events List / Home
+  deck-editor         ← a partir de Decks / Deck Detail
 ```
 
-Params de navegação para match-registration: `{ eventId, round, eventName }`
+Params de navegação:
+- `match-registration`: `{ eventId, round, eventName, mode? }` — `mode: 'edit'` corrige a ronda
+  indicada em vez de registar uma nova
+- `deck-editor`: `{ deckId? }` — sem `deckId` cria um deck novo
+
+**A colecção não é um tab de propósito:** cinco tabs num telemóvel já é o limite, e a colecção
+consulta-se de vez em quando, não entre rondas.
 
 ---
 
@@ -202,10 +221,21 @@ Params de navegação para match-registration: `{ eventId, round, eventName }`
 - Rate limit: 50–100 ms entre requests (respeitar sempre), e nunca pedidos em paralelo
 - Tudo o que fala com a Scryfall vive em `services/scryfall.ts`. O que decide — filtrar, ordenar,
   validar — vive em `domain/sets.ts` e tem testes.
-- `GET /sets` alimenta o selector de set do evento. Fica em cache em `mtgrecall.scryfall.sets`
-  (AsyncStorage, validade de 7 dias). **É cache, não são dados nossos**: não passa pela outbox nem
-  pelo `localStore`, e por isso nunca aparece num commit. Sem cache e sem rede, o selector deixa
-  escrever o código à mão.
+- **Todos os pedidos passam por um portão único** em `services/scryfall.ts`, que serializa e espera
+  o intervalo mínimo. Duas filas independentes respeitariam 100 ms cada uma e mandariam o dobro.
+- `GET /sets` alimenta o selector de set do evento. Cache em `mtgrecall.scryfall.sets`, validade de
+  7 dias.
+- `GET /cards/search` alimenta a procura de cartas. Cache em `mtgrecall.scryfall.cards`, validade de
+  1 dia — o que uma procura devolve muda quando sai uma colecção nova.
+- **É cache, não são dados nossos**: não passa pela outbox nem pelo `localStore`, e por isso nunca
+  aparece num commit.
+- **Sem rede nada falha**: o set escreve-se à mão, a carta acrescenta-se só pelo nome. O schema só
+  exige `name` e `quantity`, e numa loja sem sinal é a diferença entre a app servir e não servir.
+
+### Preços (ADR 0007)
+- Vêm da Scryfall (`prices.eur`), **nunca da Cardmarket API** — exigiria aplicação aprovada e OAuth.
+- Escritos por `tools/refresh-prices.mts` num workflow semanal, **nunca pelo telemóvel**. A app lê-os
+  do bundle e não lhes toca; `data/collection/prices.json` não passa pela outbox de propósito.
 
 ### GitHub
 - Contents API para escrever; `bundle.json` em GitHub Pages para ler
