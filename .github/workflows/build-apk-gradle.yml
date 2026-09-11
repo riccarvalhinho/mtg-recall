@@ -78,11 +78,36 @@ jobs:
       # Confirmar que saiu mesmo assinado com a nossa chave, e não com a de debug que o Gradle usa
       # por omissão. Um APK assinado com a chave errada instala na mesma à primeira — e só dá erro
       # na actualização seguinte, quando já é tarde.
+      #
+      # A impressão digital está aqui à vista de propósito: é pública (qualquer um a tira do APK) e
+      # o que interessa é que fique fixa, para uma troca de chave dar erro em vez de passar
+      # despercebida.
       - name: Confirmar a assinatura
+        env:
+          EXPECTED: f442a44ff8d29fb689a8b8b0f9dfc195767f94f8710de1913b62d41cd70e68a6
         run: |
+          set -euo pipefail
+
           APK=$(find android/app/build/outputs/apk/release -name '*.apk' | head -1)
           echo "APK: $APK"
-          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$APK" | grep -i 'SHA-256\|Subject' || true
+
+          # A versão mais alta das build-tools. Um glob simples apanha todas as versões instaladas
+          # e passa a segunda como argumento da primeira — foi o que aconteceu no build 1.
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          echo "apksigner: $APKSIGNER"
+
+          "$APKSIGNER" verify --print-certs "$APK" | tee /tmp/certs.txt
+
+          ACTUAL=$(grep -io 'certificate SHA-256 digest: [0-9a-f]*' /tmp/certs.txt | head -1 | awk '{print $NF}')
+          echo "esperado: $EXPECTED"
+          echo "obtido:   $ACTUAL"
+
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::Assinado com a chave errada. Instalar isto obrigaria a desinstalar a app e perder os dados locais."
+            exit 1
+          fi
+          echo "Assinatura confirmada."
+
           cp "$APK" "$RUNNER_TEMP/mtg-recall-v${{ github.run_number }}.apk"
 
       - name: Publicar a Release
