@@ -1,14 +1,21 @@
 // Events List Screen
 // Spec: design/handoff.md § 4
 // Print: design/screen-events.png
+//
+// Além das secções activo/histórico, este écran é o arquivo: é aqui que se procura um torneio
+// antigo. A procura é local, sobre o store — o predicado vive em `domain/search.ts`.
 
-import { useEffect } from 'react';
-import { View, Text, Pressable, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  View, Text, Pressable, TextInput, FlatList, StyleSheet, ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { Event, isActive } from '../../types';
+import { searchEvents } from '../../domain/search';
 import { useEventsStore } from '../../store/useEventsStore';
 import { EventCard } from '../../components/EventCard';
 
@@ -146,6 +153,64 @@ const sectionStyle = StyleSheet.create({
   },
 });
 
+// ─── SearchBar ────────────────────────────────────────────────────────────────
+
+// Alvo de toque grande e botão de limpar sempre visível: usa-se de pé, numa loja, com uma mão.
+function SearchBar({ value, onChange }: { value: string; onChange: (text: string) => void }) {
+  return (
+    <View style={search.wrap}>
+      <Feather name="search" size={15} color={colors.textDim} />
+      <TextInput
+        style={search.input}
+        value={value}
+        onChangeText={onChange}
+        placeholder="Search events, venues, opponents"
+        placeholderTextColor={colors.textDim}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        clearButtonMode="never"
+      />
+      {value.length > 0 && (
+        <Pressable onPress={() => onChange('')} hitSlop={16}>
+          <Feather name="x" size={17} color={colors.textSec} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+const search = StyleSheet.create({
+  wrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    height: 48,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    paddingHorizontal: 14,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+  },
+  input: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textPrim,
+  },
+  empty: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 14,
+    color: colors.textDim,
+    textAlign: 'center',
+    marginTop: 36,
+    marginHorizontal: 32,
+    lineHeight: 20,
+  },
+});
+
 // ─── Tipos para a FlatList ────────────────────────────────────────────────────
 
 type ListItem =
@@ -154,6 +219,8 @@ type ListItem =
   | { key: string; type: 'past-header' }
   | { key: string; type: 'divider' }
   | { key: string; type: 'event'; event: Event }
+  | { key: string; type: 'results-header'; count: number }
+  | { key: string; type: 'no-results' }
   | { key: string; type: 'footer' };
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -162,25 +229,40 @@ export default function EventsScreen() {
   const events       = useEventsStore(s => s.events);
   const isLoading    = useEventsStore(s => s.isLoading);
   const load         = useEventsStore(s => s.load);
-  const activeEvents = events.filter(isActive);
-  const pastEvents   = events.filter(e => !isActive(e));
+  const [query, setQuery] = useState('');
 
   // Relê a cópia local quando o écran monta — instantâneo, sem rede
   useEffect(() => {
     load();
   }, []);
 
-  const sections: ListItem[] = [
-    { key: 'strip', type: 'strip' },
-    ...(activeEvents.length > 0 ? [
-      { key: 'active-header', type: 'active-header' as const },
-      ...activeEvents.map(e => ({ key: e.id, type: 'event' as const, event: e })),
-      { key: 'divider', type: 'divider' as const },
-    ] : []),
-    { key: 'past-header', type: 'past-header' },
-    ...pastEvents.map(e => ({ key: e.id, type: 'event' as const, event: e })),
-    { key: 'footer', type: 'footer' },
-  ];
+  const searching = query.trim().length > 0;
+  const results   = useMemo(() => searchEvents(events, query), [events, query]);
+
+  const activeEvents = events.filter(isActive);
+  const pastEvents   = events.filter(e => !isActive(e));
+
+  // A procurar, as secções desaparecem: quem procura quer os resultados, não saber em qual das duas
+  // metades do arquivo é que eles caíram.
+  const sections: ListItem[] = searching
+    ? [
+        { key: 'results-header', type: 'results-header', count: results.length },
+        ...(results.length > 0
+          ? results.map(e => ({ key: e.id, type: 'event' as const, event: e }))
+          : [{ key: 'no-results', type: 'no-results' as const }]),
+        { key: 'footer', type: 'footer' },
+      ]
+    : [
+        { key: 'strip', type: 'strip' },
+        ...(activeEvents.length > 0 ? [
+          { key: 'active-header', type: 'active-header' as const },
+          ...activeEvents.map(e => ({ key: e.id, type: 'event' as const, event: e })),
+          { key: 'divider', type: 'divider' as const },
+        ] : []),
+        { key: 'past-header', type: 'past-header' },
+        ...pastEvents.map(e => ({ key: e.id, type: 'event' as const, event: e })),
+        { key: 'footer', type: 'footer' },
+      ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -205,10 +287,14 @@ export default function EventsScreen() {
         />
       )}
 
+      <SearchBar value={query} onChange={setQuery} />
+
       <FlatList
         data={sections}
         keyExtractor={item => item.key}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         contentContainerStyle={{ paddingTop: 4 }}
         renderItem={({ item }) => {
           switch (item.type) {
@@ -217,7 +303,19 @@ export default function EventsScreen() {
             case 'active-header':
               return <SectionHeader label="Active" />;
             case 'past-header':
-              return <SectionHeader label="History" action="Filter" />;
+              return <SectionHeader label="History" />;
+            case 'results-header':
+              return (
+                <SectionHeader
+                  label={item.count === 1 ? '1 result' : `${item.count} results`}
+                />
+              );
+            case 'no-results':
+              return (
+                <Text style={search.empty}>
+                  Nothing matches “{query.trim()}”. Try an event name, a venue, or an opponent.
+                </Text>
+              );
             case 'divider':
               return <OrnamentDivider />;
             case 'event':

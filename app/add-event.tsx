@@ -1,5 +1,5 @@
 // Add Event Screen — modal
-// Permite criar um novo evento com nome, formato, data e localização
+// Permite criar um novo evento com nome, formato, set (só em Limited), data e localização
 
 import { useState } from 'react';
 import {
@@ -14,7 +14,9 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { EventType, isActive } from '../types';
+import { isLimitedFormat } from '../domain/sets';
 import { useEventsStore } from '../store/useEventsStore';
+import { SetSelector } from '../components/SetSelector';
 
 const FORMATS: EventType[] = ['Sealed', 'Draft', 'Standard', 'Modern', 'Pioneer', 'Commander', 'Legacy'];
 
@@ -41,6 +43,7 @@ export default function AddEventScreen() {
   // iOS: data temporária enquanto o picker está aberto
   const [tempDate, setTempDate]   = useState<Date>(new Date());
   const [location, setLocation]   = useState('');
+  const [setCode, setSetCode]     = useState<string | undefined>(undefined);
   const [saving, setSaving]       = useState(false);
 
   const createEvent = useEventsStore(s => s.createEvent);
@@ -52,6 +55,15 @@ export default function AddEventScreen() {
   const blocked = activeEvent !== undefined;
 
   const canSave = name.trim().length > 0 && format !== null && !saving && !blocked;
+
+  // O set só existe em Limited (ver o schema). Trocar Sealed por Modern tem de o largar, senão o
+  // evento ficava com um set que ninguém escolheu e que o écran já nem mostra.
+  const limited = format !== null && isLimitedFormat(format);
+
+  function chooseFormat(next: EventType) {
+    setFormat(next);
+    if (!isLimitedFormat(next)) setSetCode(undefined);
+  }
 
   // ─── Handlers do DatePicker ─────────────────────────────────────────────────
 
@@ -89,6 +101,7 @@ export default function AddEventScreen() {
       type:     format,
       date:     toIsoDate(selectedDate),
       location: location.trim() || undefined,
+      setCode:  isLimitedFormat(format) ? setCode : undefined,
     });
 
     setSaving(false);
@@ -176,7 +189,7 @@ export default function AddEventScreen() {
               {FORMATS.map(f => (
                 <Pressable
                   key={f}
-                  onPress={() => setFormat(f)}
+                  onPress={() => chooseFormat(f)}
                   style={[styles.formatBtn, format === f && styles.formatBtnActive]}
                 >
                   <Text style={[styles.formatBtnText, format === f && styles.formatBtnTextActive]}>
@@ -186,6 +199,9 @@ export default function AddEventScreen() {
               ))}
             </View>
           </View>
+
+          {/* Set — só em Limited: em Modern ou Commander não há set nenhum a registar */}
+          {limited && <SetSelector value={setCode} onChange={setSetCode} />}
 
           {/* Data — Pressable que abre o picker */}
           <View style={styles.field}>
