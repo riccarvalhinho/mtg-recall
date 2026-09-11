@@ -36,26 +36,52 @@ revogar (não basta apagar o ficheiro: fica no histórico).
 
 ---
 
-## 3. Gerar o APK
+## 3. Gerar o APK — sem computador
 
-Uma vez, no computador:
+O build corre no GitHub Actions e dispara-se a partir do browser do telemóvel. O computador deixa de
+ser preciso.
 
-```bash
-npm install -g eas-cli
-eas login                    # conta Expo, gratuita
-eas init                     # cria o projecto e escreve o id no app.json
-eas update:configure         # liga o EAS Update, para as próximas actualizações não precisarem de APK novo
+### 3.1. Uma vez: conta Expo e token
+
+Tudo isto se faz no browser do telemóvel.
+
+1. Criar conta em **expo.dev** (gratuita).
+2. **Account settings → Access tokens → Create token**. Copiar — só aparece uma vez.
+3. No GitHub: **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `EXPO_TOKEN`
+   - Secret: o token do passo 2
+
+O `EXPO_TOKEN` é o que deixa a Action falar com a Expo em teu nome. Não é o mesmo token do ponto 2
+deste guia — aquele é do GitHub e serve para a app escrever no repositório; este é da Expo e serve
+para pedir builds.
+
+### 3.2. Sempre que for preciso um APK novo
+
+1. GitHub → separador **Actions** → **Gerar APK** → **Run workflow**
+2. Escolher o perfil (`preview` serve para tudo o que não seja uma versão a sério)
+3. A Action valida o código e pede o build à Expo. Demora um minuto.
+4. O build em si corre na nuvem da Expo, ~15 minutos. Ver em **expo.dev → Projects → mtg-recall →
+   Builds**.
+5. Quando acabar, abrir a página do build **no telemóvel** e carregar em **Install**. O Android
+   avisa que a origem é desconhecida — é sideload de uma app própria, autorizar.
+
+### 3.3. Da segunda vez em diante, quase nunca é preciso APK novo
+
+O EAS Update entrega alterações de JavaScript sem APK nenhum: a app vai buscá-las ao arrancar. Só é
+preciso um APK novo quando muda alguma coisa nativa — uma dependência nova com código nativo, uma
+permissão, o ícone, a versão do Expo SDK.
+
+Para tudo o resto, basta o update:
+
+```
+Actions → Publicar update → Run workflow
 ```
 
-E depois, sempre que for preciso um APK novo:
-
-```bash
-eas build --profile preview --platform android
-```
-
-O build corre na nuvem e demora ~15 minutos. No fim aparece um link e um QR code: abrir no telemóvel,
-descarregar o `.apk` e instalar. O Android vai avisar que a origem é desconhecida — é sideload de uma
-app própria, autorizar.
+> **Nota de estado:** o primeiro build ainda não foi feito. Até correr uma vez, há um detalhe por
+> confirmar: o `app.json` não tem `extra.eas.projectId` (o `eas init` nunca correu). O workflow
+> tenta criá-lo sozinho, mas o id fica só naquela execução. Depois do primeiro build, copiar o id
+> de **expo.dev → Project settings** e escrevê-lo no `app.json` — passa a ser permanente e o passo
+> deixa de ter nada que fazer.
 
 ---
 

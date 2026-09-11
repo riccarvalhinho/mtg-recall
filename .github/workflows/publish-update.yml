@@ -1,0 +1,52 @@
+name: Publicar update
+
+# Entrega alterações de JavaScript ao telemóvel sem APK novo: a app vai buscá-las ao arrancar.
+#
+# Serve para quase tudo — écrans, lógica, correcções. NÃO serve quando muda alguma coisa nativa:
+# uma dependência com código nativo, uma permissão, o ícone, a versão do SDK. Nesses casos é o
+# workflow "Gerar APK".
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Canal (tem de bater certo com o perfil do APK instalado)'
+        type: choice
+        options: [preview, production]
+        default: preview
+      message:
+        description: 'O que vai neste update'
+        type: string
+        default: 'Update'
+
+concurrency:
+  group: publish-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: EAS Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci --legacy-peer-deps
+
+      # Um update entra no telemóvel sem passar por mais lado nenhum. Se o código não compila, a
+      # app abre partida — e não há loja nem revisão pelo meio a apanhar isso.
+      - name: Validar antes de publicar
+        run: npm run check
+
+      - name: Publicar
+        run: npx eas-cli update --branch ${{ inputs.channel }} --message "${{ inputs.message }}" --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

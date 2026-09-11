@@ -249,6 +249,11 @@ APK gerado pelo EAS Build e instalado por sideload; alterações de JavaScript c
 sem APK novo. Os passos todos — token, Pages, build, restauro — estão em
 `docs/ops/telemovel-setup.md`.
 
+**Sem computador:** os builds e os updates disparam-se do separador Actions do GitHub, que abre no
+browser do telemóvel — workflows `build-apk.yml` e `publish-update.yml`. Precisam de um segredo
+`EXPO_TOKEN` (expo.dev → Account settings → Access tokens), que é diferente do token do GitHub
+usado pela app para escrever no repositório.
+
 ---
 
 ## Estado Actual

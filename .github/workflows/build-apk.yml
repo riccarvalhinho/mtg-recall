@@ -1,0 +1,63 @@
+name: Gerar APK
+
+# Existe para o APK poder ser pedido sem computador: abre-se o separador Actions no browser do
+# telemóvel, carrega-se em "Run workflow", e no fim o APK sai num link do expo.dev.
+#
+# O guia completo, com os passos que só se fazem uma vez, está em docs/ops/telemovel-setup.md.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Perfil de build (eas.json)'
+        type: choice
+        options: [preview, production]
+        default: preview
+
+# Um build de cada vez. Dois em paralelo só gastavam a quota da conta Expo.
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: EAS Build (Android)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar o eas-cli e autenticar
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci --legacy-peer-deps
+
+      # O mesmo que o CI corre. Um APK gerado a partir de código que não compila é meia hora
+      # perdida a descobri-lo no telemóvel.
+      - name: Validar antes de construir
+        run: npm run check
+
+      # Só faz alguma coisa se o app.json ainda não tiver o projectId. Depois da primeira vez é
+      # um no-op — mas o id fica só nesta execução, portanto convém commitá-lo (ver o guia).
+      - name: Ligar ao projecto Expo
+        run: npx eas-cli init --non-interactive --force
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # --no-wait devolve logo o link: a Action não fica meia hora à espera a gastar minutos.
+      # O progresso vê-se em expo.dev e o APK aparece lá quando acabar.
+      - name: Pedir o build
+        run: npx eas-cli build --platform android --profile ${{ inputs.profile }} --non-interactive --no-wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Onde ver o resultado
+        run: |
+          echo "Build pedido. O APK aparece em https://expo.dev quando acabar (~15 min)."
+          echo "Projects → mtg-recall → Builds → o mais recente → Install/Download."
