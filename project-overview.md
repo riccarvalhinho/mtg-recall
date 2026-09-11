@@ -2,7 +2,7 @@
 
 > Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica
 > for tomada, ou o estado mudar.
-> Última actualização: 2026-08-31
+> Última actualização: 2026-09-11
 
 ---
 
@@ -15,9 +15,18 @@ project documentation (`docs/`, ADRs) are written in Portuguese.
 
 ## Estado Actual
 
-**Fase 0 — Repurpose.** A app deixa de depender do Supabase e passa a guardar os dados como ficheiros
-JSON no próprio repositório, escritos pela app através da Contents API do GitHub. Utilizador único,
-sem contas. As decisões estão em `docs/adr/`; o que falta está em `docs/product/roadmap.md`.
+**Fase 0 — Repurpose, feita no código.** A app deixou de depender do Supabase e guarda os dados como
+ficheiros JSON no próprio repositório, escritos através da Contents API do GitHub. Utilizador único,
+sem contas. As decisões estão em `docs/adr/`.
+
+`npm run check` passa — dados válidos, typecheck limpo, 46 testes verdes.
+
+Falta uma correcção (o restauro não descarta a outbox, Q7) e quatro passos manuais que dependem das
+contas do autor: ligar o Pages, correr o `eas build`, criar o token e registar o primeiro torneio. O
+detalhe está em `docs/product/roadmap.md` e o guia em `docs/ops/telemovel-setup.md`.
+
+**`data/events/` está vazio.** Enquanto não houver lá um torneio a sério, a cadeia telemóvel →
+commit → bundle → restauro não está provada ponta a ponta.
 
 ---
 
@@ -42,7 +51,8 @@ sem contas. As decisões estão em `docs/adr/`; o que falta está em `docs/produ
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data e local
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações
-- [ ] **Settings** (hoje o tab Profile é um placeholder) — token e estado da sincronização
+- [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
+      agora, restauro a partir do GitHub
 
 ### Navegação
 - [x] Root layout com 9 variantes de fonte carregadas por `expo-font`
@@ -74,12 +84,19 @@ sem contas. As decisões estão em `docs/adr/`; o que falta está em `docs/produ
 
 ## O que falta (Fase 0)
 
-- [ ] Correr `eas init` e o primeiro `eas build --profile preview --platform android`
+**A corrigir:**
+
+- [ ] O restauro não descarta a outbox. `localStore.replaceAll` limpa `mtgrecall.file:*` e
+      `mtgrecall.files`, mas a fila vive em `mtgrecall.outbox` e sobrevive — o worker envia-a a
+      seguir, por cima do que acabou de ser restaurado. O modal promete o contrário. Ver Q7 em
+      `docs/product/open-questions.md`
+
+**Passos manuais**, com o guia em `docs/ops/telemovel-setup.md`:
+
 - [ ] Ligar o GitHub Pages (Settings → Pages → Source: GitHub Actions)
+- [ ] Correr `eas init` e o primeiro `eas build --profile preview --platform android`
 - [ ] Criar o token e colá-lo no écran de Settings
 - [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
-
-Os três primeiros são passos manuais, com o guia em `docs/ops/telemovel-setup.md`.
 
 O detalhe das fases seguintes está em `docs/product/roadmap.md`.
 

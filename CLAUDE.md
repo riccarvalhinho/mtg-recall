@@ -47,7 +47,7 @@ conhecimento prévio de padrões ou convenções.
 | Segredos | `expo-secure-store` (token do GitHub) |
 | Distribuição | EAS Build (APK) + EAS Update |
 | Card data | Scryfall API |
-| Card prices | Cardmarket API (Fase 4) |
+| Card prices | Por decidir (Fase 4) — ver Q8 em `docs/product/open-questions.md` |
 | Mana symbols | SVG locais em `assets/mana/symbols.ts` |
 
 ---
