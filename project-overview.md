@@ -52,7 +52,8 @@ commit → bundle → restauro não está provada ponta a ponta.
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
-- [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações
+- [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações e
+      **Opponents** (nemesis, melhor matchup, mais enfrentados e head-to-head por toque)
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
       agora, restauro a partir do GitHub
 
@@ -84,6 +85,8 @@ commit → bundle → restauro não está provada ponta a ponta.
 - [x] `domain/sets.ts` (puro) — filtra os tipos jogáveis, ordena por data e valida o código
       contra o padrão do schema
 - [x] `domain/search.ts` (puro) — predicado da procura de eventos
+- [x] `domain/opponents.ts` (puro) — registo contra cada adversário, ranking por número de
+      encontros, nemesis/melhor matchup (mínimo de 3 encontros) e head-to-head
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
 - [x] 46 testes nos módulos puros
 

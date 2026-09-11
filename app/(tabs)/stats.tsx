@@ -1,14 +1,25 @@
 // Stats Screen
 // Design ref: design prints provided by user (2026-05-10)
 
-import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Rect, Line, Circle, G, Text as SvgText } from 'react-native-svg';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-import { ManaColor, Event, isActive } from '../../types';
+import { ManaColor, Event, Opponent, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
+import { RecordBadge } from '../../components/RecordBadge';
+import {
+  MIN_HIGHLIGHT_ENCOUNTERS,
+  OpponentRecord,
+  favouriteMatchup,
+  headToHead,
+  nemesis,
+  rankOpponents,
+} from '../../domain/opponents';
 
 const SCREEN_W   = Dimensions.get('window').width;
 const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
@@ -434,6 +445,323 @@ const byColor = StyleSheet.create({
   },
 });
 
+// ─── Opponents ────────────────────────────────────────────────────────────────
+
+// Quantos adversários a lista mostra antes de se resumir. Seis chega para a pergunta ("quem é que
+// eu enfrento mais vezes?") sem transformar o écran de stats numa lista de contactos.
+const OPPONENTS_SHOWN = 6;
+
+/** "14 Feb" a partir de "2026-02-14", sem passar pelo Date — que interpreta a data em UTC. */
+function shortDay(date: string): string {
+  const [, month, day] = date.split('-');
+  const monthName = MONTHS[Number(month) - 1];
+  return monthName ? `${Number(day)} ${monthName}` : date;
+}
+
+/**
+ * Um destaque: o nemesis ou o melhor matchup.
+ *
+ * A borda e o número são tingidos de derrota ou de vitória porque é a leitura que interessa à
+ * distância — o nome vem depois.
+ */
+function Highlight({ label, record, tone }: {
+  label: string;
+  record: OpponentRecord;
+  tone: 'win' | 'loss';
+}) {
+  const accent = tone === 'win' ? colors.win : colors.loss;
+  const background = tone === 'win' ? colors.winBg : colors.lossBg;
+  const borderColor = tone === 'win' ? colors.winBorder : colors.lossBorder;
+
+  return (
+    <View style={[opp.highlight, { backgroundColor: background, borderColor }]}>
+      <Text style={[opp.highlightLabel, { color: accent }]}>{label}</Text>
+      <Text style={opp.highlightName} numberOfLines={1}>{record.name}</Text>
+      <Text style={opp.highlightMeta}>
+        <Text style={[opp.highlightRate, { color: accent }]}>{record.winRate}%</Text>
+        {`  ${record.wins}–${record.losses}${record.draws > 0 ? `–${record.draws}` : ''}`}
+      </Text>
+      <Text style={opp.highlightMeta}>
+        {record.played === 1 ? '1 match' : `${record.played} matches`}
+      </Text>
+    </View>
+  );
+}
+
+/** Uma linha da lista. Toca-se para abrir o histórico contra aquela pessoa. */
+function OpponentRow({ record, events, expanded, onToggle }: {
+  record: OpponentRecord;
+  events: Event[];
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const history = expanded ? headToHead(record.opponentId, events) : [];
+
+  return (
+    <Pressable
+      onPress={onToggle}
+      style={({ pressed }) => [opp.row, pressed && { backgroundColor: colors.bgCardHov }]}
+    >
+      <View style={opp.rowMain}>
+        <View style={opp.rowInfo}>
+          <Text style={opp.name} numberOfLines={1}>{record.name}</Text>
+          <Text style={opp.meta} numberOfLines={1}>
+            {record.played === 1 ? '1 match' : `${record.played} matches`}
+            {' · '}
+            {record.events === 1 ? '1 event' : `${record.events} events`}
+            {record.draws > 0 ? (record.draws === 1 ? ' · 1 draw' : ` · ${record.draws} draws`) : ''}
+          </Text>
+        </View>
+
+        <RecordBadge wins={record.wins} losses={record.losses} draws={record.draws} />
+
+        <Feather
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={14}
+          color={colors.textDim}
+          style={opp.chevron}
+        />
+      </View>
+
+      {/* Histórico, do encontro mais recente para o mais antigo */}
+      {expanded && (
+        <View style={opp.history}>
+          {history.map(({ event, match }) => (
+            <View key={`${event.id}-${match.round}`} style={opp.historyRow}>
+              <Text style={[opp.historyResult, { color: resultColor(match.result) }]}>
+                {match.result}
+              </Text>
+              <Text style={opp.historyEvent} numberOfLines={1}>
+                {event.name}
+              </Text>
+              <Text style={opp.historyDate}>R{match.round} · {shortDay(event.date)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+function resultColor(result: 'W' | 'L' | 'D'): string {
+  if (result === 'W') return colors.win;
+  if (result === 'L') return colors.loss;
+  return colors.draw;
+}
+
+/**
+ * A secção inteira.
+ *
+ * As contas estão em `domain/opponents.ts` — aqui só se desenha. A ordem da lista é a do
+ * `rankOpponents` (mais enfrentados primeiro) e não a do win rate; o porquê está lá explicado.
+ */
+function OpponentsSection({ events, opponents }: { events: Event[]; opponents: Opponent[] }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const ranked = useMemo(() => rankOpponents(opponents, events), [opponents, events]);
+  const faced = useMemo(() => ranked.filter(record => record.played > 0), [ranked]);
+  const worst = useMemo(() => nemesis(opponents, events), [opponents, events]);
+  const best = useMemo(() => favouriteMatchup(opponents, events), [opponents, events]);
+
+  // Sem eventos registados não há aqui nada a dizer — e é o caso normal de quem abre a app pela
+  // primeira vez, não uma falha a disfarçar com gráficos vazios.
+  if (faced.length === 0) {
+    return (
+      <View style={opp.empty}>
+        <Text style={opp.emptyText}>
+          No opponents yet. Register a match and your record against each player starts here.
+        </Text>
+      </View>
+    );
+  }
+
+  // Com um só candidato o nemesis e o melhor matchup são a mesma pessoa. Mostrar as duas etiquetas
+  // sobre o mesmo nome seria ridículo: fica a que o registo justifica.
+  const sameOne = worst && best && worst.opponentId === best.opponentId;
+  const soloTone: 'win' | 'loss' = worst && worst.winRate >= 50 ? 'win' : 'loss';
+
+  return (
+    <View style={opp.section}>
+      {worst && best && (
+        <View style={opp.highlights}>
+          {sameOne ? (
+            <Highlight
+              label={soloTone === 'win' ? 'BEST MATCHUP' : 'NEMESIS'}
+              record={worst}
+              tone={soloTone}
+            />
+          ) : (
+            <>
+              <Highlight label="NEMESIS" record={worst} tone="loss" />
+              <Highlight label="BEST MATCHUP" record={best} tone="win" />
+            </>
+          )}
+        </View>
+      )}
+
+      {/* Porque é que ainda não há destaques — melhor do que um espaço vazio sem explicação */}
+      {!worst && (
+        <Text style={opp.note}>
+          Nemesis and best matchup need {MIN_HIGHLIGHT_ENCOUNTERS} matches against the same player.
+        </Text>
+      )}
+
+      <View style={opp.card}>
+        {faced.slice(0, OPPONENTS_SHOWN).map((record, index) => (
+          <View key={record.opponentId}>
+            {index > 0 && <View style={opp.divider} />}
+            <OpponentRow
+              record={record}
+              events={events}
+              expanded={openId === record.opponentId}
+              onToggle={() => setOpenId(openId === record.opponentId ? null : record.opponentId)}
+            />
+          </View>
+        ))}
+      </View>
+
+      {faced.length > OPPONENTS_SHOWN && (
+        <Text style={opp.note}>
+          + {faced.length - OPPONENTS_SHOWN} more opponents faced.
+        </Text>
+      )}
+    </View>
+  );
+}
+
+const opp = StyleSheet.create({
+  section: {
+    marginBottom: 24,
+  },
+  highlights: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 10,
+  },
+  highlight: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 2,
+  },
+  highlightLabel: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 10,
+    letterSpacing: 0.8,
+  },
+  highlightName: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.textPrim,
+  },
+  highlightMeta: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.textDim,
+  },
+  highlightRate: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 12,
+  },
+  card: {
+    backgroundColor: colors.bgCard,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: 16,
+    overflow: 'hidden',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 14,
+  },
+  row: {
+    // 44 px de alvo de toque mínimo, com folga: a app usa-se de pé numa loja
+    minHeight: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  rowMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rowInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  name: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.textPrim,
+  },
+  meta: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: colors.textDim,
+  },
+  chevron: {
+    marginLeft: 2,
+  },
+  history: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: 6,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  historyResult: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 12,
+    width: 12,
+  },
+  historyEvent: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.textSec,
+  },
+  historyDate: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: colors.textDim,
+  },
+  empty: {
+    marginHorizontal: 16,
+    backgroundColor: colors.bgCard,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyText: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 13,
+    color: colors.textDim,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  note: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: colors.textDim,
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+});
+
 // ─── Positions Pyramid ────────────────────────────────────────────────────────
 
 // Pyramid row occupies a centered portion; percentage label sits outside to the right.
@@ -525,6 +853,7 @@ const pyramid = StyleSheet.create({
 
 export default function StatsScreen() {
   const events = useEventsStore(s => s.events);
+  const opponents = useEventsStore(s => s.opponents);
 
   const trendEvents = events.filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined);
 
@@ -544,6 +873,9 @@ export default function StatsScreen() {
 
         <SectionHeader title="By Color" />
         <ColorSection events={events} />
+
+        <SectionHeader title="Opponents" />
+        <OpponentsSection events={events} opponents={opponents} />
 
         <SectionHeader title="Positions Reached" />
         <PositionsPyramid events={events} />
