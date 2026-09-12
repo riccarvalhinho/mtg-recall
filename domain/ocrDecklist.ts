@@ -89,6 +89,13 @@ export function columnsOf(blocks: TextBlock[], gapRatio = 0.6): TextBlock[][] {
  *
  * A referência é a **altura mediana**, e não a máxima: uma única leitura gigante de um bloco mal
  * segmentado levaria o limiar atrás dela e deitaria fora a fotografia toda.
+ *
+ * **Isto é um remendo, não a cura.** A cura é a fotografia não ter texto de regras nenhum — tapar a
+ * carta de baixo com uma sleeve ou com o verso de outra carta, deixando só as barras dos títulos à
+ * vista. Quando a mesa está montada assim, este filtro deixa de ter o que fazer e passa a poder
+ * fazer mal: sem regras na fotografia, a mediana passa a ser a altura de um título, e um título
+ * lido mais pequeno — canto da imagem, carta inclinada, perspectiva — seria deitado fora em
+ * silêncio. Ver a opção `titlesOnly` de `decklistFromBlocks`.
  */
 export function titleSized(blocks: TextBlock[], minRatio = 0.7): TextBlock[] {
   if (blocks.length === 0) return [];
@@ -116,6 +123,30 @@ export function normalizeCardText(text: string): string {
     .replace(/\/\//g, ' ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+}
+
+/**
+ * O nome sem o custo de mana que vem colado a ele.
+ *
+ * O custo está na **mesma barra** do título, portanto tapar a carta de baixo não o esconde: o OCR
+ * devolve "Llanowar Elves 6" ou "Opt 1" e o custo vira lixo no fim da linha. Num nome longo a
+ * tolerância a erros absorvia isso, mas em "Opt" dois caracteres a mais são mais erros do que os
+ * permitidos — e era logo aí que falhava.
+ *
+ * Só se tiram palavras **curtas** e feitas de dígitos ou das letras que aparecem num custo. É o que
+ * impede isto de comer o fim de um nome a sério: "Fire // Ice" acaba em "ice", que tem três letras
+ * e fica onde está.
+ */
+export function stripManaCost(normalized: string): string {
+  const words = normalized.split(' ').filter(Boolean);
+
+  while (words.length > 1) {
+    const last = words[words.length - 1];
+    if (last.length > 2 || !/^[wubrgcxsp0-9]+$/.test(last)) break;
+    words.pop();
+  }
+
+  return words.join(' ');
 }
 
 /**
@@ -183,17 +214,24 @@ export function matchCardName(text: string, catalogue: string[]): NameMatch | nu
   const reading = normalizeCardText(text);
   if (reading.length < 3) return null;
 
+  // Duas leituras da mesma linha: com e sem o custo de mana colado ao fim. A exacta ganha sempre,
+  // portanto tentar as duas nunca piora nada — só apanha o caso em que o custo estragava a conta.
+  const stripped = stripManaCost(reading);
+  const readings = stripped !== reading && stripped.length >= 3 ? [reading, stripped] : [reading];
+
   let best: NameMatch | null = null;
 
   for (const name of catalogue) {
     const candidate = normalizeCardText(name);
-    if (candidate === reading) return { name, distance: 0 };
+    if (readings.includes(candidate)) return { name, distance: 0 };
 
     const limit = Math.min(allowedErrors(candidate), best ? best.distance - 1 : Infinity);
     if (limit < 0) continue;
 
-    const distance = editDistance(reading, candidate, limit);
-    if (distance <= limit) best = { name, distance };
+    for (const attempt of readings) {
+      const distance = editDistance(attempt, candidate, limit);
+      if (distance <= limit) best = { name, distance };
+    }
   }
 
   return best;
@@ -217,6 +255,23 @@ export interface OcrDecklist {
   unmatched: string[];
 }
 
+/** Como a mesa foi montada. Muda o que é preciso descartar antes de ler. */
+export interface OcrOptions {
+  /**
+   * `true` quando só as barras dos títulos estão à vista — as cartas de baixo tapadas com uma
+   * sleeve ou com o verso de outra carta.
+   *
+   * Desliga o filtro pelo tamanho do texto, que aí não tem o que filtrar e só arriscava deitar
+   * fora um título lido mais pequeno. **É a montagem a preferir**, e a razão é mais funda do que
+   * poupar um passo: o filtro é uma heurística sobre um problema que a sleeve faz desaparecer.
+   * Nenhuma heurística é tão robusta como não haver o que adivinhar.
+   *
+   * Por omissão é `false`, que é o caso mais difícil — uma fotografia tirada sem cuidado nenhum
+   * continua a dar o seu melhor.
+   */
+  titlesOnly?: boolean;
+}
+
 /**
  * A proposta de decklist, a partir dos blocos que o OCR devolveu.
  *
@@ -228,8 +283,13 @@ export interface OcrDecklist {
  * interessa: o que ele não conhecer aparece em `unmatched` e escreve-se à mão, em vez de virar
  * silenciosamente outra carta.
  */
-export function decklistFromBlocks(blocks: TextBlock[], catalogue: string[]): OcrDecklist {
-  const ordered = columnsOf(titleSized(blocks)).flat();
+export function decklistFromBlocks(
+  blocks: TextBlock[],
+  catalogue: string[],
+  options: OcrOptions = {},
+): OcrDecklist {
+  const readable = options.titlesOnly ? blocks : titleSized(blocks);
+  const ordered = columnsOf(readable).flat();
 
   const byName = new Map<string, OcrCandidate>();
   const unmatched: string[] = [];

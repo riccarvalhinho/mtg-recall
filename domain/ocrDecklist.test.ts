@@ -7,6 +7,7 @@ import {
   editDistance,
   matchCardName,
   normalizeCardText,
+  stripManaCost,
   titleSized,
   type TextBlock,
 } from './ocrDecklist';
@@ -245,5 +246,52 @@ describe('catalogueFrom', () => {
 
   it('sem fontes devolve lista vazia', () => {
     expect(catalogueFrom()).toEqual([]);
+  });
+});
+
+describe('stripManaCost', () => {
+  it('tira o custo que vem colado ao nome — está na mesma barra do título', () => {
+    expect(stripManaCost('llanowar elves 6')).toBe('llanowar elves');
+    expect(stripManaCost('opt 1')).toBe('opt');
+    expect(stripManaCost('lightning bolt r')).toBe('lightning bolt');
+    expect(stripManaCost('counterspell u u')).toBe('counterspell');
+  });
+
+  it('não come palavras a sério do fim do nome', () => {
+    // "ice" tem três letras e fica. É o que impede isto de estragar nomes verdadeiros.
+    expect(stripManaCost('fire ice')).toBe('fire ice');
+    expect(stripManaCost('birds of paradise')).toBe('birds of paradise');
+  });
+
+  it('nunca deixa a linha vazia', () => {
+    expect(stripManaCost('x')).toBe('x');
+  });
+});
+
+describe('com as cartas de baixo tapadas (titlesOnly)', () => {
+  const catalogue = ['Lightning Bolt', 'Llanowar Elves', 'Opt', 'Birds of Paradise'];
+
+  it('um título lido mais pequeno deixa de ser deitado fora', () => {
+    // Sem regras na fotografia, a mediana passa a ser a altura de um título — e um título do canto
+    // da imagem, ou de uma carta inclinada, sai mais pequeno. O filtro comia-o em silêncio.
+    const blocks = [
+      title('Lightning Bolt', 20, 100, 200, 30),
+      title('Llanowar Elves', 20, 300, 200, 30),
+      title('Birds of Paradise', 20, 500, 160, 18),
+    ];
+
+    expect(decklistFromBlocks(blocks, catalogue).cards.map(c => c.name))
+      .not.toContain('Birds of Paradise');
+    expect(decklistFromBlocks(blocks, catalogue, { titlesOnly: true }).cards.map(c => c.name))
+      .toContain('Birds of Paradise');
+  });
+
+  it('o custo de mana da barra do título não estraga um nome curto', () => {
+    // Tapar a carta de baixo não esconde o custo: ele está na mesma barra que o nome.
+    const blocks = [title('Opt 1', 20, 100), title('Llanowar Elves 6', 20, 300)];
+    const { cards, unmatched } = decklistFromBlocks(blocks, catalogue, { titlesOnly: true });
+
+    expect(cards.map(c => c.name)).toEqual(['Opt', 'Llanowar Elves']);
+    expect(unmatched).toEqual([]);
   });
 });
