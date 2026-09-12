@@ -15,15 +15,16 @@ project documentation (`docs/`, ADRs) are written in Portuguese.
 
 ## Estado Actual
 
-**Fases 0 a 4 implementadas.** A app deixou de depender do Supabase e guarda tudo — eventos, decks,
-colecção — como ficheiros JSON no próprio repositório, escritos pela Contents API do GitHub.
-Utilizador único, sem contas. As decisões estão em `docs/adr/` (0001 a 0007).
+**Fases 0 a 4 implementadas, e a Fase 5 com tudo feito menos a decklist por fotografia.** A app
+deixou de depender do Supabase e guarda tudo — eventos, decks, colecção — como ficheiros JSON no
+próprio repositório, escritos pela Contents API do GitHub. Utilizador único, sem contas. As decisões
+estão em `docs/adr/` (0001 a 0009).
 
-`npm run check` passa: dados válidos, typecheck limpo, **219 testes verdes**.
+`npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
 O que falta não é código. São quatro passos manuais que dependem das contas do autor — ligar o
-Pages, correr o `eas build`, criar o token, registar o primeiro torneio — e estão em
-`docs/ops/telemovel-setup.md`.
+Pages, guardar a keystore e correr o workflow do APK, criar o token, registar o primeiro torneio — e
+estão em `docs/ops/telemovel-setup.md`.
 
 **`data/events/` está vazio.** Enquanto não houver lá um torneio a sério, a cadeia telemóvel →
 commit → bundle → restauro não está provada ponta a ponta, e é a única coisa que interessa a seguir.
@@ -44,26 +45,34 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
 - [x] `TypeBadge`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`, `MatchCard`, `ConfirmModal`
 - [x] `CardArtThumb` — recorte da arte com `expo-image` (cache em disco) e recuo para o placeholder
+- [x] `CardArtPicker` — grelha para escolher a carta que ilustra o deck ou o evento; controlada e
+      sem store, para servir os dois écrans
+- [x] `ManaCost` — o custo inteiro desenhado, com três níveis de recurso até ao texto numa bolha
+- [x] `SetSelector`, `CardSearchModal` — lista de sets e procura de cartas da Scryfall, com cache
 
 ### Écrans
-- [x] **Home** — empty state e variante com dados (StatsBlock + evento activo)
+- [x] **Home** — empty state (com entrada para a colecção) e variante com dados (StatsBlock +
+      evento activo, já com o recorte da arte)
 - [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
       nome do evento, local e adversário (`domain/search.ts`)
 - [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
-      (rank + nº de jogadores), apagar evento e apagar match com confirmação
+      (rank + nº de jogadores), apagar evento e apagar match com confirmação, e "Event details"
+      para corrigir o set (só Limited) e escolher a arte do evento
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
 - [x] **Deck Detail** — desempenho do deck, curva de mana, cores, tipos e **subtipos** com selector
       de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações e
-      **Opponents** (nemesis, melhor matchup, mais enfrentados e head-to-head por toque)
+      **Opponents** (nemesis, melhor matchup e mais enfrentados), que abrem o Opponent Detail
+- [x] **Collection** — valor, evolução, procura, e ligar uma carta escrita à mão a uma impressão
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
       agora, restauro a partir do GitHub
 
 ### Navegação
 - [x] Root layout com 9 variantes de fonte carregadas por `expo-font`
-- [x] 4 tabs; Event Detail fora do grupo de tabs; modais com `presentation: 'modal'`
+- [x] 5 tabs; Event, Deck e Opponent Detail fora do grupo de tabs; modais com
+      `presentation: 'modal'`
 
 ### Decisões
 - [x] `docs/adr/0001` a `0006` — GitHub como source of truth, dados JSON versionados, app nativa em
@@ -91,6 +100,11 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `domain/search.ts` (puro) — predicado da procura de eventos
 - [x] `domain/opponents.ts` (puro) — registo contra cada adversário, ranking por número de
       encontros, nemesis/melhor matchup (mínimo de 3 encontros) e head-to-head
+- [x] `app/opponent/[id].tsx` — écran de detalhe por adversário: registo, destaque (nemesis ou
+      melhor matchup) e histórico de confrontos, cada um a abrir o evento. A lista das Stats deixou
+      de expandir o histórico em acordeão e passa a navegar para aqui
+- [x] `domain/dates.ts` (puro) — formatação de datas `AAAA-MM-DD` sem passar pelo `Date`, que as lê
+      em UTC e num fuso negativo recua um dia
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
 - [x] 46 testes nos módulos puros
 
@@ -101,7 +115,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 **Passos manuais**, com o guia em `docs/ops/telemovel-setup.md`:
 
 - [ ] Ligar o GitHub Pages (Settings → Pages → Source: GitHub Actions)
-- [ ] Correr `eas init` e o primeiro `eas build --profile preview --platform android`
+- [ ] Guardar a keystore nos segredos e correr o workflow **Gerar APK (Gradle)** (ADR 0008 — sem
+      EAS e sem conta na Expo)
 - [ ] Criar o token e colá-lo no écran de Settings
 - [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
 
@@ -121,7 +136,7 @@ A dívida conhecida está listada em `docs/product/roadmap.md`.
 |---|---|---|
 | Onde vivem os dados | Ficheiros JSON no repositório | ADR 0002 — custo zero, nada que adormeça, histórico de graça |
 | Como a app escreve | Local-first + outbox → Contents API | ADR 0004 — instantâneo e funciona sem rede |
-| Forma da app | Nativa (Expo), APK por EAS Build | ADR 0003 — seis écrans já feitos; sideload no Android é grátis |
+| Forma da app | Nativa (Expo), APK compilado no GitHub Actions | ADR 0003 e ADR 0008 — os écrans já estavam feitos; sideload no Android é grátis, e o Gradle no CI dispensa conta na Expo |
 | Utilizadores | Um só, sem contas | ADR 0006 — a infraestrutura multi-utilizador estava a travar o produto |
 | Visibilidade do repo | Público | ADR 0005 — Pages gratuito; a saída para privacidade são alcunhas |
 | State management | Zustand | Simples e reactivo |

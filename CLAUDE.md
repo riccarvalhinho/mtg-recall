@@ -70,19 +70,21 @@ conhecimento prévio de padrões ou convenções.
     profile.tsx             Settings (token + sincronização)
   event/[id].tsx            Event Detail (push, sem tab bar)
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
+  opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
-/components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, CardArtThumb, ConfirmModal, SetSelector,
-                            CardSearchModal
+/components                 ManaPip, ManaCost, TypeBadge, RecordBadge, EventCard, MatchCard,
+                            CardThumbnailPlaceholder, CardArtThumb, CardArtPicker, ConfirmModal,
+                            SetSelector, CardSearchModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
-                            match, manaSelection, deck, deckList, cards, cardCache, collection,
-                            opponents
+                            match, manaSelection, manaCost, deck, deckList, basicLands, cards,
+                            cardCache, collection, opponents, thumbnails, dates
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
-                            scryfall
+                            scryfall, imagePrefetch
 /store                      useEventsStore (Zustand)
 /theme                      colors, typography, mana
 /types                      tipos TypeScript — derivam dos schemas
-/assets/mana/symbols.ts     símbolos de mana em SVG, locais
+/assets/mana/symbols.ts     símbolos de mana em SVG, locais (WUBRG)
+/assets/mana/costSymbols.ts símbolos de custo, gerados a partir da Scryfall por workflow
 
 /data                       OS DADOS (ADR 0002)
   schema/                   o contrato, validado em CI
@@ -150,6 +152,9 @@ mal formado só daria erro **depois** do commit.
 - Cada ficheiro tem **uma responsabilidade** clara
 - Chamadas a APIs e I/O **sempre** em `/services` — nunca nos écrans
 - Imports de tema: sempre de `../theme/colors`, `../theme/typography`
+- **Datas `AAAA-MM-DD` formatam-se com `domain/dates.ts`**, nunca com `new Date(string)` — que lê a
+  data como meia-noite em UTC e num fuso negativo mostra o dia anterior. `new Date()` sem argumentos,
+  para o instante actual, não tem este problema e continua bem
 - `npm install` requer sempre `--legacy-peer-deps` (conflito react-dom@19.2.5 vs react@19.1.0)
 - Metro cache: limpar com `npx expo start --clear` ao adicionar novas pastas
 
@@ -205,6 +210,7 @@ Stack principal:
   (tabs)/profile      ← Settings
   event/[id]          ← Event Detail (push, sem tab bar)
   deck/[id]           ← Deck Detail + analisador (push, sem tab bar)
+  opponent/[id]       ← Opponent Detail (push, sem tab bar) — entra pela lista das Stats
   collection          ← Colecção (push)
 
 Modals (presentation: 'modal'):
@@ -274,14 +280,19 @@ Os passos todos — token, Pages, build, restauro — estão em `docs/ops/telemo
 
 Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que vem a seguir.
 
-**Fase 5, em curso:** a decklist do Deck Detail já mostra o **recorte da arte** (`artCropUrl`) de
+**Fase 5, quase fechada.** A decklist do Deck Detail mostra o **recorte da arte** (`artCropUrl`) de
 cada carta, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
 `CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
 com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
 
-**Por fazer:** galeria de imagens de cartas fora da decklist e decklist por fotografia com OCR local
-(ADR 0009). Ambas dependem de decisões em aberto — Q9 (layout da galeria) e Q10 (o OCR aguenta uma
-foto real?).
+As **miniaturas** estão ligadas ponta a ponta: `domain/thumbnails.ts` decide a arte de um deck ou de
+um evento a partir da própria decklist (o ficheiro guarda um `scryfallId`, não um URL),
+`components/CardArtPicker.tsx` é a grelha que a escolhe no editor de deck e no Event Detail, e
+`services/imagePrefetch.ts` garante-as em disco no arranque — só as miniaturas, que as cem cartas de
+um deck de Commander ficam em cache sozinhas à medida que se abre.
+
+**Por fazer:** decklist por fotografia com OCR local (ADR 0009), que depende da Q10 — o OCR aguenta
+uma foto real? É código nativo e nunca correu.
 
 ---
 

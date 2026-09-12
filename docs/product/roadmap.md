@@ -10,8 +10,8 @@ está aqui assume isso.
 
 ## Onde estamos
 
-As Fases 0 a 4 estão **implementadas**. `npm run check` passa: dados válidos, typecheck limpo, 219
-testes verdes.
+As Fases 0 a 4 estão **implementadas** e a Fase 5 só tem por fazer a decklist por fotografia.
+`npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
 O que falta não é código — são quatro passos manuais que dependem das contas do autor, e usar a app
 a sério uma vez. **`data/events/` está vazio**: enquanto não houver lá um torneio verdadeiro, a
@@ -82,8 +82,7 @@ Tirar o Supabase do caminho e pôr a app a escrever no repositório.
 - [x] Edição da decklist: quantidades, main/sideboard
 - [x] `data/collection/cards.json` — colecção com quantidade, condição e foil
 - [x] Estatísticas por adversário, com nemesis e melhor matchup
-- [ ] Thumbnail do deck a partir de uma carta escolhida (`thumbnailCardId` está no schema, falta a
-      interface para o escolher)
+- [x] Thumbnail do deck a partir de uma carta escolhida — feito na Fase 5, com o `CardArtPicker`
 
 ## Fase 4 — Valor da colecção ✅
 
@@ -93,41 +92,46 @@ Tirar o Supabase do caminho e pôr a app a escrever no repositório.
 
 ## Fase 5 — Ver e capturar cartas
 
-As duas coisas que faltam para o deck deixar de ser uma lista de texto: **vê-lo** e **enchê-lo sem o
-escrever**. Ambas precisam de decisões que ainda não estão fechadas — ver Q9 e Q10.
+As duas coisas que faziam do deck uma lista de texto: **vê-lo** e **enchê-lo sem o escrever**. A
+primeira está feita; a segunda depende da Q10, que só uma fotografia verdadeira responde.
 
 ### Imagens de cartas
 
-Hoje não há uma única imagem de carta na app. O `CardThumbnailPlaceholder` é um rectângulo cinzento,
-e a decklist do `deck/[id].tsx` é texto puro: quantidade, nome, custo de mana.
+**Feito.** A decklist era texto puro — quantidade, nome, custo de mana — e o
+`CardThumbnailPlaceholder` era um rectângulo cinzento em todo o lado. Hoje há arte na decklist, nos
+cards de evento e no Event Detail, e o placeholder ficou a ser o que devia ser desde o início: o
+recuo para quando não há URL ou a imagem falha.
 
 A referência visual está em `design/referencia-manabox/` — fotogramas do ManaBox que o autor
 mandou. **A Q9 está respondida**: não é uma galeria de cartas inteiras, é uma **lista com o recorte
 da arte** à esquerda de cada linha. Muda o que é preciso guardar: a Scryfall serve `art_crop`, que é
 mais pequeno que a carta inteira e é o que esta lista precisa.
 
-- [ ] Recorte da arte (`art_crop`) em cada linha da decklist
-- [ ] Agrupar a lista por tipo, com contagem por grupo (Creatures 14, Instants 7…) — o
+- [x] Recorte da arte (`art_crop`) em cada linha da decklist
+- [x] Agrupar a lista por tipo, com contagem por grupo (Creatures 14, Instants 7…) — o
       `typeCounts` do `domain/deck.ts` já sabe fazer esta divisão
-- [ ] Alternar entre lista com arte e lista compacta (pílula de quantidade + nome + custo)
-- [ ] Painel de basic lands com contador por cor, à parte da procura — **pedido explícito**, porque
+- [x] Alternar entre lista com arte e lista compacta (pílula de quantidade + nome + custo)
+- [x] Painel de basic lands com contador por cor, à parte da procura — **pedido explícito**, porque
       procurar basics na barra uma a uma é absurdo
-- [ ] Escolher a carta que ilustra o deck e o evento (`thumbnailCardId` e `deckThumbnailCardId` já
-      estão nos schemas desde a Fase 2; falta só a interface)
-- [ ] Prefetch explícito **só dos thumbnails**, para esses ficarem garantidos offline
+- [x] Escolher a carta que ilustra o deck e o evento — `components/CardArtPicker.tsx`, no editor de
+      deck e em "Event details". Os campos estavam nos schemas desde a Fase 2 sem nada que os
+      escrevesse; o que faltava era só a interface
+- [x] Prefetch explícito **só dos thumbnails**, para esses ficarem garantidos offline —
+      `services/imagePrefetch.ts`, em lotes de quatro, no arranque e depois de um restauro
 
 ### Estatísticas do deck — o que falta e o que já lá está
 
 O `deck/[id].tsx` já mostra curva de mana, distribuição de cores e contagem por tipo, calculados em
 `domain/deck.ts`. A referência acrescenta três coisas, por ordem de custo:
 
-- [ ] **Subtipos** (Wizard 5, Druid 4, Elf 2…). Barato: o `typeLine` já está guardado e o
-      `primaryType` já parte a linha no travessão — os subtipos são o lado direito, que hoje se
-      deita fora
-- [ ] **Valor total do deck.** Os preços existem mas só para a colecção. O
-      `tools/refresh-prices.mts` teria de passar a pedir também as cartas dos decks
-- [ ] **Produção de mana** (quanto de cada cor o deck produz). Precisa do `produced_mana` da
-      Scryfall, que não é guardado — obriga a mexer no schema do deck
+- [x] **Subtipos** (Wizard 5, Druid 4, Elf 2…), por `subtypeCounts`. Era o barato dos três: o
+      `typeLine` já estava guardado e o `primaryType` já partia a linha no travessão — os subtipos
+      são o lado direito, que antes se deitava fora
+- ~~**Valor total do deck**~~ — **fora de âmbito por decisão do autor**: "tudo o que é sobre
+  valores das cartas e dos decks é dispensável neste scope". O valor da colecção fica como está,
+  porque já existe; o dos decks não se faz
+- ~~**Produção de mana**~~ — fora de âmbito pela mesma razão, e era a mais cara das três: obrigava a
+  guardar o `produced_mana` da Scryfall, ou seja a mexer no schema do deck
 
 **O que não dá para copiar:** a referência mostra preços LOW / AVG / TREND, que são escalões da
 Cardmarket. A Scryfall dá um número só (ADR 0007). Fica um valor, não três.
@@ -160,26 +164,26 @@ A fotografia é processada em memória e **nunca guardada nem commitada**.
 
 ---
 
----
-
 ## Dívida conhecida
 
 Coisas que ficaram por fazer de propósito, com a razão à frente. Não são bugs — são decisões
-adiadas, e estão aqui para não se perderem.
+adiadas, e estão aqui para não se perderem. **Neste momento a lista está vazia:** tudo o que aqui
+estava foi varrido. Fica o registo do que era e de como ficou, porque saber
+que uma coisa foi decidida vale tanto como saber que está por decidir:
 
-- **A entrada da colecção só aparece na Home depois do primeiro evento.** Quem queira montar a
-  colecção antes do primeiro torneio não tem por onde lá chegar.
-- **Uma carta acrescentada só pelo nome nunca tem preço.** Sem a impressão concreta não se sabe de
-  que carta se está a falar (ADR 0007). Falta uma forma de, mais tarde, ligar uma carta escrita à
-  mão a uma impressão da Scryfall.
-- **Um adversário deixado órfão por uma edição não é removido da taxonomia.** Corrigir o nome de um
-  adversário num match deixa a entrada antiga em `opponents.json`. É barato e não parte nada, mas
-  suja a lista com o tempo.
-- **Não há écran de detalhe por adversário.** O head-to-head vive expandido dentro da lista das
-  Stats. `headToHead` e `opponentRecord` já servem um `opponent/[id]` se um dia valer a pena.
-- **O `TrendChart` das Stats ainda formata datas com `new Date`**, que interpreta `2026-02-14` em
-  UTC e num fuso negativo dá o dia anterior. O resto do écran já usa `split('-')`.
-- **O `setCode` de um evento não se edita depois de criado**, e não aparece no Event Detail.
+- ~~A entrada da colecção só aparece na Home depois do primeiro evento~~ — o estado vazio da Home
+  tem agora "or start with your collection".
+- ~~Uma carta acrescentada só pelo nome nunca tem preço~~ — a linha "no printing details" passou a
+  ser o botão que abre a procura e aponta a carta a uma impressão, guardando quantidade, condição,
+  foil e idioma.
+- ~~Um adversário deixado órfão por uma edição não é removido da taxonomia~~ — `pruneOpponents`
+  varre-os ao editar um match, ao apagar uma ronda e ao apagar um evento.
+- ~~Não há écran de detalhe por adversário~~ — `app/opponent/[id].tsx`. A lista das Stats deixou de
+  expandir em acordeão e passa a navegar.
+- ~~O `TrendChart` das Stats ainda formata datas com `new Date`~~ — `domain/dates.ts`, com testes
+  que fixam `TZ=America/Los_Angeles` para o bug não voltar em silêncio.
+- ~~O `setCode` de um evento não se edita depois de criado~~ — está em "Event details", no Event
+  Detail, e só aparece em Limited.
 
 ---
 
