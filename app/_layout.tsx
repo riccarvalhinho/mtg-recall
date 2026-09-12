@@ -66,6 +66,10 @@ export default function RootLayout() {
           name="deck-editor"
           options={{ presentation: 'modal' }}
         />
+        <Stack.Screen
+          name="deck-scan"
+          options={{ presentation: 'modal' }}
+        />
       </Stack>
     </>
   );

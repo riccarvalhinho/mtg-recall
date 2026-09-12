@@ -46,6 +46,7 @@ conhecimento prévio de padrões ou convenções.
 | Sincronização | GitHub Contents API, por outbox (ADR 0004) |
 | Segredos | `expo-secure-store` (token do GitHub) |
 | Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
+| Câmara / OCR | `expo-camera` + ML Kit Text Recognition, local (ADR 0009) |
 | Card data | Scryfall API |
 | Card prices | Scryfall (`prices.eur`), por workflow agendado — ADR 0007 |
 | Mana symbols | SVG locais — `assets/mana/symbols.ts` (WUBRG) e `costSymbols.ts` (gerado) |
@@ -60,6 +61,7 @@ conhecimento prévio de padrões ou convenções.
   match-registration.tsx    modal: registo de match
   add-event.tsx             modal: criar evento
   deck-editor.tsx           modal: criar/editar deck
+  deck-scan.tsx             modal: decklist por fotografia (aviso, porções, confirmação)
   collection.tsx            a colecção (push, entra pela Home)
   (tabs)/
     _layout.tsx             tab bar (Home/Events/Decks/Stats/Settings)
@@ -79,8 +81,8 @@ conhecimento prévio de padrões ou convenções.
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
-                            scryfall, imagePrefetch
-/store                      useEventsStore (Zustand)
+                            scryfall, imagePrefetch, ocr
+/store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
 /theme                      colors, typography, mana
 /types                      tipos TypeScript — derivam dos schemas
 /assets/mana/symbols.ts     símbolos de mana em SVG, locais (WUBRG)
@@ -217,6 +219,7 @@ Modals (presentation: 'modal'):
   match-registration  ← a partir de Event Detail
   add-event           ← a partir de Events List / Home
   deck-editor         ← a partir de Decks / Deck Detail
+  deck-scan           ← a partir do editor de deck ("Scan photo")
 ```
 
 Params de navegação:
@@ -291,14 +294,22 @@ um evento a partir da própria decklist (o ficheiro guarda um `scryfallId`, não
 `services/imagePrefetch.ts` garante-as em disco no arranque — só as miniaturas, que as cem cartas de
 um deck de Commander ficam em cache sozinhas à medida que se abre.
 
-**Por fazer:** decklist por fotografia com OCR local (ADR 0009). A lógica está escrita e testada em
-`domain/ocrDecklist.ts` — colunas a partir das caixas delimitadoras, comparação tolerante a erros,
-repetições a virar quantidade, e `mergeBatches` a juntar porções (um Limited cabe numa fotografia,
-um Commander fotografa-se em três ou quatro; o mesmo nome em duas porções soma e fica marcado). A montagem da mesa é **parte do fluxo** (ADR 0009, passo 0): as
-cartas de baixo vão tapadas com uma sleeve ou com o verso de outra carta, para o único texto da
-fotografia serem nomes. Por isso **nada é descartado em silêncio** — cada leitura ou vira carta ou
-vai para `unmatched`, e o filtro pelo tamanho da letra que existia saiu, com a razão no ADR. Falta o que precisa do dispositivo: integrar o ML Kit (código nativo, entra por APK
-novo), o écran de confirmação, e a Q10 — o OCR aguenta uma foto real?
+**Decklist por fotografia (ADR 0009): escrita ponta a ponta, por provar no telemóvel.**
+`domain/ocrDecklist.ts` reconstrói colunas pelas caixas delimitadoras, compara nomes com tolerância
+a erros, conta repetições como quantidade e junta porções (`mergeBatches`) — um Limited cabe numa
+fotografia, um Commander fotografa-se em três ou quatro, e o mesmo nome em duas porções soma **e
+fica marcado**. `services/ocr.ts` liga o ML Kit a isso, usando as **linhas** e não os blocos.
+`app/deck-scan.tsx` é o fluxo: aviso da montagem, porções, confirmação — e entrega as cartas ao
+editor pela `useScanStore`.
+
+A montagem da mesa é **parte do fluxo** (ADR 0009, passo 0): as cartas de baixo vão tapadas com uma
+sleeve ou com o verso de outra carta, para o único texto da fotografia serem nomes. Por isso **nada
+é descartado em silêncio** — cada leitura ou vira carta ou vai para `unmatched`, e o filtro pelo
+tamanho da letra que existia saiu, com a razão no ADR.
+
+**Por provar, e só um APK novo o prova:** o ML Kit é código nativo e nunca correu (`isAvailable()`
+diz ao écran para pedir um APK novo em vez de rebentar), o módulo é da arquitectura antiga e a app
+corre com a nova, e a Q10 continua aberta — o OCR aguenta uma fotografia a sério?
 
 ---
 

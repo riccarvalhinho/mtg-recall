@@ -66,6 +66,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações e
       **Opponents** (nemesis, melhor matchup e mais enfrentados), que abrem o Opponent Detail
 - [x] **Collection** — valor, evolução, procura, e ligar uma carta escrita à mão a uma impressão
+- [x] **Deck Scan** — decklist por fotografia: aviso da montagem, porções acumuladas e confirmação
+      antes de entregar as cartas ao editor. Falta correr num APK com o ML Kit lá dentro
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
       agora, restauro a partir do GitHub
 

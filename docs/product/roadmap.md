@@ -175,13 +175,19 @@ fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar an
       duas porções soma **e fica marcado** (`crossBatch`): ou são duas cópias, ou as porções
       sobrepuseram-se, e quem tem a mesa à frente é que sabe
 - [x] O que não se reconhece aparece em `unmatched` em vez de desaparecer
-- [ ] Integrar o ML Kit Text Recognition (código nativo — entra por APK novo, não por update)
-- [ ] Écran de captura com o **aviso da montagem** — tapar as cartas de baixo, títulos à vista.
-      Não é decoração: a fiabilidade depende disto e ninguém adivinha
-- [ ] Acumular porções no écran de captura, com cada uma a poder ser repetida ou deitada fora antes
-      de gravar. Os terrenos básicos não vão na fotografia: entram pelo painel de contadores
-- [ ] Écran de confirmação antes de gravar seja o que for
-- [ ] Validar contra fotografias reais — **por fazer, e é o que decide se isto é viável à primeira**
+- [x] Integrar o ML Kit Text Recognition — `services/ocr.ts`. Usa as **linhas** e não os blocos: o
+      ML Kit agrupa em bloco o que lhe parece um parágrafo, e duas barras de título encostadas
+      caíam no mesmo, com o texto colado e uma caixa que servia as duas
+- [x] Écran de captura com o **aviso da montagem**, porções acumuladas (repetir ou deitar fora a
+      última) e confirmação — `app/deck-scan.tsx`. Os básicos não vão na fotografia: entram pelo
+      painel de contadores
+- [x] Entrega ao editor de deck sem gravar nada pelo caminho (`store/useScanStore.ts`), a somar às
+      cartas que já lá estejam
+- [ ] **Gerar o APK com isto lá dentro.** O ML Kit é nativo: não entra por actualização. Até lá o
+      écran diz que falta, em vez de rebentar (`isAvailable()`)
+- [ ] Confirmar que o módulo funciona com a **nova arquitectura** do React Native, que está ligada
+      (`newArchEnabled`). É da antiga e conta com a camada de compatibilidade
+- [ ] Validar contra fotografias reais — **Q10, e é o que decide se isto é viável à primeira**
 
 A fotografia é processada em memória e **nunca guardada nem commitada**.
 

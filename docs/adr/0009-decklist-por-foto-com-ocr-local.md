@@ -1,7 +1,7 @@
 # ADR 0009 — A decklist por fotografia usa OCR local, não um serviço de visão
 
 **Data:** 2026-09-12
-**Estado:** Proposto — por validar contra uma fotografia real
+**Estado:** Aceite e implementado — **por validar contra uma fotografia real** (Q10)
 
 ## Contexto
 
@@ -125,6 +125,12 @@ visível. Não vai acertar sempre, e é por isso que o passo de confirmação n�
 
 Nomes que existem em várias impressões continuam sem impressão determinada: o OCR dá o nome, não o
 set. Cartas assim entram sem `scryfallId` e, por consequência, sem preço (ver ADR 0007).
+
+**Riscos que só o primeiro APK resolve:** o `@react-native-ml-kit/text-recognition` é um módulo da
+arquitectura antiga do React Native e a app corre com a **nova** ligada (`newArchEnabled`), portanto
+depende da camada de compatibilidade. Se falhar, as saídas são um módulo equivalente para a nova
+arquitectura ou desligar a nova arquitectura — e nenhuma delas se decide sem ver o erro. Entretanto
+o écran pergunta por `isAvailable()` e explica que falta um APK novo, em vez de rebentar.
 
 **A vigiar:** se o passo de confirmação der mais trabalho a corrigir do que dava a escrever a lista
 de raiz, a funcionalidade não está a cumprir. Em particular, se as fotografias reais mostrarem muito

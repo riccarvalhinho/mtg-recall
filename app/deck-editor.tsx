@@ -8,7 +8,7 @@
 // `updateDeck` substitui o deck inteiro, e não o fazer apagaria a lista de cartas de um deck só
 // porque se lhe corrigiu o nome.
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -30,7 +30,9 @@ import {
 } from '../domain/manaSelection';
 import { cardCount } from '../domain/deck';
 import { useEventsStore } from '../store/useEventsStore';
+import { useScanStore } from '../store/useScanStore';
 import { ManaPip } from '../components/ManaPip';
+import { useFocusEffect } from 'expo-router';
 import { CardArtPicker } from '../components/CardArtPicker';
 import { CardSearchModal } from '../components/CardSearchModal';
 import { toDeckCard } from '../domain/cards';
@@ -143,6 +145,7 @@ export default function DeckEditorScreen() {
   const [cardList, setCardList]   = useState<DeckCard[]>(normalizeDeckCards(deck?.cards));
   const [thumbnailCardId, setThumbnailCardId] = useState<string | undefined>(deck?.thumbnailCardId);
   const [searchOpen, setSearchOpen] = useState(false);
+  const takeScan = useScanStore(s => s.take);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   /** Quantos eventos impedem o apagar. `null` enquanto ninguém tentou. */
@@ -154,6 +157,21 @@ export default function DeckEditorScreen() {
   function cycleColor(color: ManaColor) {
     setColorStates(prev => cycleManaState(prev, color));
   }
+
+  /**
+   * Recolhe o que o scan deixou, ao voltar da câmara.
+   *
+   * `take` esvazia a gaveta, e por isso voltar a este écran outra vez não acrescenta o mesmo scan
+   * duas vezes. As cartas entram por `addCard`, que soma às que já lá estão — um deck meio escrito
+   * à mão e meio fotografado não fica com linhas repetidas.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      const scanned = takeScan();
+      if (!scanned) return;
+      setCardList(current => scanned.reduce((list, card) => addCard(list, card), current));
+    }, []),
+  );
 
   /** Tocar no formato activo larga-o: o formato é opcional e tinha de haver forma de o desfazer. */
   function chooseFormat(next: EventType) {
@@ -427,13 +445,24 @@ export default function DeckEditorScreen() {
               </View>
             </View>
 
-            <Pressable
-              onPress={() => setSearchOpen(true)}
-              style={({ pressed }) => [styles.addCardBtn, pressed && { opacity: 0.75 }]}
-            >
-              <Feather name="plus" size={15} color={colors.gold} />
-              <Text style={styles.addCardText}>Add card</Text>
-            </Pressable>
+            <View style={styles.addRow}>
+              <Pressable
+                onPress={() => setSearchOpen(true)}
+                style={({ pressed }) => [styles.addCardBtn, { flex: 1 }, pressed && { opacity: 0.75 }]}
+              >
+                <Feather name="plus" size={15} color={colors.gold} />
+                <Text style={styles.addCardText}>Add card</Text>
+              </Pressable>
+
+              {/* Vinte e tal cartas escritas à mão num telemóvel é o que esta feature existe para evitar. */}
+              <Pressable
+                onPress={() => router.push('/deck-scan')}
+                style={({ pressed }) => [styles.addCardBtn, { flex: 1 }, pressed && { opacity: 0.75 }]}
+              >
+                <Feather name="camera" size={15} color={colors.gold} />
+                <Text style={styles.addCardText}>Scan photo</Text>
+              </Pressable>
+            </View>
 
             <Text style={styles.listNoticeText}>
               A deck works without a list — it still tracks its record across events.
@@ -735,6 +764,7 @@ const styles = StyleSheet.create({
   },
   basicsTotal: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textSec },
   basicsRow: { flexDirection: 'row', gap: 6 },
+  addRow: { flexDirection: 'row', gap: 10 },
   addCardBtn: {
     flexDirection: 'row',
     alignItems: 'center',
