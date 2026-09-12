@@ -1,9 +1,10 @@
 // Stats Screen
 // Design ref: design prints provided by user (2026-05-10)
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import Svg, { Rect, Line, Circle, G, Text as SvgText } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
@@ -16,14 +17,13 @@ import {
   MIN_HIGHLIGHT_ENCOUNTERS,
   OpponentRecord,
   favouriteMatchup,
-  headToHead,
   nemesis,
   rankOpponents,
 } from '../../domain/opponents';
+import { compareDates, monthLabel } from '../../domain/dates';
 
 const SCREEN_W   = Dimensions.get('window').width;
 const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ─── Rank helpers ─────────────────────────────────────────────────────────────
 
@@ -216,7 +216,7 @@ function levelToY(level: number): number {
 function TrendChart({ events }: { events: Event[] }) {
   const ranked = events
     .filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => compareDates(a.date, b.date));
 
   if (!ranked.length) {
     return (
@@ -237,8 +237,8 @@ function TrendChart({ events }: { events: Event[] }) {
   const xLabels: { cx: number; label: string }[] = [];
   let lastMonth = '';
   ranked.forEach((e, i) => {
-    const m = MONTHS[new Date(e.date).getMonth()];
-    if (m !== lastMonth) {
+    const m = monthLabel(e.date);
+    if (m && m !== lastMonth) {
       xLabels.push({ cx: barCx(i), label: m });
       lastMonth = m;
     }
@@ -451,13 +451,6 @@ const byColor = StyleSheet.create({
 // eu enfrento mais vezes?") sem transformar o écran de stats numa lista de contactos.
 const OPPONENTS_SHOWN = 6;
 
-/** "14 Feb" a partir de "2026-02-14", sem passar pelo Date — que interpreta a data em UTC. */
-function shortDay(date: string): string {
-  const [, month, day] = date.split('-');
-  const monthName = MONTHS[Number(month) - 1];
-  return monthName ? `${Number(day)} ${monthName}` : date;
-}
-
 /**
  * Um destaque: o nemesis ou o melhor matchup.
  *
@@ -488,18 +481,24 @@ function Highlight({ label, record, tone }: {
   );
 }
 
-/** Uma linha da lista. Toca-se para abrir o histórico contra aquela pessoa. */
-function OpponentRow({ record, events, expanded, onToggle }: {
+/**
+ * Uma linha da lista. Toca-se para abrir o écran do adversário.
+ *
+ * **Porque é que o histórico deixou de abrir aqui dentro.** Abria-o em acordeão, e passou a haver
+ * um écran (`opponent/[id]`) que mostra o mesmo e mais — o registo, as cores de cada encontro, e um
+ * toque que leva ao evento. Manter os dois seria mostrar a mesma coisa em dois sítios, que é como
+ * se ganha a hipótese de divergirem; e um confronto que se toca para abrir o evento dentro de uma
+ * linha que já é um botão são dois alvos de toque empilhados, o pior caso para um dedo apressado.
+ * As Stats ficam com a pergunta de resumo — quem é que eu enfrento mais vezes — e o detalhe mudou-se
+ * para onde há espaço para ele.
+ */
+function OpponentRow({ record, onPress }: {
   record: OpponentRecord;
-  events: Event[];
-  expanded: boolean;
-  onToggle: () => void;
+  onPress: () => void;
 }) {
-  const history = expanded ? headToHead(record.opponentId, events) : [];
-
   return (
     <Pressable
-      onPress={onToggle}
+      onPress={onPress}
       style={({ pressed }) => [opp.row, pressed && { backgroundColor: colors.bgCardHov }]}
     >
       <View style={opp.rowMain}>
@@ -516,37 +515,14 @@ function OpponentRow({ record, events, expanded, onToggle }: {
         <RecordBadge wins={record.wins} losses={record.losses} draws={record.draws} />
 
         <Feather
-          name={expanded ? 'chevron-up' : 'chevron-down'}
+          name="chevron-right"
           size={14}
           color={colors.textDim}
           style={opp.chevron}
         />
       </View>
-
-      {/* Histórico, do encontro mais recente para o mais antigo */}
-      {expanded && (
-        <View style={opp.history}>
-          {history.map(({ event, match }) => (
-            <View key={`${event.id}-${match.round}`} style={opp.historyRow}>
-              <Text style={[opp.historyResult, { color: resultColor(match.result) }]}>
-                {match.result}
-              </Text>
-              <Text style={opp.historyEvent} numberOfLines={1}>
-                {event.name}
-              </Text>
-              <Text style={opp.historyDate}>R{match.round} · {shortDay(event.date)}</Text>
-            </View>
-          ))}
-        </View>
-      )}
     </Pressable>
   );
-}
-
-function resultColor(result: 'W' | 'L' | 'D'): string {
-  if (result === 'W') return colors.win;
-  if (result === 'L') return colors.loss;
-  return colors.draw;
 }
 
 /**
@@ -556,8 +532,6 @@ function resultColor(result: 'W' | 'L' | 'D'): string {
  * `rankOpponents` (mais enfrentados primeiro) e não a do win rate; o porquê está lá explicado.
  */
 function OpponentsSection({ events, opponents }: { events: Event[]; opponents: Opponent[] }) {
-  const [openId, setOpenId] = useState<string | null>(null);
-
   const ranked = useMemo(() => rankOpponents(opponents, events), [opponents, events]);
   const faced = useMemo(() => ranked.filter(record => record.played > 0), [ranked]);
   const worst = useMemo(() => nemesis(opponents, events), [opponents, events]);
@@ -612,9 +586,12 @@ function OpponentsSection({ events, opponents }: { events: Event[]; opponents: O
             {index > 0 && <View style={opp.divider} />}
             <OpponentRow
               record={record}
-              events={events}
-              expanded={openId === record.opponentId}
-              onToggle={() => setOpenId(openId === record.opponentId ? null : record.opponentId)}
+              onPress={() =>
+                router.push({
+                  pathname: '/opponent/[id]',
+                  params: { id: record.opponentId },
+                })
+              }
             />
           </View>
         ))}
@@ -707,34 +684,6 @@ const opp = StyleSheet.create({
   },
   chevron: {
     marginLeft: 2,
-  },
-  history: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: 6,
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  historyResult: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 12,
-    width: 12,
-  },
-  historyEvent: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 12,
-    color: colors.textSec,
-  },
-  historyDate: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 11,
-    color: colors.textDim,
   },
   empty: {
     marginHorizontal: 16,

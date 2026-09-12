@@ -12,12 +12,7 @@ import { ManaPip } from './ManaPip';
 import { TypeBadge } from './TypeBadge';
 import { RecordBadge } from './RecordBadge';
 import { CardThumbnailPlaceholder } from './CardThumbnailPlaceholder';
-
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
+import { formatDate } from '../domain/dates';
 
 interface EventCardProps {
   event: Event;

@@ -51,6 +51,7 @@ export default function RootLayout() {
         {/* Detalhe — fora do tab group, sem tab bar */}
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="deck/[id]" />
+        <Stack.Screen name="opponent/[id]" />
 
         {/* Modais — sobem desde baixo */}
         <Stack.Screen
