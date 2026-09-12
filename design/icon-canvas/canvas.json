@@ -6,58 +6,71 @@
       "y": 0,
       "w": 540,
       "h": 900,
-      "title": "A — Ex-libris"
+      "title": "Ícone — cartas"
     },
     {
-      "file": "Lombadas.dc.html",
+      "file": "ZonaSegura.dc.html",
       "x": 620,
       "y": 0,
       "w": 540,
-      "h": 900,
-      "title": "B — Lombadas"
-    },
-    {
-      "file": "Marcador.dc.html",
-      "x": 1240,
-      "y": 0,
-      "w": 540,
-      "h": 900,
-      "title": "C — Marcador"
+      "h": 740,
+      "title": "Zona segura"
     },
     {
       "file": "TamanhoReal.dc.html",
       "x": 0,
       "y": 1060,
       "w": 1120,
-      "h": 620,
+      "h": 600,
       "title": "Teste a 48 px"
     },
     {
-      "file": "ZonaSegura.dc.html",
-      "x": 1240,
-      "y": 1060,
+      "file": "Lombadas.dc.html",
+      "x": 0,
+      "y": 0,
       "w": 540,
-      "h": 740,
-      "title": "Zona segura"
+      "h": 900,
+      "title": "B — Lombadas",
+      "page": "descartadas"
+    },
+    {
+      "file": "Marcador.dc.html",
+      "x": 620,
+      "y": 0,
+      "w": 540,
+      "h": 900,
+      "title": "C — Marcador",
+      "page": "descartadas"
+    }
+  ],
+  "pages": [
+    {
+      "id": "escolhida",
+      "name": "A escolhida"
+    },
+    {
+      "id": "descartadas",
+      "name": "As outras duas"
     }
   ],
   "annotations": [
     {
-      "id": "brief",
-      "x": 1880,
+      "id": "limite",
+      "x": 1240,
       "y": 0,
       "w": 300,
-      "text": "As três direcções vêm do brief em design/icon-brief.md.\n\nNenhuma usa marcas da Wizards: sem símbolos de mana e sem verso de carta. Uma carta genérica — rectângulo de cantos redondos — não é marca de ninguém.\n\nEscolhe uma e leva-se a sério. Misturar as três dá a quarta pior."
+      "text": "“Maior” tem um tecto, e é a zona segura: 660 px dos 1024. As cartas estão encostadas a esse limite — o canto mais distante fica a menos de 5 px de folga.\\n\\nO ficheiro icon.png (o quadrado completo) pode sangrar até à borda; é o adaptive-icon.png que tem de respeitar isto."
     },
     {
-      "id": "decidir",
-      "x": 1880,
-      "y": 300,
+      "id": "proximo",
+      "x": 1240,
+      "y": 320,
       "w": 300,
-      "text": "Para decidir: tapa a linha de cima e olha só para o teste a 48 px. Se aí não distingues as três, a escolha é entre as que sobram."
+      "text": "A seguir: exportar os quatro PNG, declarar o monochromeImage no app.json e gerar APK.\\n\\nO ícone é nativo — não entra por actualização."
     }
   ],
   "launch": {
-    "view": "canvas"
+    "view": "canvas",
+    "page": "escolhida"
   }
 }
