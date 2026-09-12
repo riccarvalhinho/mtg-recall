@@ -295,8 +295,8 @@ um deck de Commander ficam em cache sozinhas à medida que se abre.
 `domain/ocrDecklist.ts` — colunas a partir das caixas delimitadoras, comparação tolerante a erros e
 repetições a virar quantidade. A montagem da mesa é **parte do fluxo** (ADR 0009, passo 0): as
 cartas de baixo vão tapadas com uma sleeve ou com o verso de outra carta, para o único texto da
-fotografia serem nomes — e é por isso que o filtro pelo tamanho do texto é condicional
-(`titlesOnly`) e não uma constante. Falta o que precisa do dispositivo: integrar o ML Kit (código nativo, entra por APK
+fotografia serem nomes. Por isso **nada é descartado em silêncio** — cada leitura ou vira carta ou
+vai para `unmatched`, e o filtro pelo tamanho da letra que existia saiu, com a razão no ADR. Falta o que precisa do dispositivo: integrar o ML Kit (código nativo, entra por APK
 novo), o écran de confirmação, e a Q10 — o OCR aguenta uma foto real?
 
 ---

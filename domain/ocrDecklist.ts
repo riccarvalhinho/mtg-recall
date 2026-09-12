@@ -11,15 +11,18 @@
  * preciso reorganizar:
  *
  *  1. `columnsOf` agrupa por posição horizontal e reconstrói as colunas.
- *  2. `titleSized` deita fora o texto pequeno. **É o passo que evita o pior erro possível**: as
- *     cartas de baixo de cada pilha mostram pedaços de texto de regras, e texto de regras está
- *     cheio de nomes de cartas ("sacrifice a Mountain", "put a Beast token"). Casar cada linha
- *     lida com o catálogo sem olhar ao tamanho inflacionava quantidades com cartas que nem estão
- *     na mesa.
- *  3. `matchCardName` compara com tolerância a erros, porque o OCR troca letras e um nome próprio
+ *  2. `matchCardName` compara com tolerância a erros, porque o OCR troca letras e um nome próprio
  *     de Magic não perdoa comparação exacta.
- *  4. `decklistFromBlocks` conta as repetições: quatro cópias espalhadas dão quatro leituras do
+ *  3. `decklistFromBlocks` conta as repetições: quatro cópias espalhadas dão quatro leituras do
  *     mesmo nome, que é exactamente a informação que não se quer escrever à mão.
+ *
+ * **Nada é descartado em silêncio.** Houve aqui um filtro que deitava fora as leituras com letras
+ * pequenas, para apanhar o texto de regras que espreita por baixo da carta de cima — texto de
+ * regras está cheio de nomes de cartas ("sacrifice a Mountain"). Saiu, e a razão está no ADR 0009:
+ * a montagem da mesa (tapar as cartas de baixo) resolve isso na origem, e os dois erros não custam
+ * o mesmo. Uma linha a mais aparece na confirmação e apaga-se com um toque; uma carta deitada fora
+ * por um filtro não aparece em lado nenhum, e a única maneira de dar por ela é contar as cartas da
+ * mesa.
  *
  * Nada disto grava seja o que for. O resultado é uma **proposta** para o écran de confirmação, com
  * o que ficou por reconhecer à vista — a regra de nada ficar em branco em silêncio aplica-se aqui
@@ -77,33 +80,6 @@ export function columnsOf(blocks: TextBlock[], gapRatio = 0.6): TextBlock[][] {
 
   // Dentro da coluna manda a posição vertical: é a ordem em que as cartas estão na mesa.
   return columns.map(column => [...column].sort((a, b) => a.y - b.y));
-}
-
-/**
- * Só os blocos escritos ao tamanho de um título.
- *
- * Numa pilha sobreposta, além da barra do título de cada carta aparecem restos de texto de regras
- * da carta de baixo — e texto de regras está cheio de nomes de cartas. Distingui-los pelo conteúdo
- * é impossível; pelo tamanho é trivial, porque numa carta de Magic o nome é sempre maior do que as
- * regras.
- *
- * A referência é a **altura mediana**, e não a máxima: uma única leitura gigante de um bloco mal
- * segmentado levaria o limiar atrás dela e deitaria fora a fotografia toda.
- *
- * **Isto é um remendo, não a cura.** A cura é a fotografia não ter texto de regras nenhum — tapar a
- * carta de baixo com uma sleeve ou com o verso de outra carta, deixando só as barras dos títulos à
- * vista. Quando a mesa está montada assim, este filtro deixa de ter o que fazer e passa a poder
- * fazer mal: sem regras na fotografia, a mediana passa a ser a altura de um título, e um título
- * lido mais pequeno — canto da imagem, carta inclinada, perspectiva — seria deitado fora em
- * silêncio. Ver a opção `titlesOnly` de `decklistFromBlocks`.
- */
-export function titleSized(blocks: TextBlock[], minRatio = 0.7): TextBlock[] {
-  if (blocks.length === 0) return [];
-
-  const heights = blocks.map(block => block.height).sort((a, b) => a - b);
-  const medianHeight = heights[Math.floor(heights.length / 2)];
-
-  return blocks.filter(block => block.height >= medianHeight * minRatio);
 }
 
 /**
@@ -255,23 +231,6 @@ export interface OcrDecklist {
   unmatched: string[];
 }
 
-/** Como a mesa foi montada. Muda o que é preciso descartar antes de ler. */
-export interface OcrOptions {
-  /**
-   * `true` quando só as barras dos títulos estão à vista — as cartas de baixo tapadas com uma
-   * sleeve ou com o verso de outra carta.
-   *
-   * Desliga o filtro pelo tamanho do texto, que aí não tem o que filtrar e só arriscava deitar
-   * fora um título lido mais pequeno. **É a montagem a preferir**, e a razão é mais funda do que
-   * poupar um passo: o filtro é uma heurística sobre um problema que a sleeve faz desaparecer.
-   * Nenhuma heurística é tão robusta como não haver o que adivinhar.
-   *
-   * Por omissão é `false`, que é o caso mais difícil — uma fotografia tirada sem cuidado nenhum
-   * continua a dar o seu melhor.
-   */
-  titlesOnly?: boolean;
-}
-
 /**
  * A proposta de decklist, a partir dos blocos que o OCR devolveu.
  *
@@ -282,14 +241,13 @@ export interface OcrOptions {
  * pela app (decks, colecção, cache da procura). Um catálogo pequeno não é problema para o que
  * interessa: o que ele não conhecer aparece em `unmatched` e escreve-se à mão, em vez de virar
  * silenciosamente outra carta.
+ *
+ * **Toda a leitura tem destino:** ou vira carta, ou vai para `unmatched`. Se a mesa não tiver sido
+ * bem tapada, o que entra a mais fica à vista na confirmação, e apaga-se. Nenhuma leitura
+ * desaparece pelo caminho.
  */
-export function decklistFromBlocks(
-  blocks: TextBlock[],
-  catalogue: string[],
-  options: OcrOptions = {},
-): OcrDecklist {
-  const readable = options.titlesOnly ? blocks : titleSized(blocks);
-  const ordered = columnsOf(readable).flat();
+export function decklistFromBlocks(blocks: TextBlock[], catalogue: string[]): OcrDecklist {
+  const ordered = columnsOf(blocks).flat();
 
   const byName = new Map<string, OcrCandidate>();
   const unmatched: string[] = [];

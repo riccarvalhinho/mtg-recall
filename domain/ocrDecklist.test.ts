@@ -8,7 +8,6 @@ import {
   matchCardName,
   normalizeCardText,
   stripManaCost,
-  titleSized,
   type TextBlock,
 } from './ocrDecklist';
 
@@ -55,36 +54,6 @@ describe('columnsOf', () => {
     const longe = [title('A', 10, 50, 100, 15), title('B', 260, 50, 100, 15)];
     expect(columnsOf(perto)).toHaveLength(2);
     expect(columnsOf(longe)).toHaveLength(2);
-  });
-});
-
-describe('titleSized', () => {
-  it('deita fora o texto de regras que espreita por baixo da carta de cima', () => {
-    // É o erro que mais custava: "sacrifice a Mountain" casaria com Mountain e inflacionava a
-    // quantidade de uma carta que nem sequer está na mesa.
-    const blocks = [
-      title('Lightning Bolt', 20, 100, 200, 30),
-      title('Llanowar Elves', 20, 300, 200, 30),
-      title('Birds of Paradise', 20, 500, 200, 30),
-      { text: 'sacrifice a Mountain', x: 20, y: 140, width: 180, height: 12 },
-    ];
-
-    expect(titleSized(blocks).map(b => b.text)).not.toContain('sacrifice a Mountain');
-    expect(titleSized(blocks)).toHaveLength(3);
-  });
-
-  it('uma leitura gigante de um bloco mal segmentado não leva a fotografia atrás', () => {
-    // Por isto a referência é a mediana e não o máximo.
-    const blocks = [
-      title('Lightning Bolt', 20, 100, 200, 30),
-      title('Llanowar Elves', 20, 300, 200, 30),
-      { text: 'BLOCO ENORME', x: 0, y: 0, width: 900, height: 300 },
-    ];
-    expect(titleSized(blocks)).toHaveLength(3);
-  });
-
-  it('sem blocos devolve lista vazia', () => {
-    expect(titleSized([])).toEqual([]);
   });
 });
 
@@ -181,17 +150,18 @@ describe('decklistFromBlocks', () => {
     ]);
   });
 
-  it('o texto de regras não inflaciona quantidades', () => {
-    // Sem o filtro do tamanho, esta fotografia dava uma Mountain que não está na mesa.
+  it('tudo o que se lê tem destino: ou vira carta, ou vai para unmatched', () => {
+    // Não há filtro nenhum a deitar leituras fora. Se a mesa não estiver bem tapada, o texto de
+    // regras que escapar aparece aqui — visível e apagável — em vez de a app adivinhar por nós e
+    // arriscar comer um título a sério. A razão está no ADR 0009.
     const blocks = [
       title('Lightning Bolt', 20, 100),
-      title('Llanowar Elves', 20, 300),
-      title('Birds of Paradise', 20, 500),
-      { text: 'Mountain', x: 20, y: 150, width: 120, height: 11 },
+      { text: 'sacrifice a land', x: 20, y: 150, width: 180, height: 11 },
     ];
 
-    const { cards } = decklistFromBlocks(blocks, catalogue);
-    expect(cards.map(card => card.name)).not.toContain('Mountain');
+    const { cards, unmatched } = decklistFromBlocks(blocks, catalogue);
+    expect(cards.map(c => c.name)).toEqual(['Lightning Bolt']);
+    expect(unmatched).toEqual(['sacrifice a land']);
   });
 
   it('o que não se reconheceu aparece, em vez de desaparecer', () => {
@@ -268,28 +238,30 @@ describe('stripManaCost', () => {
   });
 });
 
-describe('com as cartas de baixo tapadas (titlesOnly)', () => {
+describe('com as cartas de baixo tapadas', () => {
   const catalogue = ['Lightning Bolt', 'Llanowar Elves', 'Opt', 'Birds of Paradise'];
 
-  it('um título lido mais pequeno deixa de ser deitado fora', () => {
-    // Sem regras na fotografia, a mediana passa a ser a altura de um título — e um título do canto
-    // da imagem, ou de uma carta inclinada, sai mais pequeno. O filtro comia-o em silêncio.
+  it('um título lido mais pequeno não é deitado fora', () => {
+    // Um título do canto da imagem, ou de uma carta inclinada, sai mais pequeno. Era isto que o
+    // filtro antigo comia em silêncio — e uma carta que desaparece sem aviso é o pior erro que
+    // esta funcionalidade pode ter.
     const blocks = [
       title('Lightning Bolt', 20, 100, 200, 30),
       title('Llanowar Elves', 20, 300, 200, 30),
       title('Birds of Paradise', 20, 500, 160, 18),
     ];
 
-    expect(decklistFromBlocks(blocks, catalogue).cards.map(c => c.name))
-      .not.toContain('Birds of Paradise');
-    expect(decklistFromBlocks(blocks, catalogue, { titlesOnly: true }).cards.map(c => c.name))
-      .toContain('Birds of Paradise');
+    expect(decklistFromBlocks(blocks, catalogue).cards.map(c => c.name)).toEqual([
+      'Lightning Bolt',
+      'Llanowar Elves',
+      'Birds of Paradise',
+    ]);
   });
 
   it('o custo de mana da barra do título não estraga um nome curto', () => {
     // Tapar a carta de baixo não esconde o custo: ele está na mesma barra que o nome.
     const blocks = [title('Opt 1', 20, 100), title('Llanowar Elves 6', 20, 300)];
-    const { cards, unmatched } = decklistFromBlocks(blocks, catalogue, { titlesOnly: true });
+    const { cards, unmatched } = decklistFromBlocks(blocks, catalogue);
 
     expect(cards.map(c => c.name)).toEqual(['Opt', 'Llanowar Elves']);
     expect(unmatched).toEqual([]);

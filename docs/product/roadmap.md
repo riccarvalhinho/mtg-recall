@@ -160,13 +160,10 @@ fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar an
 
 - [x] Reconstruir colunas a partir das caixas delimitadoras (`columnsOf`, com o limiar relativo à
       largura dos blocos — a mesma mesa de mais perto ou de mais longe dá o mesmo resultado)
-- [x] Filtrar pelo tamanho do texto (`titleSized`), para as cartas de baixo da pilha não
-      contribuírem com texto de regras — que está cheio de nomes de cartas ("sacrifice a
-      Mountain") e dava uma Mountain que nem está na mesa. **Passou a ser o caminho de recurso:**
-      ver a montagem da mesa, a seguir
-- [x] `titlesOnly` — a montagem em que as cartas de baixo vão tapadas com uma sleeve ou com o verso
-      de outra carta, e o único texto da fotografia são nomes. Desliga o filtro, que aí não tem o
-      que filtrar e só arriscava comer um título lido mais pequeno (ADR 0009, passo 0)
+- [x] **Nada é descartado em silêncio.** Houve um filtro pelo tamanho da letra, para o texto de
+      regras da carta de baixo não virar cartas ("sacrifice a Mountain"). Saiu: a montagem da mesa
+      resolve isso na origem, e os dois erros não custam o mesmo — uma linha a mais vê-se na
+      confirmação e apaga-se, uma carta comida pelo filtro não aparece em lado nenhum (ADR 0009)
 - [x] `stripManaCost` — o custo está na mesma barra do nome, portanto tapar a carta de baixo não o
       esconde. Em "Opt 1" dois caracteres a mais eram mais erros do que os tolerados
 - [x] Comparar nomes com tolerância a erros (`matchCardName`, distância de edição com limite

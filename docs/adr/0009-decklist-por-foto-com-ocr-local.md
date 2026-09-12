@@ -46,15 +46,25 @@ encontrado: numa pilha sobreposta vê-se também texto de regras da carta de bai
 regras está cheio de nomes de cartas** — "sacrifice a Mountain", "create a Beast token". Casar cada
 linha lida contra o catálogo dava cartas que nem estão na mesa, e dava-as com ar de certas.
 
-A defesa era filtrar pelo tamanho da letra: numa carta de Magic o nome é sempre maior do que as
-regras. Funciona, e fica no código para quem fotografar sem cuidado — mas é uma heurística sobre um
-problema que a sleeve faz desaparecer. Nenhuma heurística é tão robusta como não haver o que
-adivinhar.
+A primeira defesa foi filtrar pelo tamanho da letra: numa carta de Magic o nome é sempre maior do
+que as regras, portanto deitava-se fora tudo o que viesse escrito pequeno. Funcionava — e **saiu do
+código**, por duas razões.
 
-E quando a mesa está montada assim, o filtro passa a poder **fazer mal**: sem regras na fotografia,
-a altura de referência passa a ser a de um título, e um título lido mais pequeno — canto da imagem,
-carta inclinada, perspectiva — seria deitado fora em silêncio. Por isso o filtro é condicional
-(`titlesOnly` em `domain/ocrDecklist.ts`), e não uma constante.
+A primeira é que é uma heurística sobre um problema que a sleeve faz desaparecer. Nenhuma
+heurística é tão robusta como não haver o que adivinhar.
+
+A segunda é a que decide: **os dois erros não custam o mesmo.** Sem regras na fotografia, a altura
+de referência do filtro passa a ser a de um título, e um título lido mais pequeno — canto da
+imagem, carta inclinada, perspectiva — era deitado fora em silêncio. Uma linha de texto de regras
+que escape aparece na confirmação como uma carta a mais: vê-se, toca-se, apaga-se. Uma carta
+deitada fora pelo filtro não aparece em lado nenhum — nem na lista, nem nos `unmatched` — e a única
+maneira de dar por ela é contar as cartas da mesa. Trocar um erro visível e barato por um erro
+invisível é um mau negócio.
+
+Também não fica como opção. Uma opção é mais uma coisa que se pode ter mal configurada sem saber, e
+o que ela protegeria já está protegido pelo passo de confirmação. **Há um fluxo só:** tapa-se, a app
+diz-te para tapar, e nada do que o OCR leu é descartado pelo caminho — cada leitura ou vira carta ou
+vai para `unmatched`.
 
 **O que a sleeve não resolve:** o custo de mana está na **mesma barra** do nome, portanto continua a
 aparecer colado a ele ("Opt 1"). É tratado à parte, por `stripManaCost`. Nomes que a app ainda não
@@ -95,5 +105,7 @@ Nomes que existem em várias impressões continuam sem impressão determinada: o
 set. Cartas assim entram sem `scryfallId` e, por consequência, sem preço (ver ADR 0007).
 
 **A vigiar:** se o passo de confirmação der mais trabalho a corrigir do que dava a escrever a lista
-de raiz, a funcionalidade não está a cumprir. Nessa altura a saída é a API de visão como **segunda**
+de raiz, a funcionalidade não está a cumprir. Em particular, se as fotografias reais mostrarem muito
+lixo por a mesa não ter ficado bem tapada, a resposta é melhorar o aviso e a confirmação — **não**
+repor o filtro pelo tamanho, cujo custo está explicado acima. Nessa altura a saída é a API de visão como **segunda**
 tentativa, só para as fotografias que o OCR local não resolver — não como caminho principal.
