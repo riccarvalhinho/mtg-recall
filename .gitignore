@@ -43,3 +43,6 @@ yarn-error.*
 
 # gerado pelo npm run bundle — publicado no Pages, nunca commitado
 site/data/
+
+# O canvas do ícone é gerado a partir dos .dc.html ao lado — 2 MB de editor que não vale a pena versionar
+design/icon-canvas/icone-mtg-recall.html

@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+  <style>
+    body { margin: 0; }
+    .disp { font-family: "Playfair Display", Georgia, serif; }
+    .body { font-family: "EB Garamond", Georgia, serif; }
+    a { color: #C9A96E; } a:hover { color: #E8DCC8; }
+  </style>
+</helmet>
+<div style="width: 540px; min-height: 720px; box-sizing: border-box; padding: 36px; background: #0C0A07; display: flex; flex-direction: column; gap: 24px;">
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="body" style="font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #6B5C3E;">Antes de exportar</div>
+    <div class="disp" style="font-size: 28px; font-weight: 600; color: #E8DCC8;">A zona segura</div>
+    <div class="body" style="font-size: 15px; line-height: 23px; color: #A8967A;">
+      O Android recorta o primeiro plano com uma máscara que muda de telemóvel para telemóvel, e
+      ainda o anima ao tocar. Só se pode contar com o centro.
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: center;">
+    <svg viewBox="0 0 400 400" width="360" height="360" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="400" rx="10" fill="#1E1812" stroke="#3A3020" stroke-width="2"/>
+      <rect x="0" y="0" width="400" height="400" rx="10" fill="none" stroke="#8B7248" stroke-width="2" stroke-dasharray="6 8" opacity="0.5"/>
+      <circle cx="200" cy="200" r="129" fill="#130F0A" stroke="#C9A96E" stroke-width="3" stroke-dasharray="9 7"/>
+      <text x="200" y="196" text-anchor="middle" font-family="Georgia, serif" font-size="19" fill="#E8DCC8">660 px</text>
+      <text x="200" y="220" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#A8967A">conta-se com isto</text>
+      <text x="200" y="28" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6B5C3E">1024 px — a tela toda</text>
+      <line x1="200" y1="40" x2="200" y2="66" stroke="#6B5C3E" stroke-width="2"/>
+      <text x="200" y="386" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#6B5C3E">~180 px de margem que pode ser cortada</text>
+    </svg>
+  </div>
+
+  <div class="body" style="font-size: 14px; line-height: 21px; color: #A8967A; padding-top: 20px; border-top: 1px solid #3A3020;">
+    Desenhar até às bordas fica bem no ficheiro e aparece cortado no telemóvel. As medidas todas,
+    e os ficheiros a entregar, estão em <span style="color: #C9A96E;">design/icon-brief.md</span>.
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

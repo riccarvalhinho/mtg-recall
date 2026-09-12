@@ -1,0 +1,63 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 540,
+      "h": 900,
+      "title": "A — Ex-libris"
+    },
+    {
+      "file": "Lombadas.dc.html",
+      "x": 620,
+      "y": 0,
+      "w": 540,
+      "h": 900,
+      "title": "B — Lombadas"
+    },
+    {
+      "file": "Marcador.dc.html",
+      "x": 1240,
+      "y": 0,
+      "w": 540,
+      "h": 900,
+      "title": "C — Marcador"
+    },
+    {
+      "file": "TamanhoReal.dc.html",
+      "x": 0,
+      "y": 1060,
+      "w": 1120,
+      "h": 620,
+      "title": "Teste a 48 px"
+    },
+    {
+      "file": "ZonaSegura.dc.html",
+      "x": 1240,
+      "y": 1060,
+      "w": 540,
+      "h": 740,
+      "title": "Zona segura"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 1880,
+      "y": 0,
+      "w": 300,
+      "text": "As três direcções vêm do brief em design/icon-brief.md.\n\nNenhuma usa marcas da Wizards: sem símbolos de mana e sem verso de carta. Uma carta genérica — rectângulo de cantos redondos — não é marca de ninguém.\n\nEscolhe uma e leva-se a sério. Misturar as três dá a quarta pior."
+    },
+    {
+      "id": "decidir",
+      "x": 1880,
+      "y": 300,
+      "w": 300,
+      "text": "Para decidir: tapa a linha de cima e olha só para o teste a 48 px. Se aí não distingues as três, a escolha é entre as que sobram."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
