@@ -23,7 +23,11 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.riccarvalhinho.mtgrecall"
+      "package": "com.riccarvalhinho.mtgrecall",
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +37,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "MTG Recall uses the camera to read a decklist from a photo. The photo is processed on the phone and never saved or uploaded."
+          "cameraPermission": "MTG Recall uses the camera to read a decklist from a photo. The photo is processed on the phone and never saved or uploaded.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ]
     ]
