@@ -9,6 +9,8 @@ export const paths = {
   decks: path.join(repoRoot, 'data', 'decks'),
   taxonomies: path.join(repoRoot, 'data', 'taxonomies'),
   collection: path.join(repoRoot, 'data', 'collection'),
+  /** Onde vivem os SVG dos símbolos de mana. Gerados por tools/fetch-mana-symbols.mts. */
+  manaAssets: path.join(repoRoot, 'assets', 'mana'),
   /** Onde o bundle é gerado. Não é commitado — o CI gera-o e publica-o no Pages. */
   bundleDir: path.join(repoRoot, 'site', 'data'),
 } as const;

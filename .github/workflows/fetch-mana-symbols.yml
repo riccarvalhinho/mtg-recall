@@ -1,0 +1,49 @@
+name: Actualizar símbolos de mana
+
+# Vai buscar à Scryfall os símbolos que aparecem em custos de mana e commita-os como assets locais.
+#
+# Corre à mão e raramente: os símbolos não mudam, sai um novo de dez em dez anos. Corre aqui e não
+# no telemóvel pela mesma razão dos preços — não é uma operação offline-first, e fazê-la no CI
+# mantém a app sem mais uma razão para precisar de rede.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: fetch-mana-symbols
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    name: Descarregar e commitar
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --legacy-peer-deps
+
+      - name: Descarregar os símbolos
+        run: npm run mana-symbols
+
+      # Um ficheiro gerado que não compila é pior do que não o actualizar: entra no bundle da app.
+      - name: Validar
+        run: npm run check
+
+      - name: Commitar se alguma coisa mudou
+        run: |
+          if [ -z "$(git status --porcelain assets/mana)" ]; then
+            echo "Símbolos iguais aos que já lá estavam — nada a commitar."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/mana
+          git commit -m "chore(assets): actualizar símbolos de mana a partir da Scryfall"
+          git push

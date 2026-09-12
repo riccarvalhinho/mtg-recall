@@ -48,7 +48,7 @@ conhecimento prévio de padrões ou convenções.
 | Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
 | Card data | Scryfall API |
 | Card prices | Scryfall (`prices.eur`), por workflow agendado — ADR 0007 |
-| Mana symbols | SVG locais em `assets/mana/symbols.ts` |
+| Mana symbols | SVG locais — `assets/mana/symbols.ts` (WUBRG) e `costSymbols.ts` (gerado) |
 
 ---
 
@@ -183,6 +183,14 @@ mal formado só daria erro **depois** do commit.
 - SVGs locais (`assets/mana/symbols.ts`), sem rede — funciona offline
 - Props: `color: ManaColor`, `size?: number` (default 16), `isSplash?: boolean`
 - `isSplash`: tamanho ×0.70, opacidade 0.65
+
+### ManaCost (components/ManaCost.tsx)
+- Desenha um custo inteiro (`{2}{G}{U}`), não um pip só. `domain/manaCost.ts` separa a string.
+- Três níveis de recurso: símbolo da Scryfall em `assets/mana/costSymbols.ts` → os cinco WUBRG de
+  `symbols.ts` → o texto numa bolha. O terceiro existe para funcionar **antes** de alguém correr o
+  workflow que descarrega os símbolos, e para o dia em que a Scryfall invente um símbolo novo.
+- `costSymbols.ts` é **gerado** por `tools/fetch-mana-symbols.mts`, pelo workflow **Actualizar
+  símbolos de mana**. Começa vazio; correr o workflow enche-o e commita.
 
 ---
 

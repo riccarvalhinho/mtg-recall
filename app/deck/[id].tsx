@@ -17,6 +17,7 @@ import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { CardArtThumb } from '../../components/CardArtThumb';
+import { ManaCost } from '../../components/ManaCost';
 import {
   canAnalyse,
   cardCount,
@@ -265,7 +266,7 @@ function CardRow({ card, view }: { card: DeckCard; view: DeckView }) {
       <View style={cardList.compactRow}>
         <Text style={cardList.quantity}>{card.quantity}×</Text>
         <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
-        {card.manaCost ? <Text style={cardList.cost}>{card.manaCost}</Text> : null}
+        <ManaCost cost={card.manaCost} size={13} />
       </View>
     );
   }
@@ -275,7 +276,7 @@ function CardRow({ card, view }: { card: DeckCard; view: DeckView }) {
       <CardArtThumb url={card.artCropUrl} />
       <View style={cardList.artText}>
         <Text style={cardList.artName} numberOfLines={1}>{card.name}</Text>
-        {card.manaCost ? <Text style={cardList.cost}>{card.manaCost}</Text> : null}
+        <ManaCost cost={card.manaCost} size={13} />
       </View>
       <Text style={cardList.artQuantity}>{card.quantity}×</Text>
     </View>

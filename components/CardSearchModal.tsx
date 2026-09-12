@@ -19,6 +19,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { ManaCost } from './ManaCost';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { searchCards, type CardSearchResult } from '../services/scryfall';
@@ -162,7 +163,7 @@ function CardRow({ card, onPress }: { card: ScryfallCard; onPress: () => void })
           {[card.typeLine, card.setCode?.toUpperCase()].filter(Boolean).join(' · ')}
         </Text>
       </View>
-      {card.manaCost ? <Text style={styles.cost}>{card.manaCost}</Text> : null}
+      <ManaCost cost={card.manaCost} size={14} />
     </Pressable>
   );
 }

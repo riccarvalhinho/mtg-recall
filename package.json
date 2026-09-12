@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "check": "npm run validate && npm run typecheck && npm run test",
-    "prices": "tsx tools/refresh-prices.mts"
+    "prices": "tsx tools/refresh-prices.mts",
+    "mana-symbols": "tsx tools/fetch-mana-symbols.mts"
   },
   "dependencies": {
     "@expo-google-fonts/eb-garamond": "^0.4.2",
