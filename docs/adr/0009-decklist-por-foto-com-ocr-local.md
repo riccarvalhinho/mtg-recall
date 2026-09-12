@@ -141,10 +141,13 @@ o écran pergunta por `isAvailable()` e explica que falta um APK novo, em vez de
 
 ### O que a primeira fotografia real ensinou (Q10)
 
-**O OCR aguenta.** Numa fotografia de um deck de Limited espalhado em colunas, com as cartas de
-baixo tapadas, o ML Kit leu **todos** os nomes, incluindo os difíceis — "Bilbo's Deadly Slice",
-"Down, Down to Goblin-town", "Well-Worn Spatula". Nem uma linha de texto de regras entrou. A
-montagem do passo 0 é o que torna isto possível, e está provada.
+**O OCR aguenta: 23 nomes em 23 cartas.** Numa fotografia de um deck de Limited espalhado em
+colunas, com as cartas de baixo tapadas, o ML Kit leu **todos** os nomes, incluindo os difíceis —
+"Bilbo's Deadly Slice", "Down, Down to Goblin-town", "Well-Worn Spatula". Nem uma linha de texto de
+regras entrou, e nenhuma carta ficou por ler. A montagem do passo 0 é o que torna isto possível, e
+está provada.
+
+Guardar o número importa: se um dia isto piorar, é contra 23/23 que se compara.
 
 **O que falhou foi o catálogo, e era um erro de raciocínio.** A lista saiu com **zero cartas**: o
 catálogo era construído a partir das cartas que a app já conhecia — decks e colecção — e numa
