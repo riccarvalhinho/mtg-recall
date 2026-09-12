@@ -1,0 +1,15 @@
+<!--
+  O primeiro plano do adaptive icon do Android, e também a marca do arranque.
+
+  Sem fundo de propósito: o Android põe o seu por trás (app.json → android.adaptiveIcon.
+  backgroundColor, que é #130F0A) e recorta com uma máscara que muda de telemóvel para telemóvel.
+  Por isso nada aqui pode sair do círculo central de 165 px de raio — ver README.md.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <g transform="rotate(-13 208 247)">
+    <rect x="140" y="150" width="136" height="194" rx="16" fill="#8B7248"/>
+  </g>
+  <rect x="232" y="166" width="140" height="200" rx="16" fill="#C9A96E"/>
+  <rect x="252" y="188" width="100" height="20" rx="8" fill="#130F0A"/>
+  <rect x="252" y="326" width="56" height="12" rx="6" fill="#130F0A" opacity="0.5"/>
+</svg>

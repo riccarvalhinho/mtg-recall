@@ -1,0 +1,27 @@
+<!--
+  O ícone temático do Android 13+: o sistema pinta esta forma com as cores do papel de parede.
+
+  Só existe forma e vazio — não há segunda cor. Duas consequências, e são elas que explicam porque
+  este ficheiro não é o desenho a cores pintado de branco:
+
+  1. **A barra do título é um buraco**, feito por `fill-rule="evenodd"`: um caminho com o
+     rectângulo da carta e os dos recortes lá dentro. Onde se sobrepõem, o preenchimento cancela.
+     (Não se usam `<mask>` nem `<clipPath>` de propósito — o cairosvg, que gera os PNG, ignora-as
+     em silêncio, e um ícone que sai branco cheio não dá erro nenhum a ninguém.)
+
+  2. **A carta de trás está reduzida a uma nesga** que acaba 12 px antes da carta da frente. No
+     desenho a cores as duas distinguem-se pelo tom; aqui seriam duas manchas brancas coladas numa
+     só. A folga faz o mesmo trabalho que o tom fazia.
+
+  Medidas base em icon.svg. A nesga tem 58 px de largura, que é a maior que ainda deixa a folga.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <g transform="rotate(-13 208 247)">
+    <rect x="140" y="150" width="58" height="194" rx="16" fill="#FFFFFF"/>
+  </g>
+  <path fill="#FFFFFF" fill-rule="evenodd" d="
+    M248,166 H356 A16,16 0 0 1 372,182 V350 A16,16 0 0 1 356,366 H248 A16,16 0 0 1 232,350 V182 A16,16 0 0 1 248,166 Z
+    M260,188 H344 A8,8 0 0 1 352,196 V200 A8,8 0 0 1 344,208 H260 A8,8 0 0 1 252,200 V196 A8,8 0 0 1 260,188 Z
+    M258,326 H302 A6,6 0 0 1 308,332 V332 A6,6 0 0 1 302,338 H258 A6,6 0 0 1 252,332 V332 A6,6 0 0 1 258,326 Z
+  "/>
+</svg>

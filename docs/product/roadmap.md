@@ -195,12 +195,16 @@ A fotografia é processada em memória e **nunca guardada nem commitada**.
 
 ## Ícone da app
 
-O ícone é o **placeholder do Expo** — três círculos cinzentos numa grelha. O brief está em
-`design/icon-brief.md`, com as medidas, a zona segura do adaptive icon e onde os ficheiros entram.
+Feito: duas cartas douradas sobre o fundo escuro da app, saídas de três direcções exploradas em
+canvas. O desenho, os originais em SVG e o que ficou em aberto estão em `design/icon/README.md`; o
+brief que lhe deu origem em `design/icon-brief.md`.
 
-- [ ] Desenhar o ícone (Claude Design ou outro), a partir do brief
-- [ ] Substituir `assets/icon.png`, `adaptive-icon.png`, `monochrome-icon.png`, `splash-icon.png`
-- [ ] Declarar o `monochromeImage` no `app.json` e gerar APK novo — o ícone é nativo
+- [x] Desenhar o ícone a partir do brief — ganhou o *ex-libris*, sem o anel
+- [x] `icon.png`, `adaptive-icon.png`, `monochrome-icon.png`, `splash-icon.png` e `favicon.png`,
+      exportados dos SVG por `design/icon/export.py`, que recusa exportar um desenho que passe da
+      zona segura
+- [x] `monochromeImage` declarado no `app.json`, e o fundo do arranque alinhado com o da app
+- [ ] **Gerar APK novo** — o ícone é nativo e não entra por actualização
 
 ---
 

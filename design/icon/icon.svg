@@ -1,0 +1,28 @@
+<!--
+  O ícone quadrado completo — dá origem a assets/icon.png e ao favicon.
+
+  **Porque é maior aqui do que no adaptive-foreground.svg:** este ficheiro não é recortado por
+  máscara nenhuma, portanto não tem de respeitar a zona segura. O desenho é o mesmo; muda só a
+  escala. O `adaptive-foreground.svg` fica à medida que o Android deixa, e é esse que se vê na
+  esmagadora maioria dos telemóveis — este serve os lançadores antigos e a web.
+
+  Geometria base (tela de 512; o PNG sai a 1024, ×2):
+    carta de trás   x=140 y=150 w=136 h=194 rx=16, rodada -13° em torno de (208, 247)
+    carta da frente x=232 y=166 w=140 h=200 rx=16
+    barra do título x=252 y=188 w=100 h=20  rx=8   ← é isto que a faz ler como carta
+
+  O `transform` do grupo centra a mancha (que não é simétrica, por causa da carta rodada) e
+  amplia-a para ocupar 78% do lado. Os números saem das contas em export.py — mexer nas medidas
+  das cartas obriga a refazê-los.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#130F0A"/>
+  <g transform="translate(-133.7 -142.6) scale(1.584)">
+    <g transform="rotate(-13 208 247)">
+      <rect x="140" y="150" width="136" height="194" rx="16" fill="#8B7248"/>
+    </g>
+    <rect x="232" y="166" width="140" height="200" rx="16" fill="#C9A96E"/>
+    <rect x="252" y="188" width="100" height="20" rx="8" fill="#130F0A"/>
+    <rect x="252" y="326" width="56" height="12" rx="6" fill="#130F0A" opacity="0.5"/>
+  </g>
+</svg>

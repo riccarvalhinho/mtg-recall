@@ -1,7 +1,8 @@
 # Brief — ícone da app
 
-> Para entregar a quem desenhar o ícone (Claude Design ou outro). Escrito para ser lido por quem
-> não conhece o projecto: tudo o que é preciso saber está aqui.
+> **Cumprido.** O ícone está desenhado e implementado — ver `design/icon/README.md` para o desenho
+> final, os originais em SVG e o que ficou em aberto. Este brief fica como o enunciado a que ele
+> respondeu, que é a parte que não se reconstrói depois.
 
 ## O que a app é
 
