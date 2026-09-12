@@ -37,6 +37,14 @@ export interface ScryfallCard {
   collectorNumber?: string;
   /** Imagem pequena, para a lista de resultados. Não vai para o ficheiro do deck. */
   imageUrl?: string;
+  /**
+   * Recorte da arte, sem moldura nem texto. É o que a decklist mostra à esquerda de cada linha.
+   *
+   * Vai para o ficheiro do deck, ao contrário do `imageUrl`: é a única das imagens que a app
+   * desenha a partir dos dados guardados, e pedi-la à Scryfall de cada vez que se abre um deck
+   * seria rede a mais para uma coisa que não muda.
+   */
+  artCropUrl?: string;
 }
 
 /**
@@ -114,6 +122,17 @@ function smallImage(value: unknown): string | undefined {
 }
 
 /**
+ * O recorte da arte de um objecto `image_uris`.
+ *
+ * Sem alternativa: se não houver `art_crop`, não há recorte. Cair para a carta inteira daria uma
+ * linha com a moldura e o texto todo espremidos em 44 píxeis, que é pior do que o placeholder.
+ */
+function artCrop(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  return text((value as Record<string, unknown>).art_crop);
+}
+
+/**
  * Uma carta crua da Scryfall, na forma que a app usa. `null` quando não dá para aproveitar.
  *
  * **Cartas de duas faces** não trazem `mana_cost` nem `colors` no topo — vêm dentro de
@@ -160,6 +179,8 @@ export function normalizeCard(raw: unknown): ScryfallCard | null {
     setCode: text(entry.set)?.toLowerCase(),
     collectorNumber: text(entry.collector_number),
     imageUrl: smallImage(entry.image_uris) ?? smallImage(cardFaces[0]?.image_uris),
+    // Numa carta de duas faces, a arte que representa o deck é a da frente.
+    artCropUrl: artCrop(entry.image_uris) ?? artCrop(cardFaces[0]?.image_uris),
   };
 }
 
@@ -208,6 +229,7 @@ export function toDeckCard(card: PickedCard, quantity: number, board: DeckBoard 
     cmc: card.cmc,
     typeLine: card.typeLine,
     colors: card.colors,
+    artCropUrl: card.artCropUrl,
   };
 }
 

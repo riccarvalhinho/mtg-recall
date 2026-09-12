@@ -105,6 +105,7 @@ function serializeDeckCard(card: DeckCard) {
     cmc: card.cmc,
     typeLine: trimmed(card.typeLine),
     colors: card.colors && card.colors.length > 0 ? [...card.colors] : undefined,
+    artCropUrl: trimmed(card.artCropUrl),
   };
 }
 

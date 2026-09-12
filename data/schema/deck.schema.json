@@ -107,6 +107,11 @@
           "type": "array",
           "items": { "$ref": "#/definitions/manaColor" },
           "uniqueItems": true
+        },
+        "artCropUrl": {
+          "description": "Recorte da arte na Scryfall, sem moldura nem texto — é o que a decklist mostra em cada linha. Ao contrário dos outros campos copiados, este NÃO é imutável: a Scryfall pode mudar onde aloja as imagens. Trata-se como pista, não como verdade — se não carregar, a linha volta ao placeholder.",
+          "type": "string",
+          "format": "uri"
         }
       }
     }

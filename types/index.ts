@@ -100,6 +100,12 @@ export interface DeckCard {
   cmc?: number;
   typeLine?: string;
   colors?: ManaColor[];
+  /**
+   * Recorte da arte. É a imagem que a decklist mostra — nunca a carta inteira, que a esse tamanho
+   * seria moldura e texto ilegível. Não é imutável como os outros campos copiados: se falhar a
+   * carregar, a linha volta ao placeholder.
+   */
+  artCropUrl?: string;
 }
 
 /** Um deck. Um ficheiro por deck em `data/decks/<id>.json`. */

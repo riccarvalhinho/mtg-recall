@@ -10,7 +10,7 @@
  *
  * Nada disto é guardado: calcula-se em runtime, como o win rate dos eventos (CLAUDE.md § Os dados).
  */
-import type { Deck, DeckCard, Event, ManaColor } from '../types';
+import type { Deck, DeckBoard, DeckCard, Event, ManaColor } from '../types';
 
 // ─── Desempenho ──────────────────────────────────────────────────────────────
 
@@ -219,6 +219,100 @@ export function typeCounts(cards: DeckCard[] | undefined): TypeCount[] {
   return [...counts.entries()]
     .map(([type, count]) => ({ type, count }))
     .sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
+}
+
+export interface SubtypeCount {
+  subtype: string;
+  count: number;
+  /** 0–100, arredondado a uma casa. Ver a nota sobre o denominador. */
+  percent: number;
+}
+
+/** Acima disto a lista deixa de se ler e o resto vale mais somado em "Other". */
+const SUBTYPE_LIMIT = 5;
+
+/**
+ * Os subtipos mais comuns do deck principal, para um tipo de carta.
+ *
+ * Um subtipo é o que vem **depois** do travessão na linha de tipo: "Legendary Creature — Human
+ * Wizard" dá `Human` e `Wizard`. O `primaryType` já parte a linha nesse sítio e deita fora este
+ * lado; aqui aproveita-se.
+ *
+ * Uma carta com dois subtipos conta nos dois, como acontece com as cores. **A percentagem é sobre o
+ * total de subtipos contados, não sobre o número de cartas** — com 14 criaturas a somarem 26
+ * subtipos, 5 Wizards são 19% de 26 e não 36% de 14. É também assim que a app de referência o faz
+ * (ver design/referencia-manabox/).
+ */
+export function subtypeCounts(
+  cards: DeckCard[] | undefined,
+  type: CardType = 'Creature',
+  limit: number = SUBTYPE_LIMIT,
+): SubtypeCount[] {
+  const counts = new Map<string, number>();
+  let total = 0;
+
+  for (const card of mainboard(cards ?? [])) {
+    if (primaryType(card) !== type) continue;
+
+    const line = card.typeLine ?? '';
+    const dash = line.search(/[—–-]/);
+    if (dash === -1) continue;
+
+    for (const word of line.slice(dash + 1).trim().split(/\s+/)) {
+      const subtype = word.trim();
+      if (!subtype) continue;
+      counts.set(subtype, (counts.get(subtype) ?? 0) + card.quantity);
+      total += card.quantity;
+    }
+  }
+
+  if (total === 0) return [];
+
+  const ordered = [...counts.entries()]
+    .map(([subtype, count]) => ({ subtype, count }))
+    .sort((a, b) => b.count - a.count || a.subtype.localeCompare(b.subtype));
+
+  const top = ordered.slice(0, limit);
+  const rest = ordered.slice(limit).reduce((sum, entry) => sum + entry.count, 0);
+
+  const pct = (count: number) => Math.round((count / total) * 1000) / 10;
+
+  const result: SubtypeCount[] = top.map(entry => ({ ...entry, percent: pct(entry.count) }));
+  if (rest > 0) result.push({ subtype: 'Other', count: rest, percent: pct(rest) });
+  return result;
+}
+
+/**
+ * A decklist agrupada por tipo, na ordem em que os tipos aparecem em `typeCounts`.
+ *
+ * É o que a lista do deck mostra: um cabeçalho por tipo com a contagem à frente. Cartas sem linha
+ * de tipo — escritas à mão — ficam num grupo próprio no fim, em vez de desaparecerem.
+ */
+export function groupByType(cards: DeckCard[] | undefined, board: DeckBoard = 'main'): {
+  type: CardType | 'Unknown';
+  count: number;
+  cards: DeckCard[];
+}[] {
+  const scoped = (cards ?? []).filter(card => (card.board ?? 'main') === board);
+
+  const groups = new Map<CardType | 'Unknown', DeckCard[]>();
+  for (const card of scoped) {
+    const key = primaryType(card) ?? 'Unknown';
+    groups.set(key, [...(groups.get(key) ?? []), card]);
+  }
+
+  return [...groups.entries()]
+    .map(([type, list]) => ({
+      type,
+      count: list.reduce((sum, card) => sum + card.quantity, 0),
+      cards: [...list].sort((a, b) => a.name.localeCompare(b.name, 'pt')),
+    }))
+    .sort((a, b) => {
+      // "Unknown" no fim; o resto pela contagem, como a referência.
+      if (a.type === 'Unknown') return 1;
+      if (b.type === 'Unknown') return -1;
+      return b.count - a.count || a.type.localeCompare(b.type);
+    });
 }
 
 /**
