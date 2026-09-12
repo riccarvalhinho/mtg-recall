@@ -16,14 +16,18 @@
  *   updateDeck(id, data)            — altera um deck sem lhe mexer no id
  *   deleteDeck(id)                  — apaga, se nenhum evento o usar
  *   setEventDeck(eventId, deckId)   — liga um deck a um evento
+ *   setEventDeckThumbnail(id, card) — escolhe a carta que ilustra o evento
+ *   setEventSetCode(id, setCode)    — corrige o set de um evento de Limited
  *   addToCollection(card)           — acrescenta uma carta (soma se já lá estiver)
  *   setCardQuantity(card, n)        — muda a quantidade; 0 tira da colecção
  *   restoreFromGitHub()             — repõe tudo a partir do bundle publicado
  */
 import { create } from 'zustand';
+import { pruneOpponents } from '../domain/opponents';
 import { repoPaths } from '../domain/outbox';
 import { eventId as makeEventId, slugify, uniqueId } from '../domain/slug';
-import { thumbnailUrls } from '../domain/thumbnails';
+import { isLimitedFormat } from '../domain/sets';
+import { thumbnailChoices, thumbnailUrls } from '../domain/thumbnails';
 import { prefetchThumbnails } from '../services/imagePrefetch';
 import * as localStore from '../services/localStore';
 import * as outbox from '../services/outbox';
@@ -80,6 +84,8 @@ export interface NewDeckData {
   archetype?: string;
   cards?: DeckCard[];
   notes?: string;
+  /** A carta que ilustra o deck. Tem de ser uma das cartas dele — ver `domain/thumbnails.ts`. */
+  thumbnailCardId?: string;
 }
 
 interface EventsStore {
@@ -100,6 +106,8 @@ interface EventsStore {
   updateDeck: (deckId: string, data: NewDeckData) => Promise<boolean>;
   deleteDeck: (deckId: string) => Promise<{ ok: true } | { ok: false; usedBy: number }>;
   setEventDeck: (eventId: string, deckId: string | undefined) => Promise<boolean>;
+  setEventDeckThumbnail: (eventId: string, scryfallId: string | undefined) => Promise<boolean>;
+  setEventSetCode: (eventId: string, setCode: string | undefined) => Promise<boolean>;
   addToCollection: (card: CollectionCard) => Promise<void>;
   setCardQuantity: (card: CollectionCard, quantity: number) => Promise<void>;
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
@@ -209,6 +217,25 @@ async function persistOpponents(opponents: Opponent[], message: string): Promise
   const content = serializeOpponents(opponents);
   await localStore.writeFile(path, content);
   await outbox.enqueueFile({ path, content, message });
+}
+
+/**
+ * Tira da taxonomia quem deixou de ser referido e grava o ficheiro, se alguém saiu.
+ *
+ * Chama-se **depois** de o estado já ter os eventos novos: é a lista de eventos que decide quem
+ * fica. Quando ninguém sai, devolve a lista tal como veio e não escreve nada — nem ficheiro nem
+ * commit por uma coisa que não mudou.
+ */
+async function persistPrunedOpponents(
+  opponents: Opponent[],
+  events: Event[],
+  message: string,
+): Promise<Opponent[]> {
+  const kept = pruneOpponents(opponents, events);
+  if (kept.length === opponents.length) return opponents;
+
+  await persistOpponents(kept, message);
+  return kept;
 }
 
 export const useEventsStore = create<EventsStore>((set, get) => ({
@@ -358,13 +385,16 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       ),
     };
 
-    set(state => ({
-      events: state.events.map(e => (e.id === eventId ? updated : e)),
-      opponents,
-    }));
+    const events = get().events.map(e => (e.id === eventId ? updated : e));
+    set({ events, opponents });
 
     if (isNew) await persistOpponents(opponents, `Add opponent ${displayName}`);
     await persistEvent(updated, `Edit round ${round} of ${event.name}`);
+
+    // Corrigir um nome mal escrito cria um id novo e deixa o antigo a apontar para ninguém. É a
+    // razão mais provável para se estar aqui, portanto é aqui que se varre.
+    const kept = await persistPrunedOpponents(opponents, events, 'Clean up unreferenced opponents');
+    set({ opponents: kept });
     return true;
   },
 
@@ -383,6 +413,7 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       archetype: data.archetype,
       cards: data.cards,
       notes: data.notes,
+      thumbnailCardId: data.thumbnailCardId,
     };
 
     set(state => ({ decks: [...state.decks, deck].sort(byName) }));
@@ -409,6 +440,9 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       archetype: data.archetype,
       cards: data.cards,
       notes: data.notes,
+      // Explícito e não herdado do spread: sem isto, largar a escolha era impossível — o valor
+      // antigo sobrevivia a um `undefined`.
+      thumbnailCardId: data.thumbnailCardId,
     };
 
     set(state => ({ decks: state.decks.map(d => (d.id === deckId ? updated : d)).sort(byName) }));
@@ -445,10 +479,60 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     if (!event) return false;
     if (deckId && !get().decks.some(deck => deck.id === deckId)) return false;
 
-    const updated: Event = { ...event, deckId };
+    // Trocar de deck larga a carta escolhida: ela era do deck anterior, e um evento ilustrado por
+    // uma carta que o deck já não tem é pior do que um evento sem ilustração escolhida — passa a
+    // herdar a do deck novo, que é o que `eventThumbnailUrl` faz sozinho.
+    const keepThumbnail = deckId === event.deckId;
+    const updated: Event = {
+      ...event,
+      deckId,
+      deckThumbnailCardId: keepThumbnail ? event.deckThumbnailCardId : undefined,
+    };
 
     set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
     await persistEvent(updated, `Set deck of ${event.name}`);
+    return true;
+  },
+
+  /**
+   * Escolhe a carta que ilustra o evento, de entre as do deck ligado.
+   *
+   * Valida que a carta é mesmo do deck: o campo é uma referência, e uma referência para uma carta
+   * que o deck não tem não desenharia nada. `undefined` larga a escolha e volta a herdar a do deck.
+   */
+  setEventDeckThumbnail: async (eventId, scryfallId) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    if (scryfallId) {
+      const deck = get().decks.find(d => d.id === event.deckId);
+      if (!thumbnailChoices(deck?.cards).some(choice => choice.scryfallId === scryfallId)) {
+        return false;
+      }
+    }
+
+    const updated: Event = { ...event, deckThumbnailCardId: scryfallId };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    await persistEvent(updated, `Set thumbnail of ${event.name}`);
+    return true;
+  },
+
+  /**
+   * Corrige o set de um evento de Limited depois de criado.
+   *
+   * Só em Limited, pela mesma regra do écran de criação: num evento de Constructed o set não quer
+   * dizer nada, e guardá-lo lá seria guardar ruído.
+   */
+  setEventSetCode: async (eventId, setCode) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+    if (!isLimitedFormat(event.type)) return false;
+
+    const updated: Event = { ...event, setCode: setCode?.trim().toLowerCase() || undefined };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    await persistEvent(updated, `Set set of ${event.name}`);
     return true;
   },
 
@@ -510,13 +594,18 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
     const event = get().events.find(e => e.id === eventId);
     if (!event) return false;
 
-    set(state => ({ events: state.events.filter(e => e.id !== eventId) }));
+    const events = get().events.filter(e => e.id !== eventId);
+    set({ events });
 
     // Apaga mesmo o ficheiro em vez de o marcar: o histórico do Git é a rede de segurança, e um
     // evento apagado que continuasse no repositório voltaria a aparecer no próximo restauro.
     const path = repoPaths.event(eventId);
     await localStore.removeFile(path);
     await outbox.enqueueFile({ path, content: null, message: `Delete event ${event.name}` });
+
+    // Quem só se enfrentou nesse dia deixa de ser referido por match nenhum.
+    const kept = await persistPrunedOpponents(get().opponents, events, 'Clean up unreferenced opponents');
+    set({ opponents: kept });
     return true;
   },
 
@@ -535,8 +624,12 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
         .map((match, index) => ({ ...match, round: index + 1 })),
     };
 
-    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    const events = get().events.map(e => (e.id === eventId ? updated : e));
+    set({ events });
     await persistEvent(updated, `Delete round ${round} of ${event.name}`);
+
+    const kept = await persistPrunedOpponents(get().opponents, events, 'Clean up unreferenced opponents');
+    set({ opponents: kept });
     return true;
   },
 

@@ -5,6 +5,7 @@ import {
   headToHead,
   nemesis,
   opponentRecord,
+  pruneOpponents,
   rankOpponents,
 } from './opponents';
 import type { Event, Match, Opponent } from '../types';
@@ -291,5 +292,53 @@ describe('favouriteMatchup', () => {
 
     expect(favouriteMatchup(only, events)?.opponentId).toBe('unico');
     expect(nemesis(only, events)?.opponentId).toBe('unico');
+  });
+});
+
+describe('pruneOpponents', () => {
+  const ana: Opponent = { id: 'ana', name: 'Ana' };
+  const bruno: Opponent = { id: 'bruno', name: 'Bruno' };
+
+  function eventWith(id: string, opponentIds: string[]): Event {
+    return {
+      id,
+      name: id,
+      type: 'Modern',
+      date: '2026-01-01',
+      status: 'completed',
+      matches: opponentIds.map((opponentId, index) => ({
+        round: index + 1,
+        opponentId,
+        opponent: opponentId,
+        opponentColors: { main: [], splash: [] },
+        result: 'W' as const,
+      })),
+    };
+  }
+
+  it('tira quem já não é referido por match nenhum', () => {
+    // O caso real: o nome estava mal escrito, foi corrigido no match, e o id antigo ficou órfão.
+    const gralha: Opponent = { id: 'anna', name: 'Anna' };
+    expect(pruneOpponents([gralha, ana], [eventWith('e', ['ana'])])).toEqual([ana]);
+  });
+
+  it('mantém quem é referido, mesmo que noutro evento', () => {
+    const events = [eventWith('e1', ['ana']), eventWith('e2', ['bruno'])];
+    expect(pruneOpponents([ana, bruno], events)).toEqual([ana, bruno]);
+  });
+
+  it('apagar o único evento de alguém tira-o da lista', () => {
+    expect(pruneOpponents([ana, bruno], [eventWith('e', ['ana'])])).toEqual([ana]);
+  });
+
+  it('sem eventos não sobra ninguém', () => {
+    expect(pruneOpponents([ana, bruno], [])).toEqual([]);
+  });
+
+  it('não reordena o que fica', () => {
+    // Reordenar daria um diff do ficheiro inteiro por causa de uma linha removida.
+    const carla: Opponent = { id: 'carla', name: 'Carla' };
+    const events = [eventWith('e', ['carla', 'ana'])];
+    expect(pruneOpponents([ana, carla], events)).toEqual([ana, carla]);
   });
 });

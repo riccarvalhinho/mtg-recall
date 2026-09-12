@@ -31,6 +31,7 @@ import {
 import { cardCount } from '../domain/deck';
 import { useEventsStore } from '../store/useEventsStore';
 import { ManaPip } from '../components/ManaPip';
+import { CardArtPicker } from '../components/CardArtPicker';
 import { CardSearchModal } from '../components/CardSearchModal';
 import { toDeckCard } from '../domain/cards';
 import {
@@ -140,6 +141,7 @@ export default function DeckEditorScreen() {
   const [notes, setNotes]         = useState(deck?.notes ?? '');
   const [saving, setSaving]       = useState(false);
   const [cardList, setCardList]   = useState<DeckCard[]>(normalizeDeckCards(deck?.cards));
+  const [thumbnailCardId, setThumbnailCardId] = useState<string | undefined>(deck?.thumbnailCardId);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -169,6 +171,7 @@ export default function DeckEditorScreen() {
       archetype: archetype.trim() || undefined,
       cards:     toStoredCards(cardList),
       notes:     notes.trim() || undefined,
+      thumbnailCardId,
     };
 
     if (isEdit && deckId) await updateDeck(deckId, data);
@@ -436,6 +439,16 @@ export default function DeckEditorScreen() {
               A deck works without a list — it still tracks its record across events.
             </Text>
           </View>
+
+          {/*
+            Depois da lista e não antes: as candidatas são as cartas que estão nela neste momento,
+            incluindo as que se acabaram de acrescentar sem gravar.
+          */}
+          <CardArtPicker
+            cards={cardList}
+            value={thumbnailCardId}
+            onChange={setThumbnailCardId}
+          />
 
           {/* Apagar — só faz sentido num deck que já existe */}
           {isEdit && (

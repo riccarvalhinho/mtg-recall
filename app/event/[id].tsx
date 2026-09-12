@@ -11,21 +11,20 @@ import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { calcEventStats, isActive } from '../../types';
 import type { Deck, Event } from '../../types';
+import { formatDate } from '../../domain/dates';
 import { deckPerformance } from '../../domain/deck';
+import { isLimitedFormat } from '../../domain/sets';
+import { eventThumbnailUrl, thumbnailChoices } from '../../domain/thumbnails';
 import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ManaPip } from '../../components/ManaPip';
-import { CardThumbnailPlaceholder } from '../../components/CardThumbnailPlaceholder';
+import { CardArtThumb } from '../../components/CardArtThumb';
+import { CardArtPicker } from '../../components/CardArtPicker';
+import { SetSelector } from '../../components/SetSelector';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
 const RANK_OPTIONS = ['1st Place', 'Top 2', 'Top 4', 'Top 8', 'Top 16', 'Top 32', 'Other'];
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 // ─── StatsBar ─────────────────────────────────────────────────────────────────
 
@@ -139,6 +138,11 @@ function DeckSection({ event }: { event: Event }) {
   const linked = decks.find(d => d.id === event.deckId);
   const legacyName = event.deckName;
 
+  // A carta que ilustra o evento, se houver uma escolhida — e, sem escolha própria, a do deck. Sai
+  // da lista de cartas do deck ligado, portanto não custa rede nenhuma. O `CardArtThumb` volta ao
+  // placeholder sozinho quando não há arte ou quando ela falha a carregar.
+  const artUrl = eventThumbnailUrl(event, decks);
+
   const performance = linked ? deckPerformance(linked.id, events) : null;
 
   function choose(deckId: string | undefined) {
@@ -152,7 +156,7 @@ function DeckSection({ event }: { event: Event }) {
         style={deck.header}
         onPress={() => (linked ? router.push({ pathname: '/deck/[id]', params: { id: linked.id } }) : setPicking(true))}
       >
-        <CardThumbnailPlaceholder width={38} height={52} />
+        <CardArtThumb url={artUrl} width={38} height={52} />
 
         <View style={deck.info}>
           <Text style={deck.label}>Deck</Text>
@@ -204,6 +208,78 @@ function DeckSection({ event }: { event: Event }) {
     </View>
   );
 }
+
+/**
+ * O que se corrige num evento depois de ele existir: o set e a carta que o ilustra.
+ *
+ * Está atrás de um toque de propósito. São coisas que se mexem uma vez e nunca mais — abertas por
+ * omissão, empurravam os matches para baixo em todos os torneios para servir o caso raro, e os
+ * matches são o que se vem cá ver entre rondas.
+ *
+ * Cada uma só aparece quando quer dizer alguma coisa: o set só em Limited (num Modern não significa
+ * nada), a arte só quando há um deck ligado com cartas que tenham arte.
+ */
+function EventSettings({ event }: { event: Event }) {
+  const decks = useEventsStore(s => s.decks);
+  const setEventSetCode = useEventsStore(s => s.setEventSetCode);
+  const setEventDeckThumbnail = useEventsStore(s => s.setEventDeckThumbnail);
+
+  const [open, setOpen] = useState(false);
+
+  const linked = decks.find(d => d.id === event.deckId);
+  const showSet = isLimitedFormat(event.type);
+  const showArt = thumbnailChoices(linked?.cards).length > 0;
+
+  if (!showSet && !showArt) return null;
+
+  return (
+    <View style={settings.wrap}>
+      <Pressable
+        style={settings.toggle}
+        onPress={() => setOpen(current => !current)}
+        hitSlop={8}
+      >
+        <Feather name="sliders" size={13} color={colors.textDim} />
+        <Text style={settings.toggleText}>Event details</Text>
+        <Feather name={open ? 'chevron-up' : 'chevron-down'} size={15} color={colors.textDim} />
+      </Pressable>
+
+      {open && (
+        <View style={settings.body}>
+          {showSet && (
+            <SetSelector
+              value={event.setCode}
+              onChange={code => void setEventSetCode(event.id, code)}
+            />
+          )}
+
+          {showArt && (
+            <CardArtPicker
+              cards={linked?.cards}
+              value={event.deckThumbnailCardId}
+              onChange={cardId => void setEventDeckThumbnail(event.id, cardId)}
+              label="Event art"
+            />
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const settings = StyleSheet.create({
+  wrap: { marginHorizontal: 16, marginTop: 10 },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 },
+  toggleText: {
+    flex: 1,
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: colors.textDim,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  body: { paddingBottom: 4 },
+});
 
 /** Escolher entre os decks que existem. Criar um novo é trabalho do tab Decks, não daqui. */
 function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
@@ -471,6 +547,14 @@ export default function EventDetailScreen() {
 
   const stats = calcEventStats(event);
 
+  // O set do torneio, ao lado do formato. `setCode` é o campo a sério e só existe em Limited; o
+  // pedaço do nome a seguir ao travessão é o que se fazia antes de o campo ter interface, e
+  // continua a valer para os eventos antigos que não o têm.
+  const setCode = event.setCode?.trim().toUpperCase();
+  const legacySetLabel = setCode
+    ? undefined
+    : event.name.split('—')[1]?.trim().toLowerCase() || undefined;
+
   function goToMatchRegistration() {
     router.push({
       pathname: '/match-registration',
@@ -518,13 +602,15 @@ export default function EventDetailScreen() {
                 {isActive(event) ? 'Active' : 'Completed'}
               </Text>
             </View>
-            {event.name.includes('—') && (
+            {setCode ? (
               <View style={styles.setBadge}>
-                <Text style={styles.setBadgeText}>
-                  {event.name.split('—')[1]?.trim().toLowerCase()}
-                </Text>
+                <Text style={[styles.setBadgeText, styles.setBadgeCode]}>{setCode}</Text>
               </View>
-            )}
+            ) : legacySetLabel ? (
+              <View style={styles.setBadge}>
+                <Text style={styles.setBadgeText}>{legacySetLabel}</Text>
+              </View>
+            ) : null}
           </View>
           <Text style={styles.eventName}>{event.name}</Text>
           <View style={styles.eventMeta}>
@@ -554,6 +640,8 @@ export default function EventDetailScreen() {
         <DeckSection
           event={event}
         />
+
+        <EventSettings event={event} />
 
         {/* Matches */}
         <View style={styles.matchesHeader}>
@@ -910,6 +998,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyItal,
     fontSize: 10,
     color: colors.textDim,
+  },
+  // Um código a sério lê-se como código: maiúsculas e espaçado, como no SetSelector.
+  setBadgeCode: {
+    fontFamily: fonts.bodyMed,
+    color: colors.goldDim,
+    letterSpacing: 0.6,
   },
   eventName: {
     fontFamily: fonts.display,

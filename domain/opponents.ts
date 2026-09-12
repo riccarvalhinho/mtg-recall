@@ -174,3 +174,30 @@ export function favouriteMatchup(opponents: Opponent[], events: Event[]): Oppone
   if (candidates.length === 0) return null;
   return candidates.reduce((best, record) => (record.winRate > best.winRate ? record : best));
 }
+
+// ─── Limpeza ─────────────────────────────────────────────────────────────────
+
+/**
+ * Os adversários que ainda são referidos por algum match.
+ *
+ * Corrigir o nome de um adversário num match deixa a entrada antiga em `opponents.json` a apontar
+ * para ninguém: o id vem do slug do nome, portanto mudar o nome cria um id novo e o velho fica lá.
+ * Apagar um evento faz o mesmo a toda a gente que só se enfrentou nesse dia. Nenhum dos dois casos
+ * parte nada — a lista é que vai enchendo de gralhas que nunca mais aparecem em lado nenhum.
+ *
+ * A ordem é preservada de propósito: reordenar aqui daria um diff do ficheiro inteiro por causa de
+ * uma linha removida, e os diffs legíveis são meia razão de os dados serem ficheiros (ADR 0002).
+ *
+ * **Só se chama depois de o evento novo já estar no estado.** Passar a lista antiga apagaria quem
+ * acabou de ser acrescentado.
+ */
+export function pruneOpponents(opponents: Opponent[], events: Event[]): Opponent[] {
+  const referenced = new Set<string>();
+  for (const event of events) {
+    for (const match of event.matches) {
+      if (match.opponentId) referenced.add(match.opponentId);
+    }
+  }
+
+  return opponents.filter(opponent => referenced.has(opponent.id));
+}
