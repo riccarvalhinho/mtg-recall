@@ -292,8 +292,9 @@ um evento a partir da própria decklist (o ficheiro guarda um `scryfallId`, não
 um deck de Commander ficam em cache sozinhas à medida que se abre.
 
 **Por fazer:** decklist por fotografia com OCR local (ADR 0009). A lógica está escrita e testada em
-`domain/ocrDecklist.ts` — colunas a partir das caixas delimitadoras, comparação tolerante a erros e
-repetições a virar quantidade. A montagem da mesa é **parte do fluxo** (ADR 0009, passo 0): as
+`domain/ocrDecklist.ts` — colunas a partir das caixas delimitadoras, comparação tolerante a erros,
+repetições a virar quantidade, e `mergeBatches` a juntar porções (um Limited cabe numa fotografia,
+um Commander fotografa-se em três ou quatro; o mesmo nome em duas porções soma e fica marcado). A montagem da mesa é **parte do fluxo** (ADR 0009, passo 0): as
 cartas de baixo vão tapadas com uma sleeve ou com o verso de outra carta, para o único texto da
 fotografia serem nomes. Por isso **nada é descartado em silêncio** — cada leitura ou vira carta ou
 vai para `unmatched`, e o filtro pelo tamanho da letra que existia saiu, com a razão no ADR. Falta o que precisa do dispositivo: integrar o ML Kit (código nativo, entra por APK

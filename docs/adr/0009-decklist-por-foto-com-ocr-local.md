@@ -37,7 +37,29 @@ O fluxo:
    letras, e um nome próprio de Magic não perdoa uma comparação exacta.
 5. **Nomes repetidos viram quantidade.** Quatro cópias espalhadas dão quatro leituras do mesmo nome,
    que é exactamente a informação que faltaria escrever à mão.
-6. Mostrar o resultado para confirmação **antes** de gravar. Nada entra no deck sem passar por aqui.
+6. Repetir 0–5 por cada **porção** da pilha, quando o deck não cabe numa fotografia. As porções
+   somam-se.
+7. Mostrar o resultado para confirmação **antes** de gravar. Nada entra no deck sem passar por aqui.
+
+### Uma fotografia ou várias, e o que isso obriga
+
+Os números do uso real: um deck de **Limited** tem 22 ou 23 cartas fora os terrenos, e cabe numa
+fotografia. Um **Commander** não cabe, e fotografa-se em três ou quatro porções de 20 a 30 cartas.
+Portanto o fluxo tem de acumular, e a porção — não a fotografia inteira nem a carta — é a unidade
+com que se trabalha: uma fotografia que saiu mal tira-se da lista e junta-se o resto outra vez, sem
+reprocessar nada. É por isso que `mergeBatches` recebe porções **já lidas** e não imagens.
+
+As porções são pedaços disjuntos da mesma pilha, portanto somam-se. O caso que obriga a pensar é o
+**mesmo nome em duas porções**, e o código não consegue decidi-lo: ou são mesmo duas cópias
+separadas (acontece em Limited), ou as porções sobrepuseram-se e a carta foi fotografada duas
+vezes. Somar às cegas dá um 2× que pode ser falso; não somar tira um 2× que pode ser verdadeiro.
+A decisão foi **somar e marcar** — `crossBatch` diz quais são, e a confirmação assinala-as. Uma
+regra automática aqui seria adivinhar; assinalar é dizer a verdade e deixar decidir quem tem a mesa
+à frente.
+
+**Os terrenos básicos ficam de fora da fotografia**, e entram pelo painel de contadores que já
+existe no editor de deck. É por isso que os 22–23 do Limited são o número que interessa: são as
+cartas que vale a pena fotografar.
 
 ### O passo 0 é parte da decisão, não um conselho
 

@@ -6,8 +6,10 @@ import {
   decklistFromBlocks,
   editDistance,
   matchCardName,
+  mergeBatches,
   normalizeCardText,
   stripManaCost,
+  type OcrDecklist,
   type TextBlock,
 } from './ocrDecklist';
 
@@ -265,5 +267,72 @@ describe('com as cartas de baixo tapadas', () => {
 
     expect(cards.map(c => c.name)).toEqual(['Opt', 'Llanowar Elves']);
     expect(unmatched).toEqual([]);
+  });
+});
+
+describe('mergeBatches', () => {
+  function batch(names: string[]): OcrDecklist {
+    const blocks = names.map((name, i) => title(name, 20, 100 + i * 200));
+    return decklistFromBlocks(blocks, [
+      'Lightning Bolt',
+      'Llanowar Elves',
+      'Opt',
+      'Birds of Paradise',
+    ]);
+  }
+
+  it('junta porções disjuntas da mesma pilha', () => {
+    // Um Commander não cabe numa fotografia: fotografa-se em três ou quatro porções.
+    const merged = mergeBatches([batch(['Lightning Bolt', 'Opt']), batch(['Llanowar Elves'])]);
+
+    expect(merged.cards.map(c => c.name)).toEqual(['Lightning Bolt', 'Opt', 'Llanowar Elves']);
+    expect(merged.cards.every(c => c.quantity === 1)).toBe(true);
+    expect(merged.crossBatch).toEqual([]);
+  });
+
+  it('duas cópias na mesma porção somam sem levantar suspeita', () => {
+    const merged = mergeBatches([batch(['Opt', 'Opt'])]);
+
+    expect(merged.cards[0]).toMatchObject({ name: 'Opt', quantity: 2 });
+    expect(merged.crossBatch).toEqual([]);
+  });
+
+  it('o mesmo nome em duas porções soma, mas fica marcado', () => {
+    // Ou são mesmo duas cópias em porções diferentes, ou as porções sobrepuseram-se e a carta foi
+    // fotografada duas vezes. O código não consegue decidir — quem confirma é que decide.
+    const merged = mergeBatches([batch(['Opt']), batch(['Opt', 'Lightning Bolt'])]);
+
+    expect(merged.cards.find(c => c.name === 'Opt')?.quantity).toBe(2);
+    expect(merged.crossBatch).toEqual(['Opt']);
+  });
+
+  it('as leituras de todas as porções ficam guardadas, para se ver de onde veio', () => {
+    const merged = mergeBatches([batch(['Opt']), batch(['Opt'])]);
+    expect(merged.cards[0].readings).toEqual(['Opt', 'Opt']);
+  });
+
+  it('o que não se reconheceu em cada porção continua a aparecer', () => {
+    const merged = mergeBatches([batch(['Xyzzy Frobnicate']), batch(['Opt'])]);
+    expect(merged.unmatched).toEqual(['Xyzzy Frobnicate']);
+  });
+
+  it('uma porção só devolve o mesmo que ela — é o caso do Limited', () => {
+    // Vinte e poucas cartas fora os terrenos cabem numa fotografia.
+    const merged = mergeBatches([batch(['Lightning Bolt', 'Opt'])]);
+    expect(merged.cards).toHaveLength(2);
+    expect(merged.crossBatch).toEqual([]);
+  });
+
+  it('sem porções nenhumas não rebenta', () => {
+    expect(mergeBatches([])).toEqual({ cards: [], unmatched: [], crossBatch: [] });
+  });
+
+  it('juntar não mexe nas porções originais', () => {
+    // A confirmação deixa tirar uma fotografia que saiu mal e voltar a juntar o resto: se juntar
+    // estragasse as porções, a segunda junção saía errada.
+    const primeira = batch(['Opt']);
+    mergeBatches([primeira, batch(['Opt'])]);
+    expect(primeira.cards[0].quantity).toBe(1);
+    expect(primeira.cards[0].readings).toEqual(['Opt']);
   });
 });

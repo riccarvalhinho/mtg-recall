@@ -304,3 +304,69 @@ export function catalogueFrom(...sources: (string | undefined)[][]): string[] {
 
   return [...names].sort((a, b) => a.localeCompare(b, 'en'));
 }
+
+// ─── Várias fotografias do mesmo deck ─────────────────────────────────────────
+
+/**
+ * O resultado de juntar as porções fotografadas.
+ *
+ * Um deck de Limited cabe numa fotografia — vinte e poucas cartas fora os terrenos. Um Commander
+ * não cabe, e fotografa-se em três ou quatro porções de vinte a trinta cartas. São **porções
+ * disjuntas da mesma pilha**, portanto somam-se.
+ */
+export interface MergedDecklist extends OcrDecklist {
+  /**
+   * Os nomes que apareceram em mais do que uma porção.
+   *
+   * São os únicos que merecem um segundo olhar, e o código **não consegue** decidir por si: ou
+   * tens mesmo duas cópias da carta em porções diferentes (acontece em Limited), ou as porções
+   * sobrepuseram-se e a mesma carta foi fotografada duas vezes. Somar às cegas dá um 2× que pode
+   * ser falso; não somar tira um 2× que pode ser verdadeiro.
+   *
+   * A saída honesta é somar **e marcar**: a quantidade fica somada, e a confirmação assinala estas
+   * linhas em vez de as esconder ou de inventar uma regra.
+   */
+  crossBatch: string[];
+}
+
+/**
+ * Junta as porções numa lista só.
+ *
+ * A ordem é a da primeira porção em que cada carta apareceu — ou seja, a ordem por que as
+ * fotografaste. É a que permite conferir contra a mesa sem andar a saltar.
+ *
+ * Cada porção continua a ser uma unidade do lado de fora: uma fotografia que saiu mal tira-se da
+ * lista e volta a juntar-se o resto. É por isso que isto recebe as porções já lidas e não as
+ * fotografias — refazer uma não obriga a reprocessar as outras.
+ */
+export function mergeBatches(batches: OcrDecklist[]): MergedDecklist {
+  const byName = new Map<string, OcrCandidate>();
+  /** Em que porção cada carta apareceu pela primeira vez. É o que denuncia as repetidas. */
+  const firstBatch = new Map<string, number>();
+  const unmatched: string[] = [];
+  const crossBatch: string[] = [];
+
+  batches.forEach((batch, index) => {
+    for (const card of batch.cards) {
+      const existing = byName.get(card.name);
+
+      if (!existing) {
+        byName.set(card.name, { ...card, readings: [...card.readings] });
+        firstBatch.set(card.name, index);
+        continue;
+      }
+
+      existing.quantity += card.quantity;
+      existing.exact = existing.exact || card.exact;
+      existing.readings.push(...card.readings);
+
+      if (firstBatch.get(card.name) !== index && !crossBatch.includes(card.name)) {
+        crossBatch.push(card.name);
+      }
+    }
+
+    unmatched.push(...batch.unmatched);
+  });
+
+  return { cards: [...byName.values()], unmatched, crossBatch };
+}

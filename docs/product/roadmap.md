@@ -170,10 +170,16 @@ fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar an
       proporcional ao comprimento — três erros num nome longo é a mesma carta, um erro em "Opt" é
       outra)
 - [x] Contar repetições como quantidade — quatro cópias espalhadas são quatro leituras
+- [x] Juntar porções (`mergeBatches`). Um Limited cabe numa fotografia — 22 ou 23 cartas fora os
+      terrenos; um Commander fotografa-se em três ou quatro porções de 20 a 30. O mesmo nome em
+      duas porções soma **e fica marcado** (`crossBatch`): ou são duas cópias, ou as porções
+      sobrepuseram-se, e quem tem a mesa à frente é que sabe
 - [x] O que não se reconhece aparece em `unmatched` em vez de desaparecer
 - [ ] Integrar o ML Kit Text Recognition (código nativo — entra por APK novo, não por update)
 - [ ] Écran de captura com o **aviso da montagem** — tapar as cartas de baixo, títulos à vista.
       Não é decoração: a fiabilidade depende disto e ninguém adivinha
+- [ ] Acumular porções no écran de captura, com cada uma a poder ser repetida ou deitada fora antes
+      de gravar. Os terrenos básicos não vão na fotografia: entram pelo painel de contadores
 - [ ] Écran de confirmação antes de gravar seja o que for
 - [ ] Validar contra fotografias reais — **por fazer, e é o que decide se isto é viável à primeira**
 
