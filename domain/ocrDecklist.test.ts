@@ -5,10 +5,12 @@ import {
   columnsOf,
   decklistFromBlocks,
   editDistance,
+  looksLikeCardName,
   matchCardName,
   mergeBatches,
   normalizeCardText,
   stripManaCost,
+  stripTrailingCost,
   type OcrDecklist,
   type TextBlock,
 } from './ocrDecklist';
@@ -147,31 +149,33 @@ describe('decklistFromBlocks', () => {
 
     const { cards } = decklistFromBlocks(blocks, catalogue);
     expect(cards).toEqual([
-      { name: 'Lightning Bolt', quantity: 3, exact: true, readings: ['Lightning Bolt', 'Lightning Bolt', 'Lightning Bolt'] },
-      { name: 'Llanowar Elves', quantity: 1, exact: true, readings: ['Llanowar Elves'] },
+      { name: 'Lightning Bolt', quantity: 3, exact: true, source: 'catalogue', readings: ['Lightning Bolt', 'Lightning Bolt', 'Lightning Bolt'] },
+      { name: 'Llanowar Elves', quantity: 1, exact: true, source: 'catalogue', readings: ['Llanowar Elves'] },
     ]);
   });
 
   it('tudo o que se lê tem destino: ou vira carta, ou vai para unmatched', () => {
-    // Não há filtro nenhum a deitar leituras fora. Se a mesa não estiver bem tapada, o texto de
-    // regras que escapar aparece aqui — visível e apagável — em vez de a app adivinhar por nós e
-    // arriscar comer um título a sério. A razão está no ADR 0009.
+    // Nada é descartado. O que o catálogo não conhece entra como foi lido — incluindo texto de
+    // regras que tenha escapado à montagem, que assim aparece na confirmação e se apaga com um
+    // toque. Só fica de fora o que nem cara de nome tem.
     const blocks = [
       title('Lightning Bolt', 20, 100),
       { text: 'sacrifice a land', x: 20, y: 150, width: 180, height: 11 },
+      { text: '3', x: 20, y: 190, width: 20, height: 11 },
     ];
 
     const { cards, unmatched } = decklistFromBlocks(blocks, catalogue);
-    expect(cards.map(c => c.name)).toEqual(['Lightning Bolt']);
-    expect(unmatched).toEqual(['sacrifice a land']);
+    expect(cards.map(c => c.name)).toEqual(['Lightning Bolt', 'sacrifice a land']);
+    expect(unmatched).toEqual(['3']);
   });
 
-  it('o que não se reconheceu aparece, em vez de desaparecer', () => {
+  it('um nome que o catálogo não conhece entra à mesma, marcado como lido', () => {
     const blocks = [title('Lightning Bolt', 20, 100), title('Xyzzy Frobnicate', 20, 300)];
     const { cards, unmatched } = decklistFromBlocks(blocks, catalogue);
 
-    expect(cards.map(c => c.name)).toEqual(['Lightning Bolt']);
-    expect(unmatched).toEqual(['Xyzzy Frobnicate']);
+    expect(cards.map(c => c.name)).toEqual(['Lightning Bolt', 'Xyzzy Frobnicate']);
+    expect(cards.map(c => c.source)).toEqual(['catalogue', 'read']);
+    expect(unmatched).toEqual([]);
   });
 
   it('uma carta só com leituras corrigidas fica marcada como não exacta', () => {
@@ -311,9 +315,12 @@ describe('mergeBatches', () => {
     expect(merged.cards[0].readings).toEqual(['Opt', 'Opt']);
   });
 
-  it('o que não se reconheceu em cada porção continua a aparecer', () => {
-    const merged = mergeBatches([batch(['Xyzzy Frobnicate']), batch(['Opt'])]);
-    expect(merged.unmatched).toEqual(['Xyzzy Frobnicate']);
+  it('o lixo de cada porção continua a aparecer, separado das cartas', () => {
+    const comLixo = decklistFromBlocks([title('3e)', 20, 100)], []);
+    const merged = mergeBatches([comLixo, batch(['Opt'])]);
+
+    expect(merged.cards.map(c => c.name)).toEqual(['Opt']);
+    expect(merged.unmatched).toEqual(['3e)']);
   });
 
   it('uma porção só devolve o mesmo que ela — é o caso do Limited', () => {
@@ -334,5 +341,78 @@ describe('mergeBatches', () => {
     mergeBatches([primeira, batch(['Opt'])]);
     expect(primeira.cards[0].quantity).toBe(1);
     expect(primeira.cards[0].readings).toEqual(['Opt']);
+  });
+});
+
+describe('stripTrailingCost', () => {
+  it('tira o custo colado ao nome, sem lhe mexer na grafia', () => {
+    expect(stripTrailingCost('Down, Down to Goblin-town 2')).toBe('Down, Down to Goblin-town');
+    expect(stripTrailingCost("Bilbo's Deadly Slice 1B")).toBe("Bilbo's Deadly Slice");
+  });
+
+  it('não come palavras verdadeiras', () => {
+    expect(stripTrailingCost('Well-Worn Spatula')).toBe('Well-Worn Spatula');
+    expect(stripTrailingCost('The Black Arrow')).toBe('The Black Arrow');
+  });
+
+  it('nunca deixa o nome vazio', () => {
+    expect(stripTrailingCost('3')).toBe('3');
+  });
+});
+
+describe('looksLikeCardName', () => {
+  it('aceita nomes', () => {
+    expect(looksLikeCardName('Hobbit Hole')).toBe(true);
+    expect(looksLikeCardName('Opt')).toBe(true);
+  });
+
+  it('recusa o lixo que vem do custo de mana', () => {
+    // Tirados de uma fotografia a sério: o ML Kit devolve estes pedaços como linhas próprias.
+    expect(looksLikeCardName('3')).toBe(false);
+    expect(looksLikeCardName('3e)')).toBe(false);
+    expect(looksLikeCardName('2')).toBe(false);
+  });
+});
+
+describe('um deck que a app nunca viu', () => {
+  // O caso que a primeira fotografia real destapou: catálogo vazio, e a lista saía com zero cartas.
+  const fotografia = [
+    title('Gandalf, Spark Starter', 20, 100),
+    title('Hobbit Hole', 20, 300),
+    title('3', 20, 340),
+    title("Bilbo's Deadly Slice", 520, 100),
+    title("Bilbo's Deadly Slice", 520, 300),
+    title('Down, Down to Goblin-town 2', 520, 500),
+  ];
+
+  it('sem catálogo nenhum, as leituras entram como nomes', () => {
+    const { cards } = decklistFromBlocks(fotografia, []);
+    expect(cards.map(c => c.name)).toEqual([
+      'Gandalf, Spark Starter',
+      'Hobbit Hole',
+      "Bilbo's Deadly Slice",
+      'Down, Down to Goblin-town',
+    ]);
+  });
+
+  it('as repetições continuam a contar', () => {
+    const { cards } = decklistFromBlocks(fotografia, []);
+    expect(cards.find(c => c.name === "Bilbo's Deadly Slice")?.quantity).toBe(2);
+  });
+
+  it('os pedaços de custo ficam de fora, mas à vista', () => {
+    const { cards, unmatched } = decklistFromBlocks(fotografia, []);
+    expect(cards.map(c => c.name)).not.toContain('3');
+    expect(unmatched).toEqual(['3']);
+  });
+
+  it('vêm marcadas como lidas, não como reconhecidas', () => {
+    const { cards } = decklistFromBlocks(fotografia, []);
+    expect(cards.every(c => c.source === 'read')).toBe(true);
+  });
+
+  it('o catálogo, quando conhece a carta, corrige a grafia', () => {
+    const { cards } = decklistFromBlocks([title('Hobbit Hoie', 20, 100)], ['Hobbit Hole']);
+    expect(cards[0]).toMatchObject({ name: 'Hobbit Hole', source: 'catalogue' });
   });
 });

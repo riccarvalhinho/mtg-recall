@@ -213,6 +213,36 @@ export function matchCardName(text: string, catalogue: string[]): NameMatch | nu
   return best;
 }
 
+/**
+ * Tira do fim de um nome lido o custo de mana que o OCR lhe colou.
+ *
+ * Gémeo do `stripManaCost`, mas para o texto **tal como foi lido** — com maiúsculas e pontuação —
+ * porque é esse que fica a ser o nome da carta quando o catálogo não a conhece. "Down, Down to
+ * Goblin-town 2" tem de entrar no deck sem o 2.
+ */
+export function stripTrailingCost(reading: string): string {
+  const words = reading.trim().split(/\s+/).filter(Boolean);
+
+  while (words.length > 1 && /^[0-9wubrgcxsp/{}()]{1,3}$/i.test(words[words.length - 1])) {
+    words.pop();
+  }
+
+  return words.join(' ');
+}
+
+/**
+ * Se uma leitura tem cara de ser o nome de uma carta.
+ *
+ * Serve para separar o que vale a pena aceitar do lixo que o OCR apanha à volta: pedaços de custo
+ * de mana ("3", "3e)"), números soltos, um símbolo perdido. A regra é grosseira de propósito —
+ * **três letras** — porque errar para o lado de aceitar dá uma linha a mais na confirmação, que se
+ * apaga, e errar para o outro lado dá uma carta a menos, que ninguém dá por ela.
+ */
+export function looksLikeCardName(reading: string): boolean {
+  const letters = reading.replace(/[^\p{L}]/gu, '');
+  return letters.length >= 3;
+}
+
 /** Uma carta proposta a partir da fotografia, para o écran de confirmação. */
 export interface OcrCandidate {
   name: string;
@@ -220,6 +250,15 @@ export interface OcrCandidate {
   quantity: number;
   /** `true` quando alguma das leituras foi exacta. Uma carta só com leituras corrigidas merece olhar. */
   exact: boolean;
+  /**
+   * De onde veio o nome.
+   *
+   * `catalogue` — bateu certo com um nome conhecido, e a grafia é a do catálogo.
+   * `read` — ninguém o reconheceu e ficou **como foi lido**. É o caso normal num deck novo, e é por
+   * isso que não é um erro: o schema só exige nome e quantidade, e uma carta escrita à mão sempre
+   * foi um caminho legítimo nesta app. A confirmação assinala-as para se lhes dar uma olhada.
+   */
+  source: 'catalogue' | 'read';
   /** O que o OCR leu, tal e qual, pela ordem em que apareceu. Para se perceber de onde veio. */
   readings: string[];
 }
@@ -237,14 +276,13 @@ export interface OcrDecklist {
  * A ordem é a da mesa: coluna a coluna, de cima para baixo. É o que permite conferir a lista contra
  * a fotografia sem andar a saltar.
  *
- * O catálogo é uma lista de nomes conhecidos — em produção, os nomes das cartas que já passaram
- * pela app (decks, colecção, cache da procura). Um catálogo pequeno não é problema para o que
- * interessa: o que ele não conhecer aparece em `unmatched` e escreve-se à mão, em vez de virar
- * silenciosamente outra carta.
+ * O catálogo é uma lista de nomes conhecidos — os das cartas que já passaram pela app. Serve para
+ * **corrigir a grafia**, e não para autorizar a entrada: o que ele não conhecer entra na mesma, com
+ * o nome tal como foi lido. Um deck novo é quase todo feito de cartas que a app nunca viu, e exigir
+ * que já lá estivessem era pedir o que a funcionalidade existe para evitar.
  *
- * **Toda a leitura tem destino:** ou vira carta, ou vai para `unmatched`. Se a mesa não tiver sido
- * bem tapada, o que entra a mais fica à vista na confirmação, e apaga-se. Nenhuma leitura
- * desaparece pelo caminho.
+ * **Toda a leitura tem destino:** ou vira carta, ou vai para `unmatched` — e só lá vai o que nem
+ * cara de nome tem, como um pedaço de custo de mana. Nenhuma leitura desaparece pelo caminho.
  */
 export function decklistFromBlocks(blocks: TextBlock[], catalogue: string[]): OcrDecklist {
   const ordered = columnsOf(blocks).flat();
@@ -256,22 +294,28 @@ export function decklistFromBlocks(blocks: TextBlock[], catalogue: string[]): Oc
     const reading = block.text.trim();
     if (!reading) continue;
 
+    // O catálogo, quando conhece a carta, dá a grafia certa. Quando não conhece — que é o caso
+    // normal num deck acabado de abrir — a leitura **é** o nome. O contrário era o que estava, e
+    // dava uma lista vazia a quem ainda não tem nada na app: exactamente quem mais precisa disto.
     const match = matchCardName(reading, catalogue);
-    if (!match) {
+    const name = match ? match.name : stripTrailingCost(reading);
+
+    if (!match && !looksLikeCardName(name)) {
       unmatched.push(reading);
       continue;
     }
 
-    const existing = byName.get(match.name);
+    const existing = byName.get(name);
     if (existing) {
       existing.quantity += 1;
-      existing.exact = existing.exact || match.distance === 0;
+      existing.exact = existing.exact || match?.distance === 0;
       existing.readings.push(reading);
     } else {
-      byName.set(match.name, {
-        name: match.name,
+      byName.set(name, {
+        name,
         quantity: 1,
-        exact: match.distance === 0,
+        exact: match?.distance === 0,
+        source: match ? 'catalogue' : 'read',
         readings: [reading],
       });
     }

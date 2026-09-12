@@ -309,9 +309,12 @@ sleeve ou com o verso de outra carta, para o único texto da fotografia serem no
 é descartado em silêncio** — cada leitura ou vira carta ou vai para `unmatched`, e o filtro pelo
 tamanho da letra que existia saiu, com a razão no ADR.
 
-**Por provar, e só um APK novo o prova:** o ML Kit é código nativo e nunca correu (`isAvailable()`
-diz ao écran para pedir um APK novo em vez de rebentar), o módulo é da arquitectura antiga e a app
-corre com a nova, e a Q10 continua aberta — o OCR aguenta uma fotografia a sério?
+**Provado numa fotografia a sério (build 3):** o ML Kit lê todos os nomes de um deck montado como
+o ADR manda, e funciona com a nova arquitectura. O que falhou na primeira tentativa foi o
+**catálogo**: exigia que a carta já fosse conhecida pela app, e num deck novo nenhuma é — a lista
+saía vazia. Agora o catálogo serve para corrigir a grafia, e o que ele não conhecer entra com o
+nome tal como foi lido, marcado na confirmação como `as read`. Só fica de fora o que nem cara de
+nome tem, como um pedaço de custo de mana.
 
 ---
 

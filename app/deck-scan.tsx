@@ -210,19 +210,29 @@ export default function DeckScanScreen() {
             {merged.crossBatch.includes(card.name) && (
               <Feather name="alert-circle" size={13} color={colors.gold} />
             )}
-            {!card.exact && (
+            {card.source === 'read' ? (
+              <Text style={styles.corrected}>as read</Text>
+            ) : !card.exact ? (
               <Text style={styles.corrected}>corrected</Text>
-            )}
+            ) : null}
           </View>
         ))}
       </View>
 
+      {merged.cards.some(card => card.source === 'read') && (
+        <Text style={styles.footnote}>
+          “As read” means the name came straight from the photo — the app had never seen that card
+          before, which is normal for a new deck. Check the spelling in the deck editor.
+        </Text>
+      )}
+
       {merged.unmatched.length > 0 && (
         <View style={styles.unmatched}>
-          <Text style={styles.unmatchedLabel}>Read but not recognised</Text>
+          <Text style={styles.unmatchedLabel}>Left out</Text>
           <Text style={styles.unmatchedText}>{merged.unmatched.join(' · ')}</Text>
           <Text style={styles.footnote}>
-            Add these by name in the deck editor. Nothing is dropped without showing it here.
+            Too short to be a card name — usually a piece of a mana cost. Shown so nothing is
+            dropped in silence; add anything real by name in the deck editor.
           </Text>
         </View>
       )}

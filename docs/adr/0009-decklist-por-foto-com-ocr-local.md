@@ -1,7 +1,7 @@
 # ADR 0009 — A decklist por fotografia usa OCR local, não um serviço de visão
 
 **Data:** 2026-09-12
-**Estado:** Aceite e implementado — **por validar contra uma fotografia real** (Q10)
+**Estado:** Aceite, implementado e **validado contra uma fotografia real** (Q10 respondida)
 
 ## Contexto
 
@@ -138,6 +138,29 @@ arquitectura antiga do React Native e a app corre com a **nova** ligada (`newArc
 depende da camada de compatibilidade. Se falhar, as saídas são um módulo equivalente para a nova
 arquitectura ou desligar a nova arquitectura — e nenhuma delas se decide sem ver o erro. Entretanto
 o écran pergunta por `isAvailable()` e explica que falta um APK novo, em vez de rebentar.
+
+### O que a primeira fotografia real ensinou (Q10)
+
+**O OCR aguenta.** Numa fotografia de um deck de Limited espalhado em colunas, com as cartas de
+baixo tapadas, o ML Kit leu **todos** os nomes, incluindo os difíceis — "Bilbo's Deadly Slice",
+"Down, Down to Goblin-town", "Well-Worn Spatula". Nem uma linha de texto de regras entrou. A
+montagem do passo 0 é o que torna isto possível, e está provada.
+
+**O que falhou foi o catálogo, e era um erro de raciocínio.** A lista saiu com **zero cartas**: o
+catálogo era construído a partir das cartas que a app já conhecia — decks e colecção — e numa
+instalação nova está vazio. Pior do que isso: mesmo cheio não serviria. Um deck de Limited é quase
+todo feito de cartas que a app nunca viu, e um deck novo é justamente o que esta funcionalidade
+existe para registar. Exigir que a carta já fosse conhecida era pedir o problema como condição da
+solução.
+
+**A correcção:** o catálogo passa a servir para **corrigir a grafia**, não para autorizar a entrada.
+O que ele não conhecer entra na mesma, com o nome tal como foi lido, marcado na confirmação como
+`as read`. Não é um remendo — é o mesmo caminho que a app já usa em todo o lado (o schema só exige
+nome e quantidade; a carta escrita à mão sempre foi legítima), e aqui o OCR é que faz a escrita.
+
+Fica de fora só o que nem cara de nome tem: pedaços de custo de mana que o ML Kit devolve como
+linhas próprias ("3", "3e)"). Esses continuam a aparecer, à parte, porque nada é descartado em
+silêncio.
 
 **A vigiar:** se o passo de confirmação der mais trabalho a corrigir do que dava a escrever a lista
 de raiz, a funcionalidade não está a cumprir. Em particular, se as fotografias reais mostrarem muito

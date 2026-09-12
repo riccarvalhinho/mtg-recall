@@ -183,11 +183,12 @@ fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar an
       painel de contadores
 - [x] Entrega ao editor de deck sem gravar nada pelo caminho (`store/useScanStore.ts`), a somar às
       cartas que já lá estejam
-- [ ] **Gerar o APK com isto lá dentro.** O ML Kit é nativo: não entra por actualização. Até lá o
-      écran diz que falta, em vez de rebentar (`isAvailable()`)
-- [ ] Confirmar que o módulo funciona com a **nova arquitectura** do React Native, que está ligada
-      (`newArchEnabled`). É da antiga e conta com a camada de compatibilidade
-- [ ] Validar contra fotografias reais — **Q10, e é o que decide se isto é viável à primeira**
+- [x] **Gerar o APK com isto lá dentro** — build 3
+- [x] Confirmar que o módulo funciona com a **nova arquitectura** do React Native: funciona, pela
+      camada de compatibilidade
+- [x] Validar contra fotografias reais — **feito, e passou**: o ML Kit leu todos os nomes de um
+      deck de Limited montado como manda o ADR. O que falhou foi o catálogo exigir que a carta já
+      fosse conhecida; passou a aceitar a leitura como nome
 
 A fotografia é processada em memória e **nunca guardada nem commitada**.
 
