@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mtg-recall",
+    "name": "MTG Recall",
     "slug": "mtg-recall",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#130F0A"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

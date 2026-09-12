@@ -101,7 +101,8 @@ conhecimento prévio de padrões ou convenções.
   adr/                      decisões estruturais
   product/                  roadmap, perguntas em aberto
   ops/                      instalar no telemóvel, gerar o token
-/design                     handoff.md (spec de implementação) + prints de referência
+/design                     handoff.md (spec de implementação), icon-brief.md (brief do ícone) e
+                            prints de referência
 
 data-model.md               o modelo de dados explicado
 design-brief.md             conceito visual

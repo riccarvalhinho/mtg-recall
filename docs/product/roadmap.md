@@ -193,6 +193,17 @@ A fotografia é processada em memória e **nunca guardada nem commitada**.
 
 ---
 
+## Ícone da app
+
+O ícone é o **placeholder do Expo** — três círculos cinzentos numa grelha. O brief está em
+`design/icon-brief.md`, com as medidas, a zona segura do adaptive icon e onde os ficheiros entram.
+
+- [ ] Desenhar o ícone (Claude Design ou outro), a partir do brief
+- [ ] Substituir `assets/icon.png`, `adaptive-icon.png`, `monochrome-icon.png`, `splash-icon.png`
+- [ ] Declarar o `monochromeImage` no `app.json` e gerar APK novo — o ícone é nativo
+
+---
+
 ## Dívida conhecida
 
 Coisas que ficaram por fazer de propósito, com a razão à frente. Não são bugs — são decisões
