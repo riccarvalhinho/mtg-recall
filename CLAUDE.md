@@ -77,7 +77,7 @@ conhecimento prévio de padrões ou convenções.
                             SetSelector, CardSearchModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
-                            cardCache, collection, opponents, thumbnails, dates
+                            cardCache, collection, opponents, thumbnails, ocrDecklist, dates
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
                             scryfall, imagePrefetch
 /store                      useEventsStore (Zustand)
@@ -291,8 +291,11 @@ um evento a partir da própria decklist (o ficheiro guarda um `scryfallId`, não
 `services/imagePrefetch.ts` garante-as em disco no arranque — só as miniaturas, que as cem cartas de
 um deck de Commander ficam em cache sozinhas à medida que se abre.
 
-**Por fazer:** decklist por fotografia com OCR local (ADR 0009), que depende da Q10 — o OCR aguenta
-uma foto real? É código nativo e nunca correu.
+**Por fazer:** decklist por fotografia com OCR local (ADR 0009). A lógica está escrita e testada em
+`domain/ocrDecklist.ts` — colunas a partir das caixas delimitadoras, filtro pelo tamanho do texto
+(para o texto de regras não virar cartas), comparação tolerante a erros e repetições a virar
+quantidade. Falta o que precisa do dispositivo: integrar o ML Kit (código nativo, entra por APK
+novo), o écran de confirmação, e a Q10 — o OCR aguenta uma foto real?
 
 ---
 

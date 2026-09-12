@@ -153,10 +153,23 @@ placeholder, que é honesto e já existe.
 Espalhar as cartas na mesa com os títulos à vista, em várias colunas, fotografar, e sair uma
 decklist. A decisão está no **ADR 0009**: OCR local com ML Kit, sem serviço de visão e sem conta.
 
+**A lógica toda já está escrita e testada** — `domain/ocrDecklist.ts`. O ML Kit é código nativo,
+mas nada do que decide vive lá dentro: o que ele devolve são blocos de texto com caixas
+delimitadoras, e transformá-los numa lista é trabalho puro, que se testa sem telemóvel e sem
+fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar antes de haver APK.
+
+- [x] Reconstruir colunas a partir das caixas delimitadoras (`columnsOf`, com o limiar relativo à
+      largura dos blocos — a mesma mesa de mais perto ou de mais longe dá o mesmo resultado)
+- [x] Filtrar pelo tamanho do texto (`titleSized`). **É o passo que evita o pior erro possível:**
+      as cartas de baixo da pilha mostram pedaços de texto de regras, e texto de regras está cheio
+      de nomes de cartas ("sacrifice a Mountain"). Sem isto, a foto dava uma Mountain que não está
+      na mesa
+- [x] Comparar nomes com tolerância a erros (`matchCardName`, distância de edição com limite
+      proporcional ao comprimento — três erros num nome longo é a mesma carta, um erro em "Opt" é
+      outra)
+- [x] Contar repetições como quantidade — quatro cópias espalhadas são quatro leituras
+- [x] O que não se reconhece aparece em `unmatched` em vez de desaparecer
 - [ ] Integrar o ML Kit Text Recognition (código nativo — entra por APK novo, não por update)
-- [ ] Reconstruir colunas a partir das caixas delimitadoras dos blocos de texto
-- [ ] Comparar nomes com tolerância a erros contra um índice local de nomes de cartas
-- [ ] Contar repetições como quantidade — quatro cópias espalhadas são quatro leituras
 - [ ] Écran de confirmação antes de gravar seja o que for
 - [ ] Validar contra fotografias reais — **por fazer, e é o que decide se isto é viável à primeira**
 
