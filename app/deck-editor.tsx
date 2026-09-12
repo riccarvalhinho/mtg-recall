@@ -34,6 +34,13 @@ import { ManaPip } from '../components/ManaPip';
 import { CardSearchModal } from '../components/CardSearchModal';
 import { toDeckCard } from '../domain/cards';
 import {
+  BASIC_LANDS,
+  basicLandQuantity,
+  setBasicLandQuantity,
+  totalBasics,
+  type BasicLand,
+} from '../domain/basicLands';
+import {
   addCard,
   cardKey,
   cardsForBoard,
@@ -48,6 +55,71 @@ import { ConfirmModal } from '../components/ConfirmModal';
 
 // A mesma ordem do add-event, para os dois écrans não apresentarem os formatos ao contrário
 const FORMATS: EventType[] = ['Sealed', 'Draft', 'Standard', 'Modern', 'Pioneer', 'Commander', 'Legacy'];
+
+/**
+ * Um contador de terrenos básicos.
+ *
+ * Setas em cima e em baixo em vez de +/− ao lado: seis destes numa linha não deixam espaço para
+ * botões laterais com o tamanho de toque mínimo, e a seta por cima do número é o que a referência
+ * faz pela mesma razão.
+ */
+function BasicLandStepper({ land, quantity, onChange }: {
+  land: BasicLand;
+  quantity: number;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <View style={basics.column}>
+      <Pressable
+        onPress={() => onChange(quantity + 1)}
+        hitSlop={6}
+        style={({ pressed }) => [basics.arrow, pressed && { opacity: 0.6 }]}
+      >
+        <Feather name="chevron-up" size={16} color={colors.textSec} />
+      </Pressable>
+
+      <View style={[basics.bubble, quantity > 0 && basics.bubbleActive]}>
+        {land.color ? (
+          <ManaPip color={land.color} size={17} />
+        ) : (
+          <Feather name="circle" size={15} color={colors.textDim} />
+        )}
+        <Text style={[basics.count, quantity > 0 && { color: colors.textPrim }]}>{quantity}</Text>
+      </View>
+
+      <Pressable
+        onPress={() => onChange(quantity - 1)}
+        hitSlop={6}
+        disabled={quantity === 0}
+        style={({ pressed }) => [basics.arrow, pressed && { opacity: 0.6 }]}
+      >
+        <Feather
+          name="chevron-down"
+          size={16}
+          color={quantity === 0 ? colors.border : colors.textSec}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
+const basics = StyleSheet.create({
+  column: { flex: 1, alignItems: 'center', gap: 2 },
+  arrow: { height: 26, width: '100%', alignItems: 'center', justifyContent: 'center' },
+  bubble: {
+    width: '100%',
+    minHeight: 46,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
+    paddingVertical: 4,
+  },
+  bubbleActive: { borderColor: colors.gold + '77', backgroundColor: colors.gold + '14' },
+  count: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textDim },
+});
 
 export default function DeckEditorScreen() {
   const { deckId } = useLocalSearchParams<{ deckId?: string }>();
@@ -333,6 +405,25 @@ export default function DeckEditorScreen() {
               );
             })}
 
+            {/* Básicos por contador. Procurá-los na barra oito vezes seria trabalho a troco de nada. */}
+            <View style={styles.basicsPanel}>
+              <View style={styles.basicsHeader}>
+                <Text style={styles.basicsLabel}>Basic lands</Text>
+                <Text style={styles.basicsTotal}>{totalBasics(cardList)}</Text>
+              </View>
+
+              <View style={styles.basicsRow}>
+                {BASIC_LANDS.map(land => (
+                  <BasicLandStepper
+                    key={land.name}
+                    land={land}
+                    quantity={basicLandQuantity(cardList, land)}
+                    onChange={next => setCardList(current => setBasicLandQuantity(current, land, next))}
+                  />
+                ))}
+              </View>
+            </View>
+
             <Pressable
               onPress={() => setSearchOpen(true)}
               style={({ pressed }) => [styles.addCardBtn, pressed && { opacity: 0.75 }]}
@@ -612,6 +703,25 @@ const styles = StyleSheet.create({
     minWidth: 20,
     textAlign: 'center',
   },
+  basicsPanel: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 6,
+    marginBottom: 8,
+    gap: 10,
+  },
+  basicsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  basicsLabel: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: colors.goldDim,
+  },
+  basicsTotal: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textSec },
+  basicsRow: { flexDirection: 'row', gap: 6 },
   addCardBtn: {
     flexDirection: 'row',
     alignItems: 'center',
