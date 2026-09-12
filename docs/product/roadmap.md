@@ -101,11 +101,39 @@ escrever**. Ambas precisam de decisões que ainda não estão fechadas — ver Q
 Hoje não há uma única imagem de carta na app. O `CardThumbnailPlaceholder` é um rectângulo cinzento,
 e a decklist do `deck/[id].tsx` é texto puro: quantidade, nome, custo de mana.
 
-- [ ] Mostrar imagens verdadeiras em vez do placeholder
-- [ ] Galeria de cartas na vista do deck, em vez de lista — **à espera do layout de referência (Q9)**
+A referência visual está em `design/referencia-manabox/` — fotogramas do ManaBox que o autor
+mandou. **A Q9 está respondida**: não é uma galeria de cartas inteiras, é uma **lista com o recorte
+da arte** à esquerda de cada linha. Muda o que é preciso guardar: a Scryfall serve `art_crop`, que é
+mais pequeno que a carta inteira e é o que esta lista precisa.
+
+- [ ] Recorte da arte (`art_crop`) em cada linha da decklist
+- [ ] Agrupar a lista por tipo, com contagem por grupo (Creatures 14, Instants 7…) — o
+      `typeCounts` do `domain/deck.ts` já sabe fazer esta divisão
+- [ ] Alternar entre lista com arte e lista compacta (pílula de quantidade + nome + custo)
+- [ ] Painel de basic lands com contador por cor, à parte da procura — **pedido explícito**, porque
+      procurar basics na barra uma a uma é absurdo
 - [ ] Escolher a carta que ilustra o deck e o evento (`thumbnailCardId` e `deckThumbnailCardId` já
       estão nos schemas desde a Fase 2; falta só a interface)
 - [ ] Prefetch explícito **só dos thumbnails**, para esses ficarem garantidos offline
+
+### Estatísticas do deck — o que falta e o que já lá está
+
+O `deck/[id].tsx` já mostra curva de mana, distribuição de cores e contagem por tipo, calculados em
+`domain/deck.ts`. A referência acrescenta três coisas, por ordem de custo:
+
+- [ ] **Subtipos** (Wizard 5, Druid 4, Elf 2…). Barato: o `typeLine` já está guardado e o
+      `primaryType` já parte a linha no travessão — os subtipos são o lado direito, que hoje se
+      deita fora
+- [ ] **Valor total do deck.** Os preços existem mas só para a colecção. O
+      `tools/refresh-prices.mts` teria de passar a pedir também as cartas dos decks
+- [ ] **Produção de mana** (quanto de cada cor o deck produz). Precisa do `produced_mana` da
+      Scryfall, que não é guardado — obriga a mexer no schema do deck
+
+**O que não dá para copiar:** a referência mostra preços LOW / AVG / TREND, que são escalões da
+Cardmarket. A Scryfall dá um número só (ADR 0007). Fica um valor, não três.
+
+**Fora de âmbito por agora:** tokens gerados pelo deck (precisa das relações `all_parts` da
+Scryfall), notas com formatação, e o "Test deck".
 
 **Decidido sobre a cache:** usar `expo-image` e deixar a cache em disco dela funcionar. Desligá-la
 para a galeria seria escrever código a mais para ter menos — o barato é forçar o download dos
