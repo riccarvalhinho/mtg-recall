@@ -126,6 +126,13 @@ visível. Não vai acertar sempre, e é por isso que o passo de confirmação n�
 Nomes que existem em várias impressões continuam sem impressão determinada: o OCR dá o nome, não o
 set. Cartas assim entram sem `scryfallId` e, por consequência, sem preço (ver ADR 0007).
 
+**A fotografia não ser guardada está posto onde o Android o vê**, e não só onde nós o dizemos. A
+`expo-camera` traz por omissão permissões de microfone e de armazenamento — para gravar vídeo e
+escrever na galeria, duas coisas que esta app não faz. Estão desligadas em `app.json`
+(`recordAudioAndroid: false`, `microphonePermission: false`, e `blockedPermissions` para as de
+armazenamento), e o manifesto gerado foi conferido. Uma app que pede o microfone para ler uma
+decklist mente sobre o que faz, mesmo que nunca o use.
+
 **Riscos que só o primeiro APK resolve:** o `@react-native-ml-kit/text-recognition` é um módulo da
 arquitectura antiga do React Native e a app corre com a **nova** ligada (`newArchEnabled`), portanto
 depende da camada de compatibilidade. Se falhar, as saídas são um módulo equivalente para a nova
