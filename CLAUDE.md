@@ -72,7 +72,8 @@ conhecimento prévio de padrões ou convenções.
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
 
 /components                 ManaPip, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, ConfirmModal, SetSelector, CardSearchModal
+                            CardThumbnailPlaceholder, CardArtThumb, ConfirmModal, SetSelector,
+                            CardSearchModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, deck, deckList, cards, cardCache, collection,
                             opponents
@@ -117,7 +118,7 @@ Comandos na raiz:
 ```bash
 npm run validate    # valida data/**/*.json contra data/schema/*.json
 npm run bundle      # gera o bundle.json que a app lê ao instalar/restaurar
-npm run test        # testes dos módulos puros — 219 neste momento
+npm run test        # testes dos módulos puros
 npm run check       # validate + typecheck + test, o que o CI corre
 npm run prices      # actualiza preços da colecção (corre no CI, não à mão)
 npm start           # Expo em desenvolvimento
@@ -265,9 +266,14 @@ Os passos todos — token, Pages, build, restauro — estão em `docs/ops/telemo
 
 Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que vem a seguir.
 
-**Fase 5, por fazer:** imagens de cartas (hoje não há nenhuma — o `CardThumbnailPlaceholder` é um
-rectângulo cinzento) e decklist por fotografia com OCR local (ADR 0009). Ambas dependem de decisões
-em aberto — Q9 (layout da galeria) e Q10 (o OCR aguenta uma foto real?).
+**Fase 5, em curso:** a decklist do Deck Detail já mostra o **recorte da arte** (`artCropUrl`) de
+cada carta, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
+`CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
+com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
+
+**Por fazer:** galeria de imagens de cartas fora da decklist e decklist por fotografia com OCR local
+(ADR 0009). Ambas dependem de decisões em aberto — Q9 (layout da galeria) e Q10 (o OCR aguenta uma
+foto real?).
 
 ---
 

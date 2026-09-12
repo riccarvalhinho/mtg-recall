@@ -1,9 +1,12 @@
-// Deck Detail Screen — Fase 2
+// Deck Detail Screen — Fase 2 (lista com arte e subtipos: Fase 5)
 //
 // O que um deck responde: com que frequência ganha, em que torneios foi jogado, e de que é feito.
 // Os gráficos são desenhados com Views em vez de uma biblioteca — a app tem de abrir sem rede e sem
-// surpresas de bundle, e três gráficos de barras não justificam uma dependência.
+// surpresas de bundle, e quatro gráficos de barras não justificam uma dependência.
+//
+// As contas estão todas em `domain/deck.ts` e têm testes. Aqui só se desenha.
 
+import { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -13,28 +16,54 @@ import { fonts } from '../../theme/typography';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { TypeBadge } from '../../components/TypeBadge';
+import { CardArtThumb } from '../../components/CardArtThumb';
 import {
   canAnalyse,
   cardCount,
   colorDistribution,
   deckPerformance,
+  groupByType,
   manaCurve,
+  subtypeCounts,
   typeCounts,
+  type CardType,
 } from '../../domain/deck';
 import { manaColors } from '../../theme/mana';
-import type { DeckCard } from '../../types';
+import type { DeckBoard, DeckCard } from '../../types';
+
+/** Como a decklist se apresenta: com o recorte da arte, ou só texto. */
+type DeckView = 'art' | 'compact';
+
+/**
+ * O plural do nome do tipo, só para o cabeçalho de grupo ("CREATURES · 14").
+ *
+ * É formatação da vista e não domínio: `groupByType` devolve o tipo no singular, que é como o
+ * schema e a Scryfall o escrevem, e é assim que tem de continuar a sair de lá.
+ */
+const TYPE_PLURAL: Record<string, string> = {
+  Sorcery: 'Sorceries',
+  Other: 'Other',
+  Unknown: 'No type line',
+};
+
+function groupHeading(type: string): string {
+  return TYPE_PLURAL[type] ?? `${type}s`;
+}
 
 // ─── Blocos ───────────────────────────────────────────────────────────────────
 
-function Section({ label, children, action }: {
+function Section({ label, children, action, right }: {
   label: string;
   children: React.ReactNode;
   action?: { label: string; onPress: () => void };
+  /** Um controlo à direita do título — o selector de vista da decklist, por exemplo. */
+  right?: React.ReactNode;
 }) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionLabel}>{label}</Text>
+        {right}
         {action && (
           <Pressable onPress={action.onPress} hitSlop={10}>
             <Text style={styles.sectionAction}>{action.label}</Text>
@@ -123,32 +152,177 @@ function TypeBreakdown({ counts }: { counts: ReturnType<typeof typeCounts> }) {
   );
 }
 
-/** A lista de cartas, agrupada por board. */
-function CardList({ cards }: { cards: DeckCard[] }) {
-  const main = cards.filter(card => card.board !== 'side');
-  const side = cards.filter(card => card.board === 'side');
+/**
+ * Subtipos do tipo escolhido, em barras.
+ *
+ * Ao contrário dos tipos, o nome de um subtipo pode ser longo ("Phyrexian"), e a linha leva também
+ * contagem e percentagem — por isso o rótulo fica por cima da barra em vez de ao lado.
+ *
+ * A escala é relativa ao maior valor, como na curva de mana: o que interessa é comparar subtipos
+ * entre si. A percentagem, essa, é absoluta e vem já calculada de `subtypeCounts`.
+ */
+function SubtypeBreakdown({ rows }: { rows: ReturnType<typeof subtypeCounts> }) {
+  const widest = Math.max(...rows.map(row => row.count), 1);
 
   return (
-    <View style={{ gap: 14 }}>
-      {[
-        { label: 'Main', list: main },
-        { label: 'Sideboard', list: side },
-      ]
-        .filter(group => group.list.length > 0)
-        .map(group => (
-          <View key={group.label} style={{ gap: 4 }}>
-            <Text style={cardList.groupLabel}>
-              {group.label} · {group.list.reduce((sum, card) => sum + card.quantity, 0)}
+    <View style={{ gap: 12 }}>
+      {rows.map(row => (
+        <View key={row.subtype} style={{ gap: 5 }}>
+          <View style={subtypes.head}>
+            <Text style={subtypes.name} numberOfLines={1}>{row.subtype}</Text>
+            <Text style={subtypes.count}>
+              {row.count}
+              <Text style={subtypes.percent}>{`  ${row.percent}%`}</Text>
             </Text>
-            {group.list.map(card => (
-              <View key={`${group.label}-${card.name}`} style={cardList.row}>
-                <Text style={cardList.quantity}>{card.quantity}×</Text>
-                <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
-                {card.manaCost && <Text style={cardList.cost}>{card.manaCost}</Text>}
+          </View>
+          <View style={subtypes.track}>
+            <View style={[subtypes.bar, { width: `${Math.max((row.count / widest) * 100, 2)}%` }]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Escolher o tipo de carta analisado nos subtipos. Chips em vez de dropdown: menos toques. */
+function TypeChips({ options, value, onChange }: {
+  options: CardType[];
+  value: CardType;
+  onChange: (type: CardType) => void;
+}) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={chips.row}
+    >
+      {options.map(option => {
+        const active = option === value;
+        return (
+          <Pressable
+            key={option}
+            onPress={() => onChange(option)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            style={({ pressed }) => [
+              chips.chip,
+              active && chips.chipActive,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Text style={[chips.label, active && chips.labelActive]}>{groupHeading(option)}</Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+/** Alternar entre a lista com arte e a lista compacta. */
+function ViewToggle({ value, onChange }: {
+  value: DeckView;
+  onChange: (view: DeckView) => void;
+}) {
+  const options: { mode: DeckView; label: string; icon: 'image' | 'list' }[] = [
+    { mode: 'art', label: 'Art', icon: 'image' },
+    { mode: 'compact', label: 'Compact', icon: 'list' },
+  ];
+
+  return (
+    <View style={toggle.group}>
+      {options.map(option => {
+        const active = option.mode === value;
+        return (
+          <Pressable
+            key={option.mode}
+            onPress={() => onChange(option.mode)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={`${option.label} view`}
+            style={({ pressed }) => [
+              toggle.option,
+              active && toggle.optionActive,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Feather
+              name={option.icon}
+              size={13}
+              color={active ? colors.bg : colors.textSec}
+            />
+            <Text style={[toggle.label, active && toggle.labelActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Uma linha da decklist. Tocar numa carta ainda não faz nada — por isso não é um Pressable. */
+function CardRow({ card, view }: { card: DeckCard; view: DeckView }) {
+  if (view === 'compact') {
+    return (
+      <View style={cardList.compactRow}>
+        <Text style={cardList.quantity}>{card.quantity}×</Text>
+        <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
+        {card.manaCost ? <Text style={cardList.cost}>{card.manaCost}</Text> : null}
+      </View>
+    );
+  }
+
+  return (
+    <View style={cardList.artRow}>
+      <CardArtThumb url={card.artCropUrl} />
+      <View style={cardList.artText}>
+        <Text style={cardList.artName} numberOfLines={1}>{card.name}</Text>
+        {card.manaCost ? <Text style={cardList.cost}>{card.manaCost}</Text> : null}
+      </View>
+      <Text style={cardList.artQuantity}>{card.quantity}×</Text>
+    </View>
+  );
+}
+
+/**
+ * A decklist: primeiro pelo board, depois agrupada por tipo dentro de cada um.
+ *
+ * O agrupamento e a ordem vêm de `groupByType` — cartas sem linha de tipo caem num grupo próprio no
+ * fim em vez de desaparecerem, que é o que acontece a um deck escrito à mão.
+ */
+function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
+  const boards: { label: string; board: DeckBoard }[] = [
+    { label: 'Main', board: 'main' },
+    { label: 'Sideboard', board: 'side' },
+  ];
+
+  return (
+    <View style={{ gap: 22 }}>
+      {boards.map(({ label, board }) => {
+        const groups = groupByType(cards, board);
+        if (groups.length === 0) return null;
+
+        const total = groups.reduce((sum, group) => sum + group.count, 0);
+
+        return (
+          <View key={board} style={{ gap: 14 }}>
+            <Text style={cardList.boardLabel}>{label} · {total}</Text>
+
+            {groups.map(group => (
+              <View key={group.type} style={{ gap: view === 'art' ? 8 : 2 }}>
+                <View style={cardList.groupHeader}>
+                  <Text style={cardList.groupLabel}>
+                    {groupHeading(group.type)} · {group.count}
+                  </Text>
+                  <View style={cardList.groupRule} />
+                </View>
+
+                {group.cards.map((card, index) => (
+                  <CardRow key={`${board}-${group.type}-${card.name}-${index}`} card={card} view={view} />
+                ))}
               </View>
             ))}
           </View>
-        ))}
+        );
+      })}
     </View>
   );
 }
@@ -160,6 +334,32 @@ export default function DeckDetailScreen() {
 
   const deck = useEventsStore(s => s.decks.find(d => d.id === id));
   const events = useEventsStore(s => s.events);
+
+  // Estado de vista. Os hooks ficam antes do early return do deck que não existe — a ordem dos
+  // hooks não pode depender de condições.
+  const [view, setView] = useState<DeckView>('art');
+  const [chosenType, setChosenType] = useState<CardType | null>(null);
+
+  // Só entram no selector os tipos que este deck tem **e** que dão subtipos: um deck cheio de
+  // instants não deve oferecer uma opção que abre num gráfico vazio.
+  const subtypeOptions = useMemo(
+    () =>
+      typeCounts(deck?.cards)
+        .map(entry => entry.type)
+        .filter(type => subtypeCounts(deck?.cards, type).length > 0),
+    [deck?.cards],
+  );
+
+  // As criaturas são a leitura habitual, como na app de referência; se o deck não tiver nenhuma,
+  // vale o primeiro tipo disponível. Uma escolha que deixe de existir volta ao valor por omissão.
+  const activeType: CardType | undefined =
+    (chosenType && subtypeOptions.includes(chosenType) ? chosenType : undefined) ??
+    (subtypeOptions.includes('Creature') ? 'Creature' : subtypeOptions[0]);
+
+  const subtypeRows = useMemo(
+    () => (activeType ? subtypeCounts(deck?.cards, activeType) : []),
+    [deck?.cards, activeType],
+  );
 
   if (!deck) {
     return (
@@ -281,6 +481,24 @@ export default function DeckDetailScreen() {
                 <TypeBreakdown counts={counts} />
               </Section>
             )}
+
+            {activeType && subtypeRows.length > 0 && (
+              <Section label="Subtypes">
+                <SubtypeBreakdown rows={subtypeRows} />
+                {subtypeOptions.length > 1 && (
+                  <View style={styles.chipsWrap}>
+                    <TypeChips
+                      options={subtypeOptions}
+                      value={activeType}
+                      onChange={setChosenType}
+                    />
+                  </View>
+                )}
+                <Text style={styles.chartNote}>
+                  Share of all subtypes counted, not of the cards.
+                </Text>
+              </Section>
+            )}
           </>
         ) : (
           <Section label="Decklist">
@@ -293,8 +511,11 @@ export default function DeckDetailScreen() {
 
         {/* Lista de cartas */}
         {deck.cards && deck.cards.length > 0 && (
-          <Section label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}>
-            <CardList cards={deck.cards} />
+          <Section
+            label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}
+            right={<ViewToggle value={view} onChange={setView} />}
+          >
+            <CardList cards={deck.cards} view={view} />
           </Section>
         )}
 
@@ -340,15 +561,18 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     marginTop: 8,
   },
+  chipsWrap: { marginTop: 16, marginHorizontal: -20 },
   notes: { fontFamily: fonts.body, fontSize: 15, color: colors.textSec, lineHeight: 23 },
   section: { paddingHorizontal: 20, marginBottom: 26 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 12,
   },
   sectionLabel: {
+    flexShrink: 1,
     fontFamily: fonts.body,
     fontSize: 11,
     letterSpacing: 1.4,
@@ -415,20 +639,88 @@ const types = StyleSheet.create({
   count: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textPrim, width: 26, textAlign: 'right' },
 });
 
+const subtypes = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  name: { flexShrink: 1, fontFamily: fonts.body, fontSize: 14, color: colors.textPrim },
+  count: { fontFamily: fonts.displayMed, fontSize: 13, color: colors.textSec },
+  percent: { fontFamily: fonts.body, fontSize: 12, color: colors.textDim },
+  track: { height: 8, backgroundColor: colors.border + '55', borderRadius: 4, overflow: 'hidden' },
+  bar: { height: 8, backgroundColor: colors.goldDim, borderRadius: 4 },
+});
+
+const chips = StyleSheet.create({
+  row: { gap: 8, paddingHorizontal: 20 },
+  chip: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+  },
+  chipActive: { borderColor: colors.gold, backgroundColor: colors.bgCardHov },
+  label: { fontFamily: fonts.body, fontSize: 13, color: colors.textSec },
+  labelActive: { fontFamily: fonts.bodyMed, color: colors.gold },
+});
+
+const toggle = StyleSheet.create({
+  group: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    backgroundColor: colors.bgCard,
+    overflow: 'hidden',
+  },
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  optionActive: { backgroundColor: colors.gold },
+  label: { fontFamily: fonts.body, fontSize: 13, color: colors.textSec },
+  labelActive: { fontFamily: fonts.bodyMed, color: colors.bg },
+});
+
 const cardList = StyleSheet.create({
+  boardLabel: {
+    fontFamily: fonts.displayMed,
+    fontSize: 15,
+    color: colors.textPrim,
+  },
+  groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 },
   groupLabel: {
     fontFamily: fonts.body,
     fontSize: 11,
     letterSpacing: 1,
     textTransform: 'uppercase',
     color: colors.goldDim,
-    marginBottom: 4,
   },
-  row: {
+  groupRule: { flex: 1, height: 1, backgroundColor: colors.border + '88' },
+  compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    minHeight: 30,
+    minHeight: 32,
+  },
+  artRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 50,
+  },
+  artText: { flex: 1, gap: 2 },
+  artName: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrim },
+  artQuantity: {
+    fontFamily: fonts.displayMed,
+    fontSize: 15,
+    color: colors.textSec,
+    minWidth: 30,
+    textAlign: 'right',
   },
   quantity: {
     fontFamily: fonts.displayMed,

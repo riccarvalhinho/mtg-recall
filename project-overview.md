@@ -43,6 +43,7 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 ### Componentes
 - [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
 - [x] `TypeBadge`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`, `MatchCard`, `ConfirmModal`
+- [x] `CardArtThumb` — recorte da arte com `expo-image` (cache em disco) e recuo para o placeholder
 
 ### Écrans
 - [x] **Home** — empty state e variante com dados (StatsBlock + evento activo)
@@ -53,6 +54,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
+- [x] **Deck Detail** — desempenho do deck, curva de mana, cores, tipos e **subtipos** com selector
+      de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações e
       **Opponents** (nemesis, melhor matchup, mais enfrentados e head-to-head por toque)
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
