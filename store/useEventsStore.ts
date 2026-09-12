@@ -20,9 +20,11 @@
  *   setEventSetCode(id, setCode)    — corrige o set de um evento de Limited
  *   addToCollection(card)           — acrescenta uma carta (soma se já lá estiver)
  *   setCardQuantity(card, n)        — muda a quantidade; 0 tira da colecção
+ *   linkCollectionPrinting(c, p)    — aponta uma carta escrita à mão a uma impressão
  *   restoreFromGitHub()             — repõe tudo a partir do bundle publicado
  */
 import { create } from 'zustand';
+import { withPrinting } from '../domain/collection';
 import { pruneOpponents } from '../domain/opponents';
 import { repoPaths } from '../domain/outbox';
 import { eventId as makeEventId, slugify, uniqueId } from '../domain/slug';
@@ -110,6 +112,10 @@ interface EventsStore {
   setEventSetCode: (eventId: string, setCode: string | undefined) => Promise<boolean>;
   addToCollection: (card: CollectionCard) => Promise<void>;
   setCardQuantity: (card: CollectionCard, quantity: number) => Promise<void>;
+  linkCollectionPrinting: (
+    card: CollectionCard,
+    printing: { scryfallId: string; name: string; setCode?: string; collectorNumber?: string },
+  ) => Promise<void>;
   completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
@@ -555,6 +561,35 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
   },
 
   /** Muda a quantidade. Zero ou menos tira a carta da colecção — o schema exige mínimo de 1. */
+  /**
+   * Aponta uma carta escrita à mão a uma impressão concreta, para ela passar a ter preço.
+   *
+   * Se a colecção já tiver essa impressão — a mesma carta acrescentada duas vezes, uma à mão e
+   * outra pela procura — as duas juntam-se numa entrada só. Tinha de ser: a validação recusa
+   * duplicados pela mesma chave, e escrever um ficheiro que o próprio CI chumba é pior do que não
+   * escrever nada.
+   */
+  linkCollectionPrinting: async (card, printing) => {
+    const linked = withPrinting(card, printing);
+
+    let merged = false;
+    const collection: CollectionCard[] = [];
+    for (const item of get().collection) {
+      if (sameCard(item, card)) continue;
+
+      if (sameCard(item, linked)) {
+        merged = true;
+        collection.push({ ...item, quantity: Math.min(item.quantity + linked.quantity, 9999) });
+      } else {
+        collection.push(item);
+      }
+    }
+    if (!merged) collection.push(linked);
+
+    set({ collection });
+    await persistCollection(collection, `Link ${linked.name} to a printing`);
+  },
+
   setCardQuantity: async (card, quantity) => {
     const collection =
       quantity <= 0

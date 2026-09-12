@@ -14,7 +14,9 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { useEventsStore } from '../store/useEventsStore';
-import { byValueDesc, collectionValue, priceIndex } from '../domain/collection';
+import { byValueDesc, collectionValue, needsPrinting, priceIndex } from '../domain/collection';
+import { isScryfallCard, type PickedCard } from '../domain/cards';
+import { CardSearchModal } from '../components/CardSearchModal';
 import type { CollectionCard } from '../types';
 
 /** Euros com dois dígitos, à portuguesa. */
@@ -69,11 +71,17 @@ function ValueTrend({ entries }: { entries: { date: string; totalEur: number }[]
 
 // ─── Linha de carta ───────────────────────────────────────────────────────────
 
-function CardRow({ card, stackEur, onChange }: {
+function CardRow({ card, stackEur, onChange, onLink }: {
   card: CollectionCard;
   stackEur: number | null;
   onChange: (quantity: number) => void;
+  /** Abre a procura para apontar esta carta a uma impressão. Só existe nas escritas à mão. */
+  onLink: () => void;
 }) {
+  const meta = [card.setCode?.toUpperCase(), card.condition, card.language?.toUpperCase()]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <View style={row.container}>
       <View style={row.info}>
@@ -81,11 +89,17 @@ function CardRow({ card, stackEur, onChange }: {
           {card.name}
           {card.foil && <Text style={row.foil}> foil</Text>}
         </Text>
-        <Text style={row.meta}>
-          {[card.setCode?.toUpperCase(), card.condition, card.language?.toUpperCase()]
-            .filter(Boolean)
-            .join(' · ') || 'no printing details'}
-        </Text>
+        {/*
+          Sem impressão não há preço (ADR 0007), e dizê-lo sem dar saída seria só uma queixa. A
+          linha passa a ser o botão que a resolve.
+        */}
+        {needsPrinting(card) ? (
+          <Pressable onPress={onLink} hitSlop={8}>
+            <Text style={row.link}>{meta ? `${meta} · ` : ''}set printing →</Text>
+          </Pressable>
+        ) : (
+          <Text style={row.meta}>{meta || 'no printing details'}</Text>
+        )}
       </View>
 
       <Text style={row.value}>{stackEur === null ? '—' : euros(stackEur)}</Text>
@@ -120,8 +134,14 @@ export default function CollectionScreen() {
   const valueHistory = useEventsStore(s => s.valueHistory);
   const addToCollection = useEventsStore(s => s.addToCollection);
   const setCardQuantity = useEventsStore(s => s.setCardQuantity);
+  const linkCollectionPrinting = useEventsStore(s => s.linkCollectionPrinting);
 
   const [query, setQuery] = useState('');
+
+  // Um modal de procura só, para duas coisas: acrescentar uma carta nova e apontar uma que já cá
+  // está a uma impressão. `linking` guarda qual — nulo quer dizer que é para acrescentar.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [linking, setLinking] = useState<CollectionCard | null>(null);
 
   const index = useMemo(() => priceIndex(prices), [prices]);
   const value = useMemo(() => collectionValue(collection, index), [collection, index]);
@@ -132,6 +152,36 @@ export default function CollectionScreen() {
     if (!term) return all;
     return all.filter(entry => entry.card.name.toLowerCase().includes(term));
   }, [collection, index, query]);
+
+  function openSearch(card: CollectionCard | null) {
+    setLinking(card);
+    setSearchOpen(true);
+  }
+
+  /**
+   * O que fazer com a carta escolhida na procura.
+   *
+   * A ligar, só uma impressão a sério serve: escolher outra vez só o nome deixava a carta na mesma
+   * situação, sem preço possível. A acrescentar, o nome chega — é o caminho que funciona sem rede.
+   */
+  async function handlePick(picked: PickedCard) {
+    setSearchOpen(false);
+    const card = linking;
+    setLinking(null);
+
+    if (card) {
+      if (isScryfallCard(picked)) await linkCollectionPrinting(card, picked);
+      return;
+    }
+
+    await addToCollection({
+      name: picked.name.trim(),
+      quantity: 1,
+      scryfallId: isScryfallCard(picked) ? picked.scryfallId : undefined,
+      setCode: isScryfallCard(picked) ? picked.setCode : undefined,
+      collectorNumber: isScryfallCard(picked) ? picked.collectorNumber : undefined,
+    });
+  }
 
   /** Acrescentar pelo nome, para não depender da rede nem da Scryfall. */
   async function addByName() {
@@ -202,6 +252,14 @@ export default function CollectionScreen() {
               <Feather name="plus" size={16} color={colors.gold} />
             </Pressable>
           )}
+
+          {/* A procura traz a impressão, e é a impressão que traz o preço. */}
+          <Pressable
+            onPress={() => openSearch(null)}
+            style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.75 }]}
+          >
+            <Feather name="search" size={16} color={colors.gold} />
+          </Pressable>
         </View>
 
         {/* Lista */}
@@ -209,8 +267,8 @@ export default function CollectionScreen() {
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>Nothing here yet</Text>
             <Text style={styles.emptyText}>
-              Type a card name above to add it. Prices need the exact printing, so cards added by
-              name alone show no value until the printing is set.
+              Type a name and tap + to add it, or search to pick the exact printing. Prices need
+              the printing, and a card added by name alone can be pointed at one later.
             </Text>
           </View>
         ) : ranked.length === 0 ? (
@@ -225,11 +283,22 @@ export default function CollectionScreen() {
                 card={entry.card}
                 stackEur={entry.stackEur}
                 onChange={quantity => void setCardQuantity(entry.card, quantity)}
+                onLink={() => openSearch(entry.card)}
               />
             ))}
           </View>
         )}
       </ScrollView>
+
+      <CardSearchModal
+        visible={searchOpen}
+        title={linking ? `Printing for ${linking.name}` : 'Add card'}
+        onPick={card => void handlePick(card)}
+        onClose={() => {
+          setSearchOpen(false);
+          setLinking(null);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -317,6 +386,7 @@ const row = StyleSheet.create({
   name: { fontFamily: fonts.bodyMed, fontSize: 15, color: colors.textPrim },
   foil: { fontFamily: fonts.bodyItal, fontSize: 12, color: colors.gold },
   meta: { fontFamily: fonts.body, fontSize: 11, color: colors.textDim },
+  link: { fontFamily: fonts.body, fontSize: 11, color: colors.gold },
   value: { fontFamily: fonts.displayMed, fontSize: 14, color: colors.textSec, minWidth: 56, textAlign: 'right' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stepBtn: {

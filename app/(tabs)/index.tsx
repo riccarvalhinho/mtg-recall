@@ -13,6 +13,7 @@ import { fonts, fontSize } from '../../theme/typography';
 import { ManaPip } from '../../components/ManaPip';
 import { EventCard } from '../../components/EventCard';
 import { ManaColor, Event, isActive } from '../../types';
+import { eventThumbnailUrl } from '../../domain/thumbnails';
 import { useEventsStore } from '../../store/useEventsStore';
 
 // ─── Ornamento central (empty state) ─────────────────────────────────────────
@@ -73,6 +74,7 @@ function ScholarOrnament({ size = 140 }: { size?: number }) {
 // ─── Secção: Evento Activo ────────────────────────────────────────────────────
 
 function ActiveEventSection({ event }: { event: Event }) {
+  const decks = useEventsStore(s => s.decks);
   const round = event.matches.length + 1;
 
   function goToMatch() {
@@ -93,7 +95,11 @@ function ActiveEventSection({ event }: { event: Event }) {
         <Text style={active.label}>Active Event</Text>
       </View>
 
-      <EventCard event={event} onPress={() => router.push(`/event/${event.id}`)} />
+      <EventCard
+        event={event}
+        artUrl={eventThumbnailUrl(event, decks)}
+        onPress={() => router.push(`/event/${event.id}`)}
+      />
 
       {/* Botão Adicionar Match */}
       <Pressable

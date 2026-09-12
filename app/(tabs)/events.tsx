@@ -16,6 +16,7 @@ import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { Event, isActive } from '../../types';
 import { searchEvents } from '../../domain/search';
+import { eventThumbnailUrl } from '../../domain/thumbnails';
 import { useEventsStore } from '../../store/useEventsStore';
 import { EventCard } from '../../components/EventCard';
 
@@ -227,6 +228,7 @@ type ListItem =
 
 export default function EventsScreen() {
   const events       = useEventsStore(s => s.events);
+  const decks        = useEventsStore(s => s.decks);
   const isLoading    = useEventsStore(s => s.isLoading);
   const load         = useEventsStore(s => s.load);
   const [query, setQuery] = useState('');
@@ -322,6 +324,7 @@ export default function EventsScreen() {
               return (
                 <EventCard
                   event={item.event}
+                  artUrl={eventThumbnailUrl(item.event, decks)}
                   onPress={() => router.push(`/event/${item.event.id}`)}
                 />
               );

@@ -11,16 +11,23 @@ import { Event, calcEventStats, isActive } from '../types';
 import { ManaPip } from './ManaPip';
 import { TypeBadge } from './TypeBadge';
 import { RecordBadge } from './RecordBadge';
-import { CardThumbnailPlaceholder } from './CardThumbnailPlaceholder';
+import { CardArtThumb } from './CardArtThumb';
 import { formatDate } from '../domain/dates';
 
 interface EventCardProps {
   event: Event;
   onPress: () => void;
   showThumbnail?: boolean;
+  /**
+   * O recorte da arte que ilustra o evento, de `eventThumbnailUrl`.
+   *
+   * Vem de fora e não do store para este componente continuar puro: quem o desenha já tem os decks
+   * à mão. Sem URL fica o placeholder, que é o que acontece num evento sem deck ligado.
+   */
+  artUrl?: string;
 }
 
-export function EventCard({ event, onPress, showThumbnail = true }: EventCardProps) {
+export function EventCard({ event, onPress, showThumbnail = true, artUrl }: EventCardProps) {
   const stats = calcEventStats(event);
   const deckColors = event.deckColors;
 
@@ -44,7 +51,7 @@ export function EventCard({ event, onPress, showThumbnail = true }: EventCardPro
       <View style={[styles.row, isActive(event) && styles.rowActive]}>
         {/* Thumbnail */}
         {showThumbnail && (
-          <CardThumbnailPlaceholder width={36} height={50} />
+          <CardArtThumb url={artUrl} width={36} height={50} />
         )}
 
         {/* Info */}

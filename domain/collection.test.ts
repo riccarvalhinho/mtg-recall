@@ -4,8 +4,10 @@ import {
   byValueDesc,
   collectionValue,
   priceIndex,
+  needsPrinting,
   priceOf,
   pricedIds,
+  withPrinting,
 } from './collection';
 import type { CollectionCard, PriceEntry } from '../types';
 
@@ -136,5 +138,48 @@ describe('appendValueEntry', () => {
   it('uma entrada fora de ordem é reposta no sítio certo', () => {
     const history = appendValueEntry([entry('2026-03-01', 30)], entry('2026-02-01', 20));
     expect(history.map(item => item.date)).toEqual(['2026-02-01', '2026-03-01']);
+  });
+});
+
+describe('needsPrinting / withPrinting', () => {
+  const manual: CollectionCard = {
+    name: 'Lighting Bolt',
+    quantity: 3,
+    condition: 'NM',
+    foil: true,
+    language: 'pt',
+    notes: 'da caixa do sótão',
+  };
+
+  it('uma carta sem scryfallId precisa de impressão', () => {
+    expect(needsPrinting(manual)).toBe(true);
+  });
+
+  it('uma carta com scryfallId já não precisa', () => {
+    expect(needsPrinting({ ...manual, scryfallId: 'abc' })).toBe(false);
+  });
+
+  it('ligar guarda o que o utilizador escreveu sobre a cópia que tem', () => {
+    const linked = withPrinting(manual, {
+      scryfallId: 'abc',
+      name: 'Lightning Bolt',
+      setCode: 'lea',
+      collectorNumber: '161',
+    });
+
+    expect(linked).toEqual({
+      ...manual,
+      // O nome passa a ser o da Scryfall: a gralha ia ficar lá para sempre.
+      name: 'Lightning Bolt',
+      scryfallId: 'abc',
+      setCode: 'lea',
+      collectorNumber: '161',
+      quantity: 3,
+    });
+  });
+
+  it('uma impressão sem set não apaga o que já lá estava escrito', () => {
+    const linked = withPrinting({ ...manual, setCode: 'm10' }, { scryfallId: 'abc', name: 'Lightning Bolt' });
+    expect(linked.setCode).toBe('m10');
   });
 });

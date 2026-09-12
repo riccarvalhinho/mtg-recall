@@ -109,3 +109,37 @@ export function appendValueEntry<T extends { date: string }>(entries: T[], entry
   const withoutToday = entries.filter((existing) => existing.date !== entry.date);
   return [...withoutToday, entry].sort((a, b) => a.date.localeCompare(b.date));
 }
+
+// ─── Ligar uma carta escrita à mão a uma impressão ────────────────────────────
+
+/**
+ * Uma carta escrita à mão, sem impressão concreta atrás.
+ *
+ * Sem `scryfallId` não há preço possível (ADR 0007): a Scryfall cobra os preços por impressão, e
+ * "Lightning Bolt" sozinho não diz qual das dezenas de impressões está na caixa. O nome continua a
+ * ser o caminho que nunca falha para acrescentar uma carta sem rede — isto é só a forma de o
+ * completar mais tarde, com sinal.
+ */
+export function needsPrinting(card: CollectionCard): boolean {
+  return !card.scryfallId;
+}
+
+/**
+ * A mesma carta, agora apontada a uma impressão concreta.
+ *
+ * O que o utilizador escreveu sobre a cópia que tem — quantidade, condição, foil, idioma, data de
+ * aquisição, notas — sobrevive. O que muda é a identidade da impressão, e o nome, que passa a ser o
+ * da Scryfall: se ele escreveu "Lighting Bolt" com uma gralha, a gralha ia ficar lá para sempre.
+ */
+export function withPrinting(
+  card: CollectionCard,
+  printing: { scryfallId: string; name: string; setCode?: string; collectorNumber?: string },
+): CollectionCard {
+  return {
+    ...card,
+    scryfallId: printing.scryfallId,
+    name: printing.name.trim(),
+    setCode: printing.setCode ?? card.setCode,
+    collectorNumber: printing.collectorNumber ?? card.collectorNumber,
+  };
+}
