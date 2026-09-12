@@ -160,16 +160,23 @@ fotografia. Ficou feito primeiro de propósito: é a parte que se pode provar an
 
 - [x] Reconstruir colunas a partir das caixas delimitadoras (`columnsOf`, com o limiar relativo à
       largura dos blocos — a mesma mesa de mais perto ou de mais longe dá o mesmo resultado)
-- [x] Filtrar pelo tamanho do texto (`titleSized`). **É o passo que evita o pior erro possível:**
-      as cartas de baixo da pilha mostram pedaços de texto de regras, e texto de regras está cheio
-      de nomes de cartas ("sacrifice a Mountain"). Sem isto, a foto dava uma Mountain que não está
-      na mesa
+- [x] Filtrar pelo tamanho do texto (`titleSized`), para as cartas de baixo da pilha não
+      contribuírem com texto de regras — que está cheio de nomes de cartas ("sacrifice a
+      Mountain") e dava uma Mountain que nem está na mesa. **Passou a ser o caminho de recurso:**
+      ver a montagem da mesa, a seguir
+- [x] `titlesOnly` — a montagem em que as cartas de baixo vão tapadas com uma sleeve ou com o verso
+      de outra carta, e o único texto da fotografia são nomes. Desliga o filtro, que aí não tem o
+      que filtrar e só arriscava comer um título lido mais pequeno (ADR 0009, passo 0)
+- [x] `stripManaCost` — o custo está na mesma barra do nome, portanto tapar a carta de baixo não o
+      esconde. Em "Opt 1" dois caracteres a mais eram mais erros do que os tolerados
 - [x] Comparar nomes com tolerância a erros (`matchCardName`, distância de edição com limite
       proporcional ao comprimento — três erros num nome longo é a mesma carta, um erro em "Opt" é
       outra)
 - [x] Contar repetições como quantidade — quatro cópias espalhadas são quatro leituras
 - [x] O que não se reconhece aparece em `unmatched` em vez de desaparecer
 - [ ] Integrar o ML Kit Text Recognition (código nativo — entra por APK novo, não por update)
+- [ ] Écran de captura com o **aviso da montagem** — tapar as cartas de baixo, títulos à vista.
+      Não é decoração: a fiabilidade depende disto e ninguém adivinha
 - [ ] Écran de confirmação antes de gravar seja o que for
 - [ ] Validar contra fotografias reais — **por fazer, e é o que decide se isto é viável à primeira**
 

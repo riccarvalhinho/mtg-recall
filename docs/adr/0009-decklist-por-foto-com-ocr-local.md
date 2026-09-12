@@ -26,6 +26,9 @@ enviando a fotografia para um serviço de visão.
 
 O fluxo:
 
+0. Montar a mesa com as cartas de baixo **tapadas** — uma sleeve ou o verso de outra carta sobre a
+   parte da carta que não é a barra do título, de modo a que o único texto na fotografia sejam
+   nomes de cartas.
 1. Fotografar. A imagem fica em memória; **não é guardada nem commitada**.
 2. OCR devolve blocos de texto **com as respectivas caixas delimitadoras**.
 3. Agrupar os blocos por posição horizontal para reconstruir as colunas, e ordenar por posição
@@ -35,6 +38,33 @@ O fluxo:
 5. **Nomes repetidos viram quantidade.** Quatro cópias espalhadas dão quatro leituras do mesmo nome,
    que é exactamente a informação que faltaria escrever à mão.
 6. Mostrar o resultado para confirmação **antes** de gravar. Nada entra no deck sem passar por aqui.
+
+### O passo 0 é parte da decisão, não um conselho
+
+A montagem da mesa foi acrescentada depois, e resolve o problema mais feio que a implementação tinha
+encontrado: numa pilha sobreposta vê-se também texto de regras da carta de baixo, e **texto de
+regras está cheio de nomes de cartas** — "sacrifice a Mountain", "create a Beast token". Casar cada
+linha lida contra o catálogo dava cartas que nem estão na mesa, e dava-as com ar de certas.
+
+A defesa era filtrar pelo tamanho da letra: numa carta de Magic o nome é sempre maior do que as
+regras. Funciona, e fica no código para quem fotografar sem cuidado — mas é uma heurística sobre um
+problema que a sleeve faz desaparecer. Nenhuma heurística é tão robusta como não haver o que
+adivinhar.
+
+E quando a mesa está montada assim, o filtro passa a poder **fazer mal**: sem regras na fotografia,
+a altura de referência passa a ser a de um título, e um título lido mais pequeno — canto da imagem,
+carta inclinada, perspectiva — seria deitado fora em silêncio. Por isso o filtro é condicional
+(`titlesOnly` em `domain/ocrDecklist.ts`), e não uma constante.
+
+**O que a sleeve não resolve:** o custo de mana está na **mesma barra** do nome, portanto continua a
+aparecer colado a ele ("Opt 1"). É tratado à parte, por `stripManaCost`. Nomes que a app ainda não
+conhece continuam a sair em `unmatched`, e a reconstrução das colunas continua a ser precisa —
+várias colunas era o ponto de partida.
+
+**Consequência para a interface:** o écran de captura tem de **explicar a montagem antes da
+fotografia**, com uma imagem se possível. Uma funcionalidade cuja fiabilidade depende de como se
+arrumam as cartas na mesa e que não diz isso a ninguém é uma funcionalidade que vai falhar e parecer
+que a culpa é do OCR.
 
 ## Alternativas consideradas
 
