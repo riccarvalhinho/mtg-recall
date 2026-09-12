@@ -265,6 +265,10 @@ Os passos todos — token, Pages, build, restauro — estão em `docs/ops/telemo
 
 Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que vem a seguir.
 
+**Fase 5, por fazer:** imagens de cartas (hoje não há nenhuma — o `CardThumbnailPlaceholder` é um
+rectângulo cinzento) e decklist por fotografia com OCR local (ADR 0009). Ambas dependem de decisões
+em aberto — Q9 (layout da galeria) e Q10 (o OCR aguenta uma foto real?).
+
 ---
 
 ## Regras de Trabalho

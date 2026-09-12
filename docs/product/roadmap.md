@@ -1,7 +1,7 @@
 # MTG Recall — Roadmap
 
 > O que vem a seguir e por que ordem. Actualizar quando uma fase fechar ou quando a ordem mudar.
-> Última actualização: 2026-09-11
+> Última actualização: 2026-09-12
 
 A app é de utilizador único (ADR 0006) e os dados são ficheiros no repositório (ADR 0002). Tudo o que
 está aqui assume isso.
@@ -90,6 +90,47 @@ Tirar o Supabase do caminho e pôr a app a escrever no repositório.
 - [x] ADR 0007 — os preços vêm da Scryfall e não da Cardmarket API
 - [x] `tools/refresh-prices.mts` e o workflow `refresh-prices.yml`, semanal
 - [x] Evolução do valor ao longo do tempo, append-only
+
+## Fase 5 — Ver e capturar cartas
+
+As duas coisas que faltam para o deck deixar de ser uma lista de texto: **vê-lo** e **enchê-lo sem o
+escrever**. Ambas precisam de decisões que ainda não estão fechadas — ver Q9 e Q10.
+
+### Imagens de cartas
+
+Hoje não há uma única imagem de carta na app. O `CardThumbnailPlaceholder` é um rectângulo cinzento,
+e a decklist do `deck/[id].tsx` é texto puro: quantidade, nome, custo de mana.
+
+- [ ] Mostrar imagens verdadeiras em vez do placeholder
+- [ ] Galeria de cartas na vista do deck, em vez de lista — **à espera do layout de referência (Q9)**
+- [ ] Escolher a carta que ilustra o deck e o evento (`thumbnailCardId` e `deckThumbnailCardId` já
+      estão nos schemas desde a Fase 2; falta só a interface)
+- [ ] Prefetch explícito **só dos thumbnails**, para esses ficarem garantidos offline
+
+**Decidido sobre a cache:** usar `expo-image` e deixar a cache em disco dela funcionar. Desligá-la
+para a galeria seria escrever código a mais para ter menos — o barato é forçar o download dos
+thumbnails e deixar o resto ficar em cache sozinho, à medida que os decks forem abertos. Resultado
+prático: thumbnails sempre disponíveis sem rede, galeria a precisar de rede na primeira vez e não nas
+seguintes.
+
+Assume-se que **a loja tem rede** — mas a app não passa a depender disso: sem rede, volta ao
+placeholder, que é honesto e já existe.
+
+### Decklist por fotografia
+
+Espalhar as cartas na mesa com os títulos à vista, em várias colunas, fotografar, e sair uma
+decklist. A decisão está no **ADR 0009**: OCR local com ML Kit, sem serviço de visão e sem conta.
+
+- [ ] Integrar o ML Kit Text Recognition (código nativo — entra por APK novo, não por update)
+- [ ] Reconstruir colunas a partir das caixas delimitadoras dos blocos de texto
+- [ ] Comparar nomes com tolerância a erros contra um índice local de nomes de cartas
+- [ ] Contar repetições como quantidade — quatro cópias espalhadas são quatro leituras
+- [ ] Écran de confirmação antes de gravar seja o que for
+- [ ] Validar contra fotografias reais — **por fazer, e é o que decide se isto é viável à primeira**
+
+A fotografia é processada em memória e **nunca guardada nem commitada**.
+
+---
 
 ---
 
