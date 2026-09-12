@@ -23,6 +23,8 @@
 import { create } from 'zustand';
 import { repoPaths } from '../domain/outbox';
 import { eventId as makeEventId, slugify, uniqueId } from '../domain/slug';
+import { thumbnailUrls } from '../domain/thumbnails';
+import { prefetchThumbnails } from '../services/imagePrefetch';
 import * as localStore from '../services/localStore';
 import * as outbox from '../services/outbox';
 import {
@@ -125,6 +127,17 @@ function byName(a: Deck, b: Deck): number {
 /** Mais recentes primeiro. O desempate pelo id existe para dois torneios no mesmo dia não trocarem de sítio. */
 function byDateDesc(a: Event, b: Event): number {
   return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
+}
+
+/**
+ * Manda descarregar as miniaturas em segundo plano.
+ *
+ * Deliberadamente sem `await`: o écran não espera por imagens. Se falhar — sem rede, CDN em baixo —
+ * o placeholder faz o seu papel e tenta-se outra vez no próximo arranque. Por isso o `catch` vazio
+ * não esconde nada: não há aqui erro nenhum que valha a pena mostrar a ninguém.
+ */
+function warmThumbnails(decks: Deck[], events: Event[]): void {
+  void prefetchThumbnails(thumbnailUrls(decks, events)).catch(() => {});
 }
 
 /** Grava um evento na cópia local e põe-no na fila. Um ficheiro, um commit. */
@@ -241,6 +254,8 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
       collection,
       isLoading: false,
     });
+
+    warmThumbnails(decks, events);
   },
 
   // ─── createEvent ───────────────────────────────────────────────────────────
@@ -570,6 +585,8 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
         prices: parsePrices(remote.prices ?? []),
         valueHistory: parseValueHistory(remote.valueHistory ?? []),
       });
+
+      warmThumbnails(decks, events);
 
       return { ok: true, events: events.length };
     } catch (error) {

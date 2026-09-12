@@ -358,6 +358,19 @@ export default function HomeScreen() {
               <Text style={styles.ctaText}>+ Register first event</Text>
             </LinearGradient>
           </Pressable>
+
+          {/*
+            A colecção também se chega por aqui, e não só depois do primeiro evento.
+            Quem instala a app antes do torneio seguinte quer montar a colecção primeiro — e sem
+            este atalho não tinha por onde lá chegar, porque a colecção não é um tab.
+          */}
+          <Pressable
+            onPress={() => router.push('/collection')}
+            hitSlop={10}
+            style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text style={styles.emptySecondary}>or start with your collection →</Text>
+          </Pressable>
         </View>
       )}
 
@@ -382,6 +395,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  emptySecondary: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textSec,
+    textAlign: 'center',
+    marginTop: 18,
   },
   header: {
     flexDirection: 'row',
