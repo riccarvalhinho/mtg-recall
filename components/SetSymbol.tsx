@@ -10,24 +10,38 @@
 
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import { colors } from '../theme/colors';
 import type { CardRarity } from '../types';
 
 /**
  * A cor do símbolo diz a raridade — é assim nas cartas a sério, e por isso não são dois ícones.
  *
- * Os tons são os do baralho físico, puxados para o claro o suficiente para se verem sobre o fundo
- * quase preto da app: prateado, dourado, o laranja das míticas. As comuns ficam com o cinzento do
- * texto secundário, que é o equivalente do preto impresso.
+ * As cores são as do baralho físico: comum preta, incomum prateada, rara dourada, mítica laranja.
+ *
+ * **A comum não pode ser preta de facto.** O fundo da app é `#130F0A`, quase preto: um símbolo
+ * preto seria um buraco invisível. Fica um cinzento neutro, escuro o suficiente para ninguém o
+ * confundir com o dourado, que era a queixa — uma comum a parecer rara. O que importa é a ordem
+ * ficar legível: escuro → claro → dourado → laranja.
+ *
+ * Os tons são **neutros de propósito**, fora da paleta quente da app. Um cinzento morno lê-se como
+ * dourado ao lado de um dourado a sério, e a raridade deixava de se ver.
  */
 const RARITY_COLOR: Record<CardRarity, string> = {
-  common: colors.textSec,
-  uncommon: '#C3CBD2',
+  common: '#8C8C8C',
+  uncommon: '#C6CED6',
   rare: '#D8B65F',
   mythic: '#D2703A',
   special: '#B98BD0',
   bonus: '#B98BD0',
 };
+
+/**
+ * Enquanto não se sabe a raridade.
+ *
+ * Acontece a cartas gravadas antes de o campo existir, até alguém carregar em *Get card data*.
+ * Cinzento apagado e neutro: não reclama raridade nenhuma. Usar aqui a cor do texto — que nesta
+ * paleta é quente — fazia todas as cartas parecerem raras, que foi exactamente o que aconteceu.
+ */
+const UNKNOWN_RARITY_COLOR = '#5E5E5E';
 
 interface SetSymbolProps {
   /** Código do set, como vem da Scryfall (minúsculas). */
@@ -50,7 +64,7 @@ export function SetSymbol({ setCode, rarity, size = 13 }: SetSymbolProps) {
       contentFit="contain"
       // Os símbolos vêm pretos, e o fundo da app é quase preto. Sem isto ficavam invisíveis — e a
       // cor não é só para os ver: é ela que diz a raridade.
-      tintColor={rarity ? RARITY_COLOR[rarity] : colors.textSec}
+      tintColor={rarity ? RARITY_COLOR[rarity] : UNKNOWN_RARITY_COLOR}
       cachePolicy="memory-disk"
       transition={0}
       onError={() => setFailed(true)}
