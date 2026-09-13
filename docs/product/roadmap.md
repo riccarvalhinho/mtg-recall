@@ -194,6 +194,58 @@ A fotografia é processada em memória e **nunca guardada nem commitada**.
 
 ---
 
+## Fase 6 — Insights (exploratória, sem data)
+
+> Ideia do autor, registada para não se perder. **Não está decidida nem orçamentada** — está aqui
+> para que quem a retomar não tenha de a redescobrir, e sobretudo para não repetir as perguntas que
+> já se sabe que ela levanta.
+
+Um separador que passe pelo arquivo todo — cores escolhidas, adversários, arquétipos, resultados, e
+as cartas que foram parar aos decks — e devolva conselho em vez de números:
+
+- o que tenho priorizado mais do que devia;
+- como é o meta de cada set, e se joguei do lado errado dele;
+- cartas que deixei passar num draft ou num sealed por não parecerem grandes coisa;
+- o que se tira do meu deck building e dos meus resultados;
+- e que **melhore à medida que o arquivo cresce** — mais eventos, mais notas de match.
+
+### O que já está a favor
+
+Os dados estão todos em JSON e são poucos: o arquivo inteiro de anos cabe num prompt sem esforço.
+Não é preciso índice, nem base de dados, nem recorte. Isso torna a parte técnica invulgarmente
+simples — o difícil está noutro sítio.
+
+### As três perguntas que decidem isto
+
+**1. Onde corre o modelo?** É a mesma pergunta do ADR 0009, que já a respondeu duas vezes contra a
+nuvem — mas aqui o cálculo muda. Insights não se consultam entre rondas numa loja sem sinal:
+consultam-se sentado, com tempo. Uma funcionalidade que **só funciona com rede** não fere o
+offline-first, desde que o resto continue a funcionar sem ela.
+
+A saída que encaixa na arquitectura que já existe é um **workflow agendado**, como o dos preços
+(ADR 0007): corre no GitHub Actions, lê `data/`, chama o modelo, escreve `data/insights.json`, e a
+app lê-o do bundle como lê tudo o resto. A chave vive nos segredos do repositório — **não no
+telemóvel**, e sem conta nenhuma no dispositivo. Ver Q12.
+
+**2. De onde vem o meta?** Isto não está nos meus dados. Ou sai do conhecimento do próprio modelo —
+que tem data de corte e inventa com confiança — ou de uma fonte a sério (o 17Lands publica dados de
+Limited). É o item mais fraco da lista e o primeiro a cortar se for preciso cortar.
+
+**3. Que cartas é que eu deixei passar?** Para dizer que uma escolha foi má é preciso saber **o que
+estava disponível**, e hoje só se guarda o deck — não o pool do sealed nem os picks do draft.
+Aconselhar picks obriga a registar o que se recusou, que é um custo de registo novo e num sítio
+onde há pressa. Talvez só valha para o sealed, onde o pool é estável e se fotografa de uma vez.
+
+### A regra que isto não pode quebrar
+
+**Com meia dúzia de eventos, qualquer padrão é ruído.** Esta app já recusa esse erro noutro sítio —
+a nemesis exige três encontros, e um deck por jogar diz "unplayed" em vez de 0%. Um écran de
+insights que a partir de quatro matches declare que "jogas mal contra azul" é pior do que não
+existir: dá autoridade a acaso. Se isto se fizer, tem de dizer com que confiança fala, e calar-se
+enquanto não tiver material.
+
+---
+
 ## Ícone da app
 
 Feito: duas cartas douradas sobre o fundo escuro da app, saídas de três direcções exploradas em
