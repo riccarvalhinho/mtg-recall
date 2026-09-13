@@ -197,14 +197,32 @@ function DeckSection({ event }: { event: Event }) {
         acção frequente. Fica um ícone no canto, com área de toque a sério por baixo dele.
       */}
       {(linked || legacyName) && (
-        <Pressable
-          onPress={() => setPicking(true)}
-          hitSlop={10}
-          accessibilityLabel={linked ? 'Change deck' : 'Link to a deck'}
-          style={({ pressed }) => [deck.swapBtn, pressed && { opacity: 0.6 }]}
-        >
-          <Feather name="repeat" size={15} color={colors.textDim} />
-        </Pressable>
+        <View style={deck.actions}>
+          {/*
+            Editar vem primeiro e a dourado porque é o que se faz a seguir quase sempre: em Sealed
+            e Draft o deck é construído na hora e depois corrige-se. Trocar por outro é raro, e fica
+            esbatido ao lado.
+          */}
+          {linked && (
+            <Pressable
+              onPress={() => router.push({ pathname: '/deck-editor', params: { deckId: linked.id } })}
+              hitSlop={6}
+              accessibilityLabel="Edit deck"
+              style={({ pressed }) => [deck.iconBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Feather name="edit-2" size={15} color={colors.gold} />
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => setPicking(true)}
+            hitSlop={6}
+            accessibilityLabel={linked ? 'Change deck' : 'Link to a deck'}
+            style={({ pressed }) => [deck.iconBtn, pressed && { opacity: 0.6 }]}
+          >
+            <Feather name="repeat" size={15} color={colors.textDim} />
+          </Pressable>
+        </View>
       )}
 
       <DeckPicker
@@ -453,10 +471,14 @@ const deck = StyleSheet.create({
     fontSize: 14,
     color: colors.textDim,
   },
-  swapBtn: {
+  actions: {
     position: 'absolute',
     top: 4,
     right: 4,
+    flexDirection: 'row',
+  },
+  /** Pequeno à vista, 44×44 ao dedo — que é o mínimo para não se falhar o toque. */
+  iconBtn: {
     width: 44,
     height: 44,
     alignItems: 'center',
