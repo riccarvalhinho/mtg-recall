@@ -234,7 +234,9 @@ Params de navegação:
   deck novo; com `linkToEventId` (vindo do Event Detail) o deck criado fica ligado a esse evento, e
   os *preset* chegam preenchidos a partir do torneio
 
-**O tab Decks tem duas secções:** os decks que se guardam e, em baixo, os de **Limited** — Sealed e
+**O tab Decks é uma grelha de dois**, com a arte do deck (`deckThumbnailUrl`) a encher o quadrado e
+o nome, o registo e as cores por cima. Tem duas secções: os decks que se guardam e, em baixo, os de
+**Limited** — Sealed e
 Draft existiram para um torneio só (`isEventDeck`, em `domain/deck.ts`). Continuam a valer pelo
 registo, mas um Limited por mês soterrava os decks a sério ao fim de um ano. A regra é o formato e
 mais nada: não há campo novo no ficheiro.

@@ -4,6 +4,10 @@
 // com que deck é que se ganha mais. Por isso a ordem da lista não é alfabética — é a do
 // `rankDecks`, do melhor desempenho para o pior, com os decks ainda não jogados no fim.
 //
+// **Grelha de dois e não lista de linhas.** Um deck reconhece-se pela arte antes de se lhe ler o
+// nome, e numa linha de 50 px de altura a arte não chega para isso. O quadrado dá-lhe espaço; o
+// nome e o registo vão por cima, sobre um véu, porque texto claro sobre uma arte clara não se lê.
+//
 // As contas estão todas em `domain/deck.ts`. Aqui só se desenha.
 
 import { useEffect, useMemo } from 'react';
@@ -12,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { Deck } from '../../types';
@@ -20,74 +25,113 @@ import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { RecordBadge } from '../../components/RecordBadge';
 import { TypeBadge } from '../../components/TypeBadge';
+import { deckThumbnailUrl } from '../../domain/thumbnails';
 
 // ─── Card de deck ─────────────────────────────────────────────────────────────
 
-function DeckRow({ deck, performance, onPress }: {
+function DeckTile({ deck, performance, onPress }: {
   deck: Deck;
   performance: DeckPerformance;
   onPress: () => void;
 }) {
   const played = performance.wins + performance.losses + performance.draws;
   const cards = cardCount(deck.cards);
+  const art = deckThumbnailUrl(deck);
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [tile.container, pressed && { opacity: 0.75 }]}
     >
-      <View style={styles.cardRow}>
-        <View style={styles.info}>
-          {/* Formato e arquétipo — ambos opcionais, a linha desaparece se não houver nenhum */}
-          {(deck.format || deck.archetype) && (
-            <View style={styles.badges}>
-              {deck.format && <TypeBadge type={deck.format} />}
-              {deck.archetype && (
-                <Text style={styles.archetype} numberOfLines={1}>{deck.archetype}</Text>
-              )}
-            </View>
-          )}
-
-          <Text style={styles.name} numberOfLines={1}>{deck.name}</Text>
-
-          <View style={styles.meta}>
-            {deck.colors.main.map(c => (
-              <ManaPip key={`main-${c}`} color={c} size={14} />
-            ))}
-            {deck.colors.splash.map(c => (
-              <ManaPip key={`splash-${c}`} color={c} size={14} isSplash />
-            ))}
-            {(deck.colors.main.length > 0 || deck.colors.splash.length > 0) && (
-              <Text style={styles.metaDot}>·</Text>
-            )}
-            {/* Um deck sem lista não é um erro: serve na mesma para saber com que deck se ganha */}
-            <Text style={styles.metaText}>
-              {cards > 0 ? `${cards} cards` : 'no list yet'}
-            </Text>
-            <Text style={styles.metaDot}>·</Text>
-            <Text style={styles.metaText}>
-              {performance.events === 1 ? '1 event' : `${performance.events} events`}
-            </Text>
-          </View>
+      {art ? (
+        <Image
+          source={{ uri: art }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={140}
+          cachePolicy="memory-disk"
+        />
+      ) : (
+        // Um deck sem lista, ou escrito à mão, não tem arte nenhuma. Em vez de um buraco preto
+        // fica a superfície da app com o emblema — reconhece-se como "deck sem cartas", que é o
+        // que é, e não como uma imagem que falhou.
+        <View style={tile.noArt}>
+          <Feather name="layers" size={26} color={colors.goldDim} />
         </View>
+      )}
 
-        {/* Desempenho. Um deck por jogar mostra-o por palavras — um 0–0 a 0% parecia uma derrota */}
-        <View style={styles.right}>
-          {played > 0 ? (
-            <RecordBadge
-              wins={performance.wins}
-              losses={performance.losses}
-              draws={performance.draws}
-            />
-          ) : (
-            <Text style={styles.unplayed}>unplayed</Text>
-          )}
-          <Feather name="chevron-right" size={14} color={colors.textDim} style={styles.chevron} />
+      {/* O véu existe para o nome se ler: uma arte clara por baixo de texto claro não se lê. */}
+      <LinearGradient
+        colors={['transparent', 'rgba(10,8,5,0.55)', 'rgba(10,8,5,0.95)']}
+        locations={[0.32, 0.62, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      <View style={tile.top}>
+        {deck.format ? <TypeBadge type={deck.format} /> : <View />}
+        {played > 0 ? (
+          <RecordBadge
+            wins={performance.wins}
+            losses={performance.losses}
+            draws={performance.draws}
+          />
+        ) : (
+          <Text style={tile.unplayed}>unplayed</Text>
+        )}
+      </View>
+
+      <View style={tile.bottom}>
+        <Text style={tile.name} numberOfLines={2}>{deck.name}</Text>
+
+        <View style={tile.meta}>
+          {deck.colors.main.map(c => <ManaPip key={`main-${c}`} color={c} size={13} />)}
+          {deck.colors.splash.map(c => <ManaPip key={`splash-${c}`} color={c} size={13} isSplash />)}
+          <Text style={tile.metaText} numberOfLines={1}>
+            {cards > 0 ? `${cards} cards` : 'no list yet'} · {performance.events === 1 ? '1 event' : `${performance.events} events`}
+          </Text>
         </View>
       </View>
     </Pressable>
   );
 }
+
+const tile = StyleSheet.create({
+  container: {
+    flex: 1,
+    // Quadrado, como na referência. O `art_crop` é deitado e fica cortado dos lados — a arte da
+    // Scryfall é centrada no que interessa, portanto o corte não come o assunto.
+    aspectRatio: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    justifyContent: 'space-between',
+    padding: 10,
+  },
+  noArt: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgCard,
+  },
+  top: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
+  bottom: { gap: 6 },
+  name: { fontFamily: fonts.displaySemi, fontSize: 15, lineHeight: 19, color: '#F3EADA' },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
+  metaText: { fontFamily: fonts.body, fontSize: 11, color: '#BCAE97' },
+  unplayed: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: '#D6C9B2',
+    backgroundColor: 'rgba(10,8,5,0.55)',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+});
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
@@ -168,10 +212,28 @@ const empty = StyleSheet.create({
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-/** Uma linha da lista: ou um cabeçalho de secção, ou um deck com o seu desempenho. */
+/** Um deck com o seu desempenho, que é o que o tile precisa. */
+type DeckEntry = { deck: Deck; performance: DeckPerformance };
+
+/**
+ * Uma linha da lista: um cabeçalho de secção, ou **um par** de decks.
+ *
+ * O par existe porque a grelha e os cabeçalhos não se dão bem no mesmo `FlatList`: com
+ * `numColumns` os cabeçalhos passariam a ocupar meia largura. Emparelhar à mão mantém uma lista só,
+ * com as secções pelo meio, e um par ímpar no fim fica com metade vazia em vez de um tile esticado.
+ */
 type DeckRowItem =
   | { kind: 'header'; label: string }
-  | { kind: 'deck'; deck: Deck; performance: DeckPerformance };
+  | { kind: 'pair'; left: DeckEntry; right?: DeckEntry };
+
+/** Parte uma lista em pares, pela ordem que vem. */
+function inPairs(entries: DeckEntry[]): DeckRowItem[] {
+  const rows: DeckRowItem[] = [];
+  for (let i = 0; i < entries.length; i += 2) {
+    rows.push({ kind: 'pair', left: entries[i], right: entries[i + 1] });
+  }
+  return rows;
+}
 
 export default function DecksScreen() {
   const decks  = useEventsStore(s => s.decks);
@@ -207,12 +269,12 @@ export default function DecksScreen() {
 
     if (kept.length > 0) {
       list.push({ kind: 'header', label: `${kept.length} ${kept.length === 1 ? 'deck' : 'decks'} · best first` });
-      list.push(...kept.map((entry): DeckRowItem => ({ ...entry, kind: 'deck' })));
+      list.push(...inPairs(kept));
     }
 
     if (oneOff.length > 0) {
       list.push({ kind: 'header', label: `Limited · ${oneOff.length} built for one event` });
-      list.push(...oneOff.map((entry): DeckRowItem => ({ ...entry, kind: 'deck' })));
+      list.push(...inPairs(oneOff));
     }
 
     return list;
@@ -241,21 +303,31 @@ export default function DecksScreen() {
       ) : (
         <FlatList
           data={rows}
-          keyExtractor={row => (row.kind === 'header' ? `h-${row.label}` : row.deck.id)}
+          keyExtractor={row => (row.kind === 'header' ? `h-${row.label}` : row.left.deck.id)}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
           renderItem={({ item: row }) =>
             row.kind === 'header' ? (
               <Text style={styles.sectionLabel}>{row.label}</Text>
             ) : (
-              <DeckRow
-                deck={row.deck}
-                performance={row.performance}
-                onPress={() => router.push({
-                  pathname: '/deck/[id]',
-                  params: { id: row.deck.id },
-                })}
-              />
+              <View style={styles.pair}>
+                <DeckTile
+                  deck={row.left.deck}
+                  performance={row.left.performance}
+                  onPress={() => router.push({ pathname: '/deck/[id]', params: { id: row.left.deck.id } })}
+                />
+                {row.right ? (
+                  <DeckTile
+                    deck={row.right.deck}
+                    performance={row.right.performance}
+                    onPress={() => router.push({ pathname: '/deck/[id]', params: { id: row.right!.deck.id } })}
+                  />
+                ) : (
+                  // Metade vazia em vez de um tile esticado: um deck sozinho na linha não deve
+                  // ficar do dobro do tamanho dos outros só por ser o último.
+                  <View style={{ flex: 1 }} />
+                )}
+              </View>
             )
           }
         />
@@ -308,6 +380,13 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 24,
   },
+  /** Uma linha da grelha. O espaço entre tiles é o mesmo dos lados, para a grelha parecer grelha. */
+  pair: {
+    flexDirection: 'row',
+    gap: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
   sectionLabel: {
     fontFamily: fonts.bodyItal,
     fontSize: 11,
@@ -316,75 +395,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginHorizontal: 16,
     marginBottom: 10,
+    marginTop: 6,
   },
 
   // Card
-  card: {
-    backgroundColor: colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
-  cardPressed: {
-    backgroundColor: colors.bgCardHov,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    // Alvo de toque muito acima dos 44px: usa-se de pé, numa loja, com uma mão
-    minHeight: 72,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-  },
-  badges: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-  },
-  archetype: {
-    flex: 1,
-    fontFamily: fonts.bodyItal,
-    fontSize: 11,
-    color: colors.textSec,
-  },
-  name: {
-    fontFamily: fonts.displayMed,
-    fontSize: 15,
-    color: colors.textPrim,
-  },
-  meta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaText: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.textDim,
-  },
-  metaDot: {
-    color: colors.textDim,
-    fontSize: 10,
-  },
-  right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  unplayed: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 11,
-    color: colors.textDim,
-  },
-  chevron: {
-    opacity: 0.4,
-  },
 });
