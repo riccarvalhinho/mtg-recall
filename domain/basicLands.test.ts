@@ -4,7 +4,10 @@ import {
   MAX_BASIC,
   basicLandQuantity,
   basicLandsToIllustrate,
+  chooseBasicLandPrintings,
   dominantSetCode,
+  groupBasicLandPrintings,
+  isBasicLandPreference,
   setBasicLandQuantity,
   totalBasics,
   withBasicLandArt,
@@ -239,5 +242,67 @@ describe('withBasicLandArt', () => {
     );
     expect(typeCounts(cards)).toEqual([{ type: 'Land', count: 8 }]);
     expect(manaCurve(cards).every(bucket => bucket.count === 0)).toBe(true);
+  });
+});
+
+describe('groupBasicLandPrintings', () => {
+  const prints = [
+    { name: 'Island', scryfallId: 'i1' },
+    { name: 'Island', scryfallId: 'i2' },
+    { name: 'Forest', scryfallId: 'f1' },
+    { name: 'Snow-Covered Island', scryfallId: 's1' },
+    { name: 'Lightning Bolt', scryfallId: 'b1' },
+  ];
+
+  it('agrupa por básico e mantém a ordem de chegada', () => {
+    const grouped = groupBasicLandPrintings(prints);
+    expect(grouped.get('island')?.map(c => c.scryfallId)).toEqual(['i1', 'i2']);
+    expect(grouped.get('forest')?.map(c => c.scryfallId)).toEqual(['f1']);
+  });
+
+  it('os Snow-Covered ficam de fora — são cartas diferentes', () => {
+    expect(groupBasicLandPrintings(prints).has('snow-covered island')).toBe(false);
+    expect([...groupBasicLandPrintings(prints).keys()]).toEqual(['island', 'forest']);
+  });
+});
+
+describe('chooseBasicLandPrintings', () => {
+  const prints = [
+    { name: 'Island', scryfallId: 'i1', artCropUrl: 'normal' },
+    { name: 'Island', scryfallId: 'i2', artCropUrl: 'full-art' },
+    { name: 'Forest', scryfallId: 'f1' },
+  ];
+
+  it('sem escolha vale a primeira impressão', () => {
+    expect(chooseBasicLandPrintings(prints).get('island')?.scryfallId).toBe('i1');
+  });
+
+  it('a arte escolhida ganha à primeira', () => {
+    const chosen = chooseBasicLandPrintings(prints, { island: 'i2' });
+    expect(chosen.get('island')?.artCropUrl).toBe('full-art');
+  });
+
+  it('uma escolha que já não exista recua para a primeira, não deixa o básico sem arte', () => {
+    const chosen = chooseBasicLandPrintings(prints, { island: 'de-outra-coleccao' });
+    expect(chosen.get('island')?.scryfallId).toBe('i1');
+  });
+
+  it('uma escolha para um básico que a colecção não tem não inventa uma entrada', () => {
+    expect(chooseBasicLandPrintings(prints, { swamp: 'x' }).has('swamp')).toBe(false);
+  });
+});
+
+describe('isBasicLandPreference', () => {
+  it('aceita o mínimo e o completo', () => {
+    expect(isBasicLandPreference({ setCode: 'ltr' })).toBe(true);
+    expect(isBasicLandPreference({ setCode: 'ltr', printings: { island: 'abc' } })).toBe(true);
+  });
+
+  it('recusa o que não serve — e recusar é o mesmo que não haver preferência', () => {
+    expect(isBasicLandPreference(null)).toBe(false);
+    expect(isBasicLandPreference({})).toBe(false);
+    expect(isBasicLandPreference({ setCode: '  ' })).toBe(false);
+    expect(isBasicLandPreference({ setCode: 'ltr', printings: 'nope' })).toBe(false);
+    expect(isBasicLandPreference({ setCode: 'ltr', printings: { island: 7 } })).toBe(false);
   });
 });

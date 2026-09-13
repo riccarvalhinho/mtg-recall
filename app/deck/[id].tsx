@@ -6,10 +6,10 @@
 //
 // As contas estão todas em `domain/deck.ts` e têm testes. Aqui só se desenha.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
@@ -35,9 +35,11 @@ import {
   basicLandsToIllustrate,
   dominantSetCode,
   withBasicLandArt,
+  type BasicLandPreference,
   type BasicLandPrinting,
 } from '../../domain/basicLands';
 import { resolveBasicLands } from '../../services/scryfall';
+import { readBasicLandPreference } from '../../services/preferences';
 import { manaColors } from '../../theme/mana';
 import type { DeckBoard, DeckCard } from '../../types';
 
@@ -376,12 +378,17 @@ function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
 // ─── Écran ────────────────────────────────────────────────────────────────────
 
 /**
- * Dá aos terrenos básicos a arte da colecção de onde vem a maior parte do deck.
+ * Dá aos terrenos básicos a arte que lhes compete.
  *
  * Num Sealed as vinte e três cartas saem todas da mesma caixa, e os básicos que se jogam são os
  * dessa caixa — mas entram na app sem impressão escolhida, porque perguntar qual das centenas de
  * Ilhas se tem no deck seria trabalho a troco de nada (ver `domain/basicLands.ts`). A colecção
  * **deduz-se** do resto do deck em vez de se perguntar.
+ *
+ * Só que metade dos decks não diz de onde é: um Modern feito de dez colecções não tem maioria
+ * nenhuma. Para esses vale a colecção escolhida nas definições, que é sempre a mesma caixa de
+ * básicos na vida real. **A do deck ganha à das definições** — quando o deck diz de onde é, sabe
+ * mais do que uma preferência geral.
  *
  * O resultado vive aqui e não no ficheiro: é um campo calculado, e muda sozinho quando o deck muda.
  *
@@ -389,9 +396,29 @@ function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
  */
 function useBasicLandArt(cards: DeckCard[] | undefined): DeckCard[] {
   const [printings, setPrintings] = useState<Map<string, BasicLandPrinting>>(new Map());
+  const [preference, setPreference] = useState<BasicLandPreference | undefined>(undefined);
 
-  const setCode = useMemo(() => dominantSetCode(cards), [cards]);
+  // A preferência relê-se de cada vez que o ecrã volta à frente: quem a acabou de mudar nas
+  // definições espera ver o deck mudar ao voltar, e o ecrã continua montado por baixo.
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      readBasicLandPreference().then(value => {
+        if (alive) setPreference(value);
+      });
+      return () => {
+        alive = false;
+      };
+    }, []),
+  );
+
+  const deckSet = useMemo(() => dominantSetCode(cards), [cards]);
   const wanted = useMemo(() => basicLandsToIllustrate(cards).join(','), [cards]);
+
+  const setCode = deckSet ?? preference?.setCode;
+  // A arte escolhida à mão só vale para a colecção em que foi escolhida. Num Sealed de outra
+  // colecção os ids não existem, e `resolveBasicLands` recua para a primeira impressão.
+  const chosen = setCode === preference?.setCode ? preference?.printings : undefined;
 
   useEffect(() => {
     if (!setCode || wanted.length === 0) {
@@ -402,14 +429,14 @@ function useBasicLandArt(cards: DeckCard[] | undefined): DeckCard[] {
     // O ecrã pode desaparecer antes de a Scryfall responder; escrever estado depois disso é um
     // aviso do React e uma actualização que ninguém vê.
     let alive = true;
-    resolveBasicLands(setCode).then(found => {
+    resolveBasicLands(setCode, chosen).then(found => {
       if (alive) setPrintings(found);
     });
 
     return () => {
       alive = false;
     };
-  }, [setCode, wanted]);
+  }, [setCode, wanted, chosen]);
 
   return useMemo(() => withBasicLandArt(cards, printings), [cards, printings]);
 }

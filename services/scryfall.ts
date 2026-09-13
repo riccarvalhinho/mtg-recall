@@ -35,7 +35,10 @@ import {
   type ScryfallCard,
 } from '../domain/cards';
 import { normalizeSets, type MtgSet } from '../domain/sets';
-import { BASIC_LANDS } from '../domain/basicLands';
+import {
+  chooseBasicLandPrintings,
+  type BasicLandPrinting,
+} from '../domain/basicLands';
 
 const SETS_KEY = 'mtgrecall.scryfall.sets';
 const SETS_URL = 'https://api.scryfall.com/sets';
@@ -435,14 +438,14 @@ export async function resolveCardNames(names: string[]): Promise<ResolveResult> 
 const BASICS_KEY = 'mtgrecall.scryfall.basics';
 
 /** Sobe quando a forma desta cache mudar, para uma app nova não ler o que uma antiga escreveu. */
-const BASICS_CACHE_VERSION = 1;
+const BASICS_CACHE_VERSION = 2;
 
-/** Colecções lembradas. Cada uma são seis cartas no máximo — quarenta cabem à vontade. */
+/** Colecções lembradas. Cada uma são poucas cartas — quarenta cabem à vontade. */
 const MAX_CACHED_BASIC_SETS = 40;
 
 interface BasicsCache {
   version: number;
-  /** Código da colecção → os básicos dela. Uma lista vazia quer dizer "esta não tem básicos". */
+  /** Código da colecção → as impressões dela. Uma lista vazia quer dizer "não tem básicos". */
   sets: Record<string, { fetchedAt: number; cards: ScryfallCard[] }>;
 }
 
@@ -483,55 +486,64 @@ async function writeBasicsCache(cache: BasicsCache): Promise<void> {
 }
 
 /**
- * Os terrenos básicos de uma colecção, por nome em minúsculas.
+ * **Todas** as impressões de terrenos básicos de uma colecção.
  *
- * **Pergunta sempre pelos seis**, mesmo que o deck só precise de dois. São seis identificadores num
- * pedido só, e a cache fica completa à primeira: o deck seguinte, que talvez precise da Montanha,
- * já não vai à rede. Pedir só o que faz falta obrigava a uma cache parcial — saber o que já se
- * perguntou e o que falta — para poupar zero pedidos.
+ * Pede tudo e não só os seis nomes de propósito, por duas razões que puxam para o mesmo lado.
+ * Muitas colecções trazem duas versões do mesmo básico — a normal e a *full art* — e o selector das
+ * definições precisa das duas para as poder mostrar lado a lado. E a cache fica completa à
+ * primeira: o deck seguinte, que talvez precise da Montanha, já não vai à rede.
  *
- * A cache não tem validade de propósito. As impressões de uma colecção já publicada não mudam
- * mais; uma validade só faria voltar à rede para receber a mesma resposta.
+ * `unique=prints` é o que faz a Scryfall devolver cada arte em vez de uma carta por nome.
  *
- * Uma colecção **sem** básicos (há muitas) fica guardada como lista vazia, e é isso que impede a
- * app de perguntar outra vez de cada vez que se abre o deck. Uma falha de rede, essa, não se
- * guarda — senão um minuto sem sinal apagava a arte para sempre.
+ * A cache **não tem validade**. As impressões de uma colecção já publicada não mudam mais; uma
+ * validade só faria voltar à rede para receber a mesma resposta.
  *
- * **Nunca atira.** Sem rede devolve o que houver em cache, ou nada — e nada é como era antes de
- * isto existir: o básico fica com o placeholder.
+ * Uma colecção **sem** básicos (há muitas) guarda-se como lista vazia, e é isso que impede a app de
+ * perguntar outra vez de cada vez que se abre o deck — a Scryfall responde 404 a uma procura sem
+ * resultados, e o portão já trata disso como lista vazia e não como avaria. Uma falha de rede, essa,
+ * não se guarda: um minuto sem sinal não pode apagar a arte para sempre.
+ *
+ * **Nunca atira.** Sem rede devolve o que houver em cache, ou nada — e nada é como era antes de isto
+ * existir: o básico fica com o placeholder.
  */
-export async function resolveBasicLands(setCode: string): Promise<Map<string, ScryfallCard>> {
+export async function loadBasicLandPrintings(setCode: string): Promise<ScryfallCard[]> {
   const code = setCode.trim().toLowerCase();
-  const found = new Map<string, ScryfallCard>();
-  if (!code) return found;
+  if (!code) return [];
 
   const cache = await readBasicsCache();
   const cached = cache.sets[code];
-
-  if (cached) {
-    for (const card of cached.cards) found.set(card.name.trim().toLowerCase(), card);
-    return found;
-  }
+  if (cached) return cached.cards;
 
   let cards: ScryfallCard[];
   try {
-    const payload = (await scryfallPost(
-      'https://api.scryfall.com/cards/collection',
-      { identifiers: BASIC_LANDS.map(land => ({ name: land.name, set: code })) },
+    // Uma colecção não tem mais básicos do que uma página (175). Se algum dia tiver, ficam os
+    // primeiros — e os primeiros são os que interessam, que a ordem é a do número de coleccionador.
+    const query = encodeURIComponent(`set:${code} type:basic`);
+    const payload = await scryfallFetch(
+      `https://api.scryfall.com/cards/search?q=${query}&unique=prints&order=set`,
       'os terrenos básicos da colecção',
-    )) as { data?: unknown[] };
-
-    cards = (payload.data ?? [])
-      .map(raw => normalizeCard(raw))
-      .filter((card): card is ScryfallCard => card !== null);
+    );
+    cards = normalizeCardSearch(payload);
   } catch {
     // Sem rede fica como estava. Não se guarda nada: a colecção pode muito bem ter básicos.
-    return found;
+    return [];
   }
 
   cache.sets[code] = { fetchedAt: Date.now(), cards };
   await writeBasicsCache(cache);
 
-  for (const card of cards) found.set(card.name.trim().toLowerCase(), card);
-  return found;
+  return cards;
+}
+
+/**
+ * Uma impressão por básico, para uma colecção.
+ *
+ * `chosen` é a escolha guardada nas definições (nome em minúsculas → `scryfallId`); sem ela vale a
+ * primeira impressão de cada básico, que é a normal na esmagadora maioria das colecções.
+ */
+export async function resolveBasicLands(
+  setCode: string,
+  chosen?: Record<string, string>,
+): Promise<Map<string, BasicLandPrinting>> {
+  return chooseBasicLandPrintings(await loadBasicLandPrintings(setCode), chosen);
 }

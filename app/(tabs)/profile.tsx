@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { colors } from '../../theme/colors';
@@ -259,6 +260,19 @@ export default function SettingsScreen() {
           <Text style={styles.hint}>
             Branch {repo.branch} · {eventCount} event(s) on this phone
           </Text>
+        </Section>
+
+        {/* Aparência */}
+        <Section label="Basic lands">
+          <Text style={styles.hint}>
+            Which set&apos;s basic lands to show. Decks that mostly come from one set — a Sealed
+            pool, a draft — use that set&apos;s lands automatically; this is for all the others.
+          </Text>
+          <ActionButton
+            label="Choose a set"
+            icon="layers"
+            onPress={() => router.push('/basic-lands')}
+          />
         </Section>
 
         {/* Restauro */}

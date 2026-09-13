@@ -45,6 +45,7 @@ conhecimento prévio de padrões ou convenções.
 | Persistência local | AsyncStorage — uma chave por caminho de ficheiro |
 | Sincronização | GitHub Contents API, por outbox (ADR 0004) |
 | Segredos | `expo-secure-store` (token do GitHub) |
+| Preferências | AsyncStorage, fora de `data/` — ADR 0010 |
 | Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
 | Câmara / OCR | `expo-camera` + ML Kit Text Recognition, local (ADR 0009) |
 | Card data | Scryfall API |
@@ -63,6 +64,7 @@ conhecimento prévio de padrões ou convenções.
   deck-editor.tsx           modal: criar/editar deck
   deck-scan.tsx             modal: decklist por fotografia (aviso, porções, confirmação)
   collection.tsx            a colecção (push, entra pela Home)
+  basic-lands.tsx           definições: a colecção de básicos e a arte de cada um (push)
   (tabs)/
     _layout.tsx             tab bar (Home/Events/Decks/Stats/Settings)
     index.tsx               Home
@@ -81,7 +83,7 @@ conhecimento prévio de padrões ou convenções.
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
-                            scryfall, imagePrefetch, ocr
+                            scryfall, imagePrefetch, ocr, preferences
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
 /theme                      colors, typography, mana
 /types                      tipos TypeScript — derivam dos schemas
@@ -219,6 +221,7 @@ Stack principal:
   deck/[id]           ← Deck Detail + analisador (push, sem tab bar)
   opponent/[id]       ← Opponent Detail (push, sem tab bar) — entra pela lista das Stats
   collection          ← Colecção (push)
+  basic-lands         ← Definições → Basic lands (push)
 
 Modals (presentation: 'modal'):
   match-registration  ← a partir de Event Detail
@@ -259,9 +262,11 @@ consulta-se de vez em quando, não entre rondas.
   7 dias.
 - `GET /cards/search` alimenta a procura de cartas. Cache em `mtgrecall.scryfall.cards`, validade de
   1 dia — o que uma procura devolve muda quando sai uma colecção nova.
-- `POST /cards/collection` serve dois fins: completar cartas lidas só pelo nome (ADR 0009) e ir
-  buscar os **terrenos básicos de uma colecção**, pelos seis nomes de uma vez. Cache em
-  `mtgrecall.scryfall.basics`, **sem validade** — as impressões de uma colecção publicada não mudam.
+- `POST /cards/collection` completa cartas lidas só pelo nome (ADR 0009), 75 por pedido.
+- `GET /cards/search` com `unique=prints` traz **todas as impressões de básicos de uma colecção** —
+  todas e não só os seis nomes, porque muitas colecções têm a versão normal e a *full art* do mesmo
+  terreno e o selector das definições precisa das duas. Cache em `mtgrecall.scryfall.basics`,
+  **sem validade** — as impressões de uma colecção publicada não mudam.
 - **É cache, não são dados nossos**: não passa pela outbox nem pelo `localStore`, e por isso nunca
   aparece num commit.
 - **Sem rede nada falha**: o set escreve-se à mão, a carta acrescenta-se só pelo nome. O schema só
@@ -317,6 +322,13 @@ trinta colecções não passa nenhuma, que é o que se quer. A arte é emprestad
 (`withBasicLandArt`, no écran); **o ficheiro do deck não muda**, porque a colecção dominante é um
 campo calculado e um deck que troca de cartas trocaria de colecção. Um básico com impressão
 escolhida à mão fica sempre como está.
+
+**Para os decks que não dizem de onde são** há a preferência em *Settings → Basic lands*
+(`app/basic-lands.tsx`): escolhe-se a colecção e, dentro dela, a arte de cada básico — muitas
+colecções trazem a normal e a *full art*, e escolher só a colecção não dizia qual. Escolhe-se uma
+vez e serve todos esses decks; **a colecção do próprio deck ganha sempre à preferência**, que sabe
+mais do que uma escolha geral. A preferência vive no AsyncStorage e não em `data/`: é gosto, não é
+registo — **ADR 0010**.
 
 **A ordem do Deck Detail serve o uso:** a decklist primeiro, a análise a seguir (é sobre a lista), e
 o desempenho no fim. Em Sealed e Draft o deck joga um torneio só e o win rate dele é o mesmo do

@@ -208,3 +208,81 @@ export function withBasicLandArt(
     };
   });
 }
+
+// ─── A preferência: uma colecção de básicos para os decks sem colecção própria ──
+
+/**
+ * A colecção de básicos preferida, e a arte escolhida dentro dela.
+ *
+ * Existe porque a dedução só responde a metade dos decks. Um Sealed diz de onde é; um deck de
+ * Modern feito de dez colecções não diz nada — e nesse os básicos que se jogam são os que se tem
+ * na caixa, sempre os mesmos. Escolhe-se uma vez e serve todos.
+ *
+ * `printings` é por arte e não por colecção porque muitas colecções trazem **duas** versões do
+ * mesmo básico — a normal e a *full art*. Escolher só a colecção não chegava para dizer qual.
+ * Ausente ou incompleto quer dizer "a primeira que a colecção tiver", que é o que serve quem não
+ * se importa.
+ */
+export interface BasicLandPreference {
+  /** Código da colecção, minúsculas. */
+  setCode: string;
+  /** Nome do básico em minúsculas → `scryfallId` da arte escolhida. */
+  printings?: Record<string, string>;
+}
+
+/** Uma preferência ilegível — de uma versão antiga, ou corrompida — é o mesmo que não haver. */
+export function isBasicLandPreference(value: unknown): value is BasicLandPreference {
+  if (!value || typeof value !== 'object') return false;
+
+  const preference = value as BasicLandPreference;
+  if (typeof preference.setCode !== 'string' || preference.setCode.trim() === '') return false;
+
+  if (preference.printings !== undefined) {
+    if (typeof preference.printings !== 'object' || preference.printings === null) return false;
+    if (Object.values(preference.printings).some(id => typeof id !== 'string')) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Agrupa as impressões de uma colecção por básico, pela ordem em que vieram.
+ *
+ * Fica de fora tudo o que não seja um dos seis. A procura por tipo apanha também os
+ * *Snow-Covered*, que são cartas diferentes e nunca correspondem a um "Forest" escrito num deck.
+ */
+export function groupBasicLandPrintings<T extends { name: string }>(cards: T[]): Map<string, T[]> {
+  const byLand = new Map<string, T[]>();
+
+  for (const card of cards) {
+    const land = basicLandNamed(card.name);
+    if (!land) continue;
+
+    const key = land.name.toLowerCase();
+    const list = byLand.get(key);
+    if (list) list.push(card);
+    else byLand.set(key, [card]);
+  }
+
+  return byLand;
+}
+
+/**
+ * Uma impressão por básico: a escolhida, ou a primeira que a colecção tiver.
+ *
+ * Uma escolha que já não exista — a arte foi escolhida e depois mudou-se de colecção — cai na
+ * primeira em vez de deixar o básico sem arte nenhuma.
+ */
+export function chooseBasicLandPrintings<T extends BasicLandPrinting & { name: string }>(
+  cards: T[],
+  chosen?: Record<string, string>,
+): Map<string, BasicLandPrinting> {
+  const printings = new Map<string, BasicLandPrinting>();
+
+  for (const [land, options] of groupBasicLandPrintings(cards)) {
+    const wanted = chosen?.[land];
+    printings.set(land, options.find(card => card.scryfallId === wanted) ?? options[0]);
+  }
+
+  return printings;
+}

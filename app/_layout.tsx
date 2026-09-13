@@ -52,6 +52,7 @@ export default function RootLayout() {
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="deck/[id]" />
         <Stack.Screen name="opponent/[id]" />
+        <Stack.Screen name="basic-lands" />
 
         {/* Modais — sobem desde baixo */}
         <Stack.Screen
