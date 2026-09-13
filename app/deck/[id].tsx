@@ -278,7 +278,7 @@ function CardRow({ card, view, onOpen }: { card: DeckCard; view: DeckView; onOpe
       >
         <Text style={cardList.quantity}>{card.quantity}×</Text>
         <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
-        <SetSymbol setCode={card.setCode} size={12} />
+        <SetSymbol setCode={card.setCode} rarity={card.rarity} size={12} />
         <ManaCost cost={card.manaCost} size={13} />
       </Pressable>
     );
@@ -292,7 +292,7 @@ function CardRow({ card, view, onOpen }: { card: DeckCard; view: DeckView; onOpe
       <CardArtThumb url={card.artCropUrl} width={ART_WIDTH} />
       <View style={cardList.artText}>
         <View style={cardList.artNameRow}>
-          <SetSymbol setCode={card.setCode} size={13} />
+          <SetSymbol setCode={card.setCode} rarity={card.rarity} size={14} />
           <Text style={cardList.artName} numberOfLines={1}>{card.name}</Text>
         </View>
         <ManaCost cost={card.manaCost} size={14} />
@@ -454,48 +454,21 @@ export default function DeckDetailScreen() {
           </View>
         </View>
 
-        {/* Desempenho */}
-        <View style={stats.bar}>
-          <View style={stats.cell}>
-            <Text style={stats.record}>
-              {performance.wins} – {performance.losses} – {performance.draws}
-            </Text>
-            <Text style={stats.label}>W – L – D</Text>
-          </View>
-          <View style={stats.divider} />
-          <View style={stats.cell}>
-            <Text style={stats.big}>{performance.winRate}%</Text>
-            <Text style={stats.label}>Win Rate</Text>
-          </View>
-          <View style={stats.divider} />
-          <View style={stats.cell}>
-            <Text style={stats.big}>{performance.events}</Text>
-            <Text style={stats.label}>Events</Text>
-          </View>
-        </View>
+        {/*
+          A ordem serve o uso, e não a hierarquia de dados.
 
-        {performance.events === 0 && (
-          <Text style={styles.hint}>
-            Not played yet. Link it to an event from that event's screen.
-          </Text>
-        )}
-
-        {/* Eventos jogados com este deck */}
-        {playedIn.length > 0 && (
-          <Section label="Played in">
-            {playedIn.map(event => (
-              <Pressable
-                key={event.id}
-                style={({ pressed }) => [played.row, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={played.name} numberOfLines={1}>{event.name}</Text>
-                  <Text style={played.date}>{event.date}{event.rank ? ` · ${event.rank}` : ''}</Text>
-                </View>
-                <Feather name="chevron-right" size={14} color={colors.textDim} />
-              </Pressable>
-            ))}
+          Em Sealed e Draft o deck joga um torneio só, portanto o win rate dele é **o mesmo** do
+          evento — mostrá-lo primeiro era repetir uma coisa que já se sabia, no sítio mais nobre do
+          écran. O que se vem cá ver é a lista; a análise vem a seguir porque é sobre a lista; e o
+          desempenho fica no fim, para os poucos decks que se jogam várias vezes.
+        */}
+        {/* Lista de cartas */}
+        {deck.cards && deck.cards.length > 0 && (
+          <Section
+            label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}
+            right={<ViewToggle value={view} onChange={setView} />}
+          >
+            <CardList cards={deck.cards} view={view} />
           </Section>
         )}
 
@@ -542,19 +515,54 @@ export default function DeckDetailScreen() {
         ) : (
           <Section label="Decklist">
             <Text style={styles.hint}>
-              No cards yet. Card search arrives in Phase 3 — until then this deck still tracks its
-              record across events.
+              No cards yet. Add them in the editor — by search, by name, or from a photo of the
+              deck. Even without a list, this deck still tracks its record across events.
             </Text>
           </Section>
         )}
 
-        {/* Lista de cartas */}
-        {deck.cards && deck.cards.length > 0 && (
-          <Section
-            label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}
-            right={<ViewToggle value={view} onChange={setView} />}
-          >
-            <CardList cards={deck.cards} view={view} />
+        {/* Desempenho */}
+        <View style={stats.bar}>
+          <View style={stats.cell}>
+            <Text style={stats.record}>
+              {performance.wins} – {performance.losses} – {performance.draws}
+            </Text>
+            <Text style={stats.label}>W – L – D</Text>
+          </View>
+          <View style={stats.divider} />
+          <View style={stats.cell}>
+            <Text style={stats.big}>{performance.winRate}%</Text>
+            <Text style={stats.label}>Win Rate</Text>
+          </View>
+          <View style={stats.divider} />
+          <View style={stats.cell}>
+            <Text style={stats.big}>{performance.events}</Text>
+            <Text style={stats.label}>Events</Text>
+          </View>
+        </View>
+
+        {performance.events === 0 && (
+          <Text style={styles.hint}>
+            Not played yet. Link it to an event from that event's screen.
+          </Text>
+        )}
+
+        {/* Eventos jogados com este deck */}
+        {playedIn.length > 0 && (
+          <Section label="Played in">
+            {playedIn.map(event => (
+              <Pressable
+                key={event.id}
+                style={({ pressed }) => [played.row, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={played.name} numberOfLines={1}>{event.name}</Text>
+                  <Text style={played.date}>{event.date}{event.rank ? ` · ${event.rank}` : ''}</Text>
+                </View>
+                <Feather name="chevron-right" size={14} color={colors.textDim} />
+              </Pressable>
+            ))}
           </Section>
         )}
 

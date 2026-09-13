@@ -102,6 +102,7 @@ function serializeDeckCard(card: DeckCard) {
     board: card.board === 'side' ? 'side' : undefined,
     scryfallId: trimmed(card.scryfallId),
     setCode: trimmed(card.setCode)?.toLowerCase(),
+    rarity: card.rarity,
     manaCost: trimmed(card.manaCost),
     cmc: card.cmc,
     typeLine: trimmed(card.typeLine),

@@ -97,6 +97,9 @@ export type DeckBoard = 'main' | 'side';
  * não mudam, e copiá-los deixa o Deck Analyser funcionar sem rede (regra 3). O que muda com o tempo
  * são os preços, e esses ficam de fora — Fase 4.
  */
+/** As raridades da Scryfall. `special` e `bonus` existem em produtos fora do normal. */
+export type CardRarity = 'common' | 'uncommon' | 'rare' | 'mythic' | 'special' | 'bonus';
+
 export interface DeckCard {
   name: string;
   quantity: number;
@@ -104,6 +107,8 @@ export interface DeckCard {
   scryfallId?: string;
   /** Código do set da impressão. Dá o ícone ao lado do nome na decklist. */
   setCode?: string;
+  /** Raridade da impressão. É ela que colore o símbolo do set. */
+  rarity?: CardRarity;
   manaCost?: string;
   cmc?: number;
   typeLine?: string;

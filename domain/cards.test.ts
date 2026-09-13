@@ -177,8 +177,9 @@ describe('toDeckCard', () => {
       quantity: 4,
       board: undefined,
       scryfallId: card.scryfallId,
-      // O set vem junto: é ele que dá o ícone ao lado do nome na decklist.
+      // O set e a raridade vêm juntos: um dá o ícone ao lado do nome, a outra a cor dele.
       setCode: card.setCode,
+      rarity: card.rarity,
       manaCost: '{R}',
       cmc: 1,
       typeLine: 'Instant',
@@ -280,6 +281,7 @@ describe('completar cartas com impressão já escolhida', () => {
   const arrow: ScryfallCard = {
     scryfallId: 'arrow-1',
     name: 'The Black Arrow',
+    rarity: 'rare',
     manaCost: '{3}',
     cmc: 3,
     typeLine: 'Artifact — Equipment',
@@ -296,7 +298,7 @@ describe('completar cartas com impressão já escolhida', () => {
 
   it('uma carta completa não é perguntada outra vez', () => {
     const lista: DeckCard[] = [
-      { name: 'The Black Arrow', quantity: 1, scryfallId: 'arrow-1', setCode: 'ltr', typeLine: 'Artifact' },
+      { name: 'The Black Arrow', quantity: 1, scryfallId: 'arrow-1', setCode: 'ltr', typeLine: 'Artifact', rarity: 'rare' },
     ];
     expect(printingsToRefresh(lista)).toEqual([]);
   });
@@ -310,5 +312,26 @@ describe('completar cartas com impressão já escolhida', () => {
     const [card] = completeFromPrintings(lista, byId);
 
     expect(card).toMatchObject({ scryfallId: 'arrow-1', setCode: 'ltr', quantity: 2 });
+  });
+});
+
+describe('raridade', () => {
+  it('vem da Scryfall e chega à linha do deck', () => {
+    const card = normalizeCard(rawCard({ rarity: 'mythic' }))!;
+    expect(card.rarity).toBe('mythic');
+    expect(toDeckCard(card, 1).rarity).toBe('mythic');
+  });
+
+  it('uma raridade desconhecida fica de fora em vez de chumbar o ficheiro', () => {
+    // O schema tem uma lista fechada. Gravar "lendária" fazia o `npm run validate` recusar o deck.
+    expect(normalizeCard(rawCard({ rarity: 'lendária' }))!.rarity).toBeUndefined();
+    expect(normalizeCard(rawCard({ rarity: undefined }))!.rarity).toBeUndefined();
+  });
+
+  it('uma carta sem raridade conta como por completar', () => {
+    const lista: DeckCard[] = [
+      { name: 'x', quantity: 1, scryfallId: 'id', setCode: 'ltr', typeLine: 'Instant' },
+    ];
+    expect(printingsToRefresh(lista)).toEqual(['id']);
   });
 });

@@ -12,7 +12,7 @@
  * propósito — ver data/schema/deck.schema.json. Os dados de uma impressão não mudam, e copiá-los
  * deixa o Deck Analyser funcionar numa loja sem rede, que é a regra 3 do projecto.
  */
-import type { DeckBoard, DeckCard, ManaColor } from '../types';
+import type { CardRarity, DeckBoard, DeckCard, ManaColor } from '../types';
 
 /** As cinco cores, pela ordem WUBRG. A mesma ordem de `domain/deck.ts` e do schema. */
 const MANA_COLORS: readonly ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
@@ -34,6 +34,8 @@ export interface ScryfallCard {
   colors?: ManaColor[];
   /** Código do set, minúsculas. Serve para distinguir impressões na lista de resultados. */
   setCode?: string;
+  /** Raridade, para colorir o símbolo do set. */
+  rarity?: CardRarity;
   collectorNumber?: string;
   /** Imagem pequena, para a lista de resultados. Não vai para o ficheiro do deck. */
   imageUrl?: string;
@@ -94,6 +96,7 @@ interface RawCard {
   type_line?: unknown;
   colors?: unknown;
   set?: unknown;
+  rarity?: unknown;
   collector_number?: unknown;
   image_uris?: unknown;
   card_faces?: unknown;
@@ -140,6 +143,14 @@ function artCrop(value: unknown): string | undefined {
  * fora da distribuição de cores, que é exactamente o contrário do que ela é. Por isso as faces são
  * juntas: o custo com ` // ` pelo meio, como a Scryfall o escreve, e as cores em união.
  */
+/** As raridades que o schema aceita. Uma que não conheçamos fica de fora em vez de o chumbar. */
+const RARITIES: CardRarity[] = ['common', 'uncommon', 'rare', 'mythic', 'special', 'bonus'];
+
+function rarityOf(raw: unknown): CardRarity | undefined {
+  const value = typeof raw === 'string' ? raw.toLowerCase() : '';
+  return RARITIES.find(rarity => rarity === value);
+}
+
 export function normalizeCard(raw: unknown): ScryfallCard | null {
   if (!raw || typeof raw !== 'object') return null;
 
@@ -177,6 +188,7 @@ export function normalizeCard(raw: unknown): ScryfallCard | null {
     typeLine,
     colors,
     setCode: text(entry.set)?.toLowerCase(),
+    rarity: rarityOf(entry.rarity),
     collectorNumber: text(entry.collector_number),
     imageUrl: smallImage(entry.image_uris) ?? smallImage(cardFaces[0]?.image_uris),
     // Numa carta de duas faces, a arte que representa o deck é a da frente.
@@ -226,6 +238,7 @@ export function toDeckCard(card: PickedCard, quantity: number, board: DeckBoard 
     ...entry,
     scryfallId: card.scryfallId,
     setCode: card.setCode,
+    rarity: card.rarity,
     manaCost: card.manaCost,
     cmc: card.cmc,
     typeLine: card.typeLine,
@@ -314,7 +327,7 @@ export function printingsToRefresh(cards: DeckCard[]): string[] {
 
   for (const card of cards) {
     if (!card.scryfallId) continue;
-    if (card.setCode && card.typeLine) continue;
+    if (card.setCode && card.typeLine && card.rarity) continue;
     ids.add(card.scryfallId);
   }
 

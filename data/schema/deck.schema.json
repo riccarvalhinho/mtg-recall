@@ -131,6 +131,18 @@
           "type": "string",
           "pattern": "^[a-z0-9]{3,6}$"
         },
+        "rarity": {
+          "description": "Raridade da impressão, como a Scryfall a dá. Colore o símbolo do set na decklist, que é a convenção das cartas a sério — o símbolo é um só, a cor é que diz a raridade.",
+          "type": "string",
+          "enum": [
+            "common",
+            "uncommon",
+            "rare",
+            "mythic",
+            "special",
+            "bonus"
+          ]
+        },
         "manaCost": {
           "description": "Custo de mana em notação Scryfall, ex.: {1}{U}{U}.",
           "type": "string"

@@ -299,10 +299,15 @@ Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que 
 
 **Fase 5, quase fechada.** A decklist do Deck Detail mostra o **recorte da arte** (`artCropUrl`) de
 cada carta — grande e encostada à margem, com o ícone do set ao lado do nome (`SetSymbol`, URL
-construído a partir do `setCode`) e a carta inteira numa sobreposição ao toque (`CardImageOverlay`,
+construído a partir do `setCode`, **colorido pela raridade** — um símbolo só, como nas cartas a
+sério) e a carta inteira numa sobreposição ao toque (`CardImageOverlay`,
 URL construído a partir do `scryfallId`) —, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
 `CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
 com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
+
+**A ordem do Deck Detail serve o uso:** a decklist primeiro, a análise a seguir (é sobre a lista), e
+o desempenho no fim. Em Sealed e Draft o deck joga um torneio só e o win rate dele é o mesmo do
+evento — pô-lo no topo era repetir no sítio mais nobre uma coisa já sabida.
 
 As **miniaturas** estão ligadas ponta a ponta: `domain/thumbnails.ts` decide a arte de um deck ou de
 um evento a partir da própria decklist (o ficheiro guarda um `scryfallId`, não um URL),
