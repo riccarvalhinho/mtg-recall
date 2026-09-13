@@ -344,7 +344,9 @@ export default function MatchRegistrationScreen() {
   const derivedResult = resultFromGames(games);
   const effectiveResult = derivedResult ?? result;
 
-  const canSave = opponent.trim().length > 0 && effectiveResult !== null && !saving;
+  // O adversário não é exigido: um torneio antigo pode entrar sem se saber contra quem se jogou.
+  // O resultado é — sem ele não há match nenhum a registar.
+  const canSave = effectiveResult !== null && !saving;
 
   // Cicla estado de cor: 0 → 1 → 2 → 0
   function cycleColor(color: ManaColor) {
@@ -407,7 +409,7 @@ export default function MatchRegistrationScreen() {
             disabled={!canSave}
             style={({ pressed }) => [pressed && { opacity: 0.85 }]}
           >
-            {opponent.trim().length > 0 && effectiveResult !== null ? (
+            {effectiveResult !== null ? (
               <LinearGradient
                 colors={[colors.gold, '#A07840']}
                 start={{ x: 0, y: 0 }}
@@ -434,13 +436,13 @@ export default function MatchRegistrationScreen() {
         >
           {/* Nome do adversário */}
           <View style={styles.field}>
-            <Text style={styles.fieldLabel}>Opponent name</Text>
+            <Text style={styles.fieldLabel}>Opponent name (optional)</Text>
             <View style={[styles.inputContainer, opponent.length > 0 && styles.inputFilled]}>
               <TextInput
                 style={styles.input}
                 value={opponent}
                 onChangeText={setOpponent}
-                placeholder="e.g. John Smith"
+                placeholder="e.g. John Smith — or leave blank"
                 placeholderTextColor={colors.textDim}
                 returnKeyType="done"
               />

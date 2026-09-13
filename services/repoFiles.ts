@@ -190,12 +190,15 @@ export function serializeCollection(items: CollectionCard[]): string {
  * vazio.
  */
 export function parseEvent(raw: unknown, namesById: Map<string, string>): Event {
-  const data = raw as Event & { matches?: (Match & { opponentId: string })[] };
+  const data = raw as Event & { matches?: Match[] };
   return {
     ...data,
     matches: (data.matches ?? []).map((match) => ({
       ...match,
-      opponent: namesById.get(match.opponentId) ?? match.opponentId,
+      // Sem `opponentId` não há nome nenhum a resolver: o adversário não foi registado, e é a
+      // interface que decide como o dizer. Inventar aqui um "Unknown" punha-o no ficheiro à
+      // primeira gravação.
+      opponent: match.opponentId ? namesById.get(match.opponentId) ?? match.opponentId : undefined,
     })),
   };
 }

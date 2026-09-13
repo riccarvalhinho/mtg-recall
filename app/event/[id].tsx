@@ -654,7 +654,7 @@ export default function EventDetailScreen() {
             key={match.round}
             match={match}
             onPress={() => goToMatchEdit(match.round)}
-            onLongPress={() => setDeleteMatchModal({ round: match.round, opponent: match.opponent })}
+            onLongPress={() => setDeleteMatchModal({ round: match.round, opponent: match.opponent ?? 'an unrecorded opponent' })}
           />
         ))}
 

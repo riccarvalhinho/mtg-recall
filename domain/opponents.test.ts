@@ -342,3 +342,41 @@ describe('pruneOpponents', () => {
     expect(pruneOpponents([ana, carla], events)).toEqual([ana, carla]);
   });
 });
+
+describe('matches sem adversário registado', () => {
+  // Torneios antigos, carregados de memória: o resultado sabe-se, o adversário não.
+  function anonimo(id: string): Event {
+    return {
+      id,
+      name: id,
+      type: 'Modern',
+      date: '2024-05-01',
+      status: 'completed',
+      matches: [
+        { round: 1, opponentColors: { main: [], splash: [] }, result: 'W' },
+        { round: 2, opponentColors: { main: [], splash: [] }, result: 'L' },
+      ],
+    };
+  }
+
+  const ana: Opponent = { id: 'ana', name: 'Ana' };
+
+  it('não somam a ninguém', () => {
+    // É o ponto todo: sem isto, "Unknown" seria a pessoa mais enfrentada de sempre.
+    const ranking = rankOpponents([ana], [anonimo('e')]);
+    expect(ranking.every(record => record.played === 0)).toBe(true);
+  });
+
+  it('não criam adversário nenhum — a lista é a taxonomia, e ela não cresceu', () => {
+    expect(rankOpponents([], [anonimo('e')])).toEqual([]);
+  });
+
+  it('não inventam uma pessoa no head-to-head', () => {
+    expect(headToHead('ana', [anonimo('e')])).toEqual([]);
+  });
+
+  it('não seguram ninguém na taxonomia', () => {
+    // Se um match sem adversário contasse como referência, `pruneOpponents` nunca limparia nada.
+    expect(pruneOpponents([ana], [anonimo('e')])).toEqual([]);
+  });
+});

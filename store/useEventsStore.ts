@@ -172,8 +172,15 @@ async function persistEvent(event: Event, message: string): Promise<void> {
 function resolveOpponent(
   known: Opponent[],
   rawName: string,
-): { opponentId: string; displayName: string; opponents: Opponent[]; isNew: boolean } {
+): { opponentId?: string; displayName?: string; opponents: Opponent[]; isNew: boolean } {
   const name = rawName.trim();
+
+  // Sem nome não há adversário nenhum a resolver, e **não se inventa um**. Um torneio antigo
+  // carregado de memória pode não ter adversários de que alguém se lembre; pôr lá "Unknown" criava
+  // uma pessoa na taxonomia que depois apareceria nas Stats como a mais enfrentada de todas — uma
+  // conclusão falsa a partir de um campo vazio. Ausente é ausente.
+  if (!name) return { opponentId: undefined, displayName: undefined, opponents: known, isNew: false };
+
   const opponentId = slugify(name) || 'desconhecido';
   const existing = known.find(opponent => opponent.id === opponentId);
 

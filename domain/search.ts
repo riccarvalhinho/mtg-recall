@@ -24,7 +24,7 @@ function normalizeText(text: string): string {
  * procurar por `joao-ferreira` não era o que ninguém escreveria.
  */
 function haystack(event: Event): string {
-  const parts = [event.name, event.location ?? '', ...event.matches.map(match => match.opponent)];
+  const parts = [event.name, event.location ?? '', ...event.matches.map(match => match.opponent ?? '')];
   return normalizeText(parts.join(' '));
 }
 

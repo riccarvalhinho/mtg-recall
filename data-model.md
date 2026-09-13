@@ -101,12 +101,21 @@ Dentro do array `matches` do evento.
 | Campo | Obrigatório | Notas |
 |---|---|---|
 | `round` | sim | Inteiro ≥ 1, único dentro do evento, sem saltos |
-| `opponentId` | sim | Referência a `data/taxonomies/opponents.json` |
+| `opponentId` | não | Referência a `data/taxonomies/opponents.json`. **Ausente = adversário não registado** — ver abaixo |
 | `opponentColors` | sim | `{ "main": [...], "splash": [...] }`, cores em `W U B R G` |
 | `result` | sim | `W`, `L` ou `D` |
 | `wentFirst` | não | `true` se fui eu a jogar primeiro na ronda |
 | `games` | não | Registo game a game — permite saber que um 2-1 foi 2-1. Sem `D` num game |
 | `notes` | não | |
+
+**Um match pode não ter adversário.** Carregar torneios antigos de memória é um caso real: sabe-se
+o resultado, não se sabe contra quem. Nesses, `opponentId` fica ausente.
+
+Ausente **não é** uma pessoa chamada "Unknown", e a diferença não é de estilo. Um adversário falso
+na taxonomia entraria nas estatísticas por adversário e, ao fim de meia dúzia de torneios antigos,
+seria o mais enfrentado de todos e provavelmente a nemesis — uma conclusão inventada a partir de um
+campo vazio. Sem id, o match conta na mesma para o registo do evento, para o win rate e para o
+desempenho do deck; só não conta para as contas sobre pessoas.
 
 Quando há `games`, o `result` do match tem de ser coerente com eles: dois `W` dão `W`, dois `L` dão
 `L`, um a um com um game não jogado dá `D`. A validação verifica isso — um match a dizer `W` com dois

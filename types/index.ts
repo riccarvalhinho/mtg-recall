@@ -40,10 +40,16 @@ export interface Game {
 export interface Match {
   /** Identifica o match dentro do evento. Sequencial a partir de 1 — não há ids. */
   round: number;
-  /** Referência a data/taxonomies/opponents.json. É isto que vai para o ficheiro. */
-  opponentId: string;
+  /**
+   * Referência a data/taxonomies/opponents.json. É isto que vai para o ficheiro.
+   *
+   * Ausente quando não se registou adversário — um torneio antigo carregado de memória. Ausente é
+   * diferente de uma pessoa chamada "Unknown": sem id, o match não entra nas contas por adversário,
+   * que é o que impede a lista de ser encabeçada por alguém que não existe.
+   */
+  opponentId?: string;
   /** Nome resolvido a partir da taxonomia, para a interface. Nunca é guardado no evento. */
-  opponent: string;
+  opponent?: string;
   opponentColors: ManaSelection;
   result: MatchResult;
   /** true se fui eu a jogar primeiro. */

@@ -55,8 +55,13 @@ export function MatchCard({ match, onPress, onLongPress }: MatchCardProps) {
             <Text style={styles.playDraw}>{match.wentFirst ? '  play' : '  draw'}</Text>
           )}
         </Text>
-        <Text style={styles.opponent} numberOfLines={1}>
-          {match.opponent}
+        {/* Sem adversário registado a linha não pode ficar vazia — e dizer que não se sabe é
+            honesto, ao passo que escrever um nome falso não era. */}
+        <Text
+          style={[styles.opponent, !match.opponent && styles.opponentUnknown]}
+          numberOfLines={1}
+        >
+          {match.opponent ?? 'Opponent not recorded'}
         </Text>
       </View>
 
@@ -123,6 +128,10 @@ const styles = StyleSheet.create({
     color: colors.gold,
   },
   playDraw: {
+    fontFamily: fonts.bodyItal,
+    color: colors.textDim,
+  },
+  opponentUnknown: {
     fontFamily: fonts.bodyItal,
     color: colors.textDim,
   },

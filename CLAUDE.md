@@ -115,7 +115,10 @@ project-overview.md         estado actual detalhado
 ## Os dados
 
 Um evento = um ficheiro `data/events/<AAAA-MM-DD-slug>.json`, com os matches lá dentro. Os
-adversários são referências para `data/taxonomies/opponents.json`. Nada de campos calculados nos
+adversários são referências para `data/taxonomies/opponents.json`, e **a referência é opcional**:
+um torneio antigo carregado de memória pode não ter adversário nenhum de que alguém se lembre.
+Ausente é ausente — nunca uma pessoa chamada "Unknown", que apareceria nas Stats como a mais
+enfrentada de todas. O deck do evento é opcional pela mesma razão. Nada de campos calculados nos
 ficheiros — win rate e pontos calculam-se em runtime. **Ler `data-model.md` antes de mexer em
 qualquer coisa relacionada com dados**, e alterar o schema antes de alterar o código.
 
