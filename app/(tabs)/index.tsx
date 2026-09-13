@@ -2,17 +2,19 @@
 // Spec: design/handoff.md § 3
 
 import { useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Circle, Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { ManaPip } from '../../components/ManaPip';
-import { EventCard } from '../../components/EventCard';
-import { ManaColor, Event, isActive } from '../../types';
+import { TypeBadge } from '../../components/TypeBadge';
+import { ManaColor, Event, calcEventStats, isActive } from '../../types';
+import { formatDate } from '../../domain/dates';
 import { eventThumbnailUrl } from '../../domain/thumbnails';
 import { useEventsStore } from '../../store/useEventsStore';
 
@@ -73,9 +75,32 @@ function ScholarOrnament({ size = 140 }: { size?: number }) {
 
 // ─── Secção: Evento Activo ────────────────────────────────────────────────────
 
+/**
+ * O evento a decorrer, em grande.
+ *
+ * **É o herói da Home de propósito.** Na esmagadora maioria dos dias há zero ou um torneio a
+ * decorrer, nunca uma lista — e quando há um, é a única coisa que interessa: entrou-se na app entre
+ * rondas, de pé, para registar um resultado. Um cartão da altura de uma linha, no meio de outros
+ * elementos do mesmo tamanho, obrigava a procurar o que devia saltar à vista.
+ *
+ * Quando não há torneio nenhum isto não aparece, e o histórico — que estava por baixo — sobe
+ * sozinho para o topo. Não é preciso decidir nada: o espaço vai para quem o ocupa.
+ *
+ * A altura é uma **fracção do ecrã** e não um número fixo: o que se quer é "metade da página", e
+ * isso significa coisas diferentes num telemóvel pequeno e num grande. Os limites existem para não
+ * cair em nenhum dos dois extremos ridículos.
+ */
 function ActiveEventSection({ event }: { event: Event }) {
   const decks = useEventsStore(s => s.decks);
+  const { height } = useWindowDimensions();
+
   const round = event.matches.length + 1;
+  const stats = calcEventStats(event);
+  const played = stats.wins + stats.losses + stats.draws;
+  const art = eventThumbnailUrl(event, decks);
+  const deckColors = event.deckColors;
+
+  const cardHeight = Math.round(Math.min(Math.max(height * 0.52, 340), 520));
 
   function goToMatch() {
     router.push({
@@ -95,28 +120,111 @@ function ActiveEventSection({ event }: { event: Event }) {
         <Text style={active.label}>Active Event</Text>
       </View>
 
-      <EventCard
-        event={event}
-        artUrl={eventThumbnailUrl(event, decks)}
-        onPress={() => router.push(`/event/${event.id}`)}
-      />
-
-      {/* Botão Adicionar Match */}
       <Pressable
-        style={({ pressed }) => [active.addBtn, pressed && { opacity: 0.8 }]}
-        onPress={goToMatch}
+        onPress={() => router.push(`/event/${event.id}`)}
+        style={({ pressed }) => [active.card, { height: cardHeight }, pressed && { opacity: 0.88 }]}
       >
+        {art ? (
+          <Image
+            source={{ uri: art }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={140}
+            cachePolicy="memory-disk"
+          />
+        ) : (
+          // Um evento sem deck ligado não tem arte. Fica a superfície da app com o emblema, que se
+          // reconhece como "ainda sem deck" e não como uma imagem que falhou a carregar.
+          <View style={active.noArt}>
+            <Feather name="award" size={34} color={colors.goldDim} />
+          </View>
+        )}
+
+        {/*
+          Dois véus e não um: o de cima para os badges se lerem sobre uma arte clara, o de baixo
+          para o nome e o resultado. O meio fica limpo — é onde a arte se vê.
+        */}
         <LinearGradient
-          colors={[colors.gold + '33', colors.gold + '11']}
-          style={active.addBtnCircle}
-        >
-          <Text style={active.addBtnPlus}>+</Text>
-        </LinearGradient>
-        <View>
-          <Text style={active.addBtnText}>Add Match</Text>
-          <Text style={active.addBtnSub}>Round {round} · {event.name}</Text>
+          colors={['rgba(10,8,5,0.62)', 'transparent', 'rgba(10,8,5,0.70)', 'rgba(10,8,5,0.97)']}
+          locations={[0, 0.28, 0.6, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        <View style={active.top}>
+          <View style={active.liveBadge}>
+            <View style={active.liveDot} />
+            <Text style={active.liveText}>Live</Text>
+          </View>
+          <TypeBadge type={event.type} />
         </View>
-        <Feather name="chevron-right" size={16} color={colors.textDim} style={{ marginLeft: 'auto' }} />
+
+        <View style={active.bottom}>
+          <Text style={active.name} numberOfLines={2}>{event.name}</Text>
+
+          <View style={active.meta}>
+            {deckColors && (
+              <>
+                {deckColors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+                {deckColors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+                <Text style={active.metaDot}>·</Text>
+              </>
+            )}
+            <Feather name="calendar" size={11} color={colors.textDim} />
+            <Text style={active.metaText}>{formatDate(event.date)}</Text>
+          </View>
+
+          {/*
+            O resultado em grande. É o número que se quer saber ao pegar no telemóvel entre rondas,
+            e a Home é onde se pega — não vale a pena obrigar a abrir o evento para o ver.
+          */}
+          <View style={active.scoreRow}>
+            <View style={active.score}>
+              <Text style={[active.scoreValue, { color: colors.win }]}>{stats.wins}</Text>
+              <Text style={active.scoreSep}>–</Text>
+              <Text style={[active.scoreValue, { color: colors.loss }]}>{stats.losses}</Text>
+              {stats.draws > 0 && (
+                <>
+                  <Text style={active.scoreSep}>–</Text>
+                  <Text style={[active.scoreValue, { color: colors.draw }]}>{stats.draws}</Text>
+                </>
+              )}
+            </View>
+
+            <View style={active.scoreDivider} />
+
+            <View style={active.scoreCell}>
+              {/* Zero rondas jogadas não é 0% — é ainda nada. Um 0% aqui lia-se como derrota. */}
+              <Text style={active.scoreSmall}>{played > 0 ? `${stats.winRate}%` : '—'}</Text>
+              <Text style={active.scoreLabel}>win rate</Text>
+            </View>
+
+            <View style={active.scoreDivider} />
+
+            <View style={active.scoreCell}>
+              <Text style={active.scoreSmall}>{stats.points}</Text>
+              <Text style={active.scoreLabel}>points</Text>
+            </View>
+          </View>
+
+          {/*
+            A acção vive **dentro** do cartão. Era uma linha à parte por baixo, do tamanho de tudo o
+            resto; aqui está onde já se está a olhar, e o cartão passa a valer sozinho.
+          */}
+          <Pressable
+            onPress={goToMatch}
+            style={({ pressed }) => [active.action, pressed && { opacity: 0.85 }]}
+          >
+            <Text style={active.actionPlus}>+</Text>
+            <Text style={active.actionText}>Register round {round}</Text>
+            <Feather
+              name="chevron-right"
+              size={16}
+              color={colors.bg}
+              style={{ marginLeft: 'auto' }}
+            />
+          </Pressable>
+        </View>
       </Pressable>
     </View>
   );
@@ -142,43 +250,139 @@ const active = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  card: {
     marginHorizontal: 16,
-    marginTop: 8,
-    padding: 14,
-    gap: 12,
-    backgroundColor: colors.bgCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  addBtnCircle: {
-    width: 32,
-    height: 32,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.gold + '55',
+    overflow: 'hidden',
+    backgroundColor: colors.bgCard,
+    justifyContent: 'space-between',
+  },
+  noArt: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.bgCard,
   },
-  addBtnPlus: {
-    color: colors.gold,
-    fontSize: 18,
-    lineHeight: 22,
-    includeFontPadding: false,
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
   },
-  addBtnText: {
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: colors.gold + '26',
+    borderWidth: 1,
+    borderColor: colors.gold + '77',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.gold,
+  },
+  liveText: {
     fontFamily: fonts.displaySemi,
-    fontSize: 14,
+    fontSize: 11,
+    color: colors.gold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  bottom: {
+    padding: 16,
+    gap: 10,
+  },
+  name: {
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 32,
     color: colors.textPrim,
   },
-  addBtnSub: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 11,
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  metaDot: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: colors.textDim,
+    marginHorizontal: 2,
+  },
+  metaText: {
+    fontFamily: fonts.body,
+    fontSize: 12,
     color: colors.textSec,
-    marginTop: 1,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: 2,
+  },
+  score: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  scoreValue: {
+    fontFamily: fonts.display,
+    fontSize: 30,
+    lineHeight: 34,
+  },
+  scoreSep: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.textDim,
+  },
+  scoreDivider: {
+    width: 1,
+    height: 26,
+    backgroundColor: colors.border,
+  },
+  scoreCell: {
+    alignItems: 'flex-start',
+  },
+  scoreSmall: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 17,
+    color: colors.textPrim,
+  },
+  scoreLabel: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.textSec,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: colors.gold,
+  },
+  actionPlus: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 18,
+    lineHeight: 20,
+    color: colors.bg,
+    includeFontPadding: false,
+  },
+  actionText: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.bg,
   },
 });
 
@@ -213,7 +417,8 @@ const statsBlock = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 4,
   },
   cell: {
     flex: 1,
@@ -383,10 +588,18 @@ export default function HomeScreen() {
       {/* Variante "com dados" */}
       {hasEvents && (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}>
+          {/*
+            A ordem depende de haver torneio a decorrer, e é a única coisa nesta Home que muda.
+
+            Com torneio, ele vem primeiro: entrou-se na app entre rondas e é isso que se quer ver.
+            O total de eventos e o win rate de sempre continuam a ler-se igual de bem logo abaixo —
+            são números de referência, não são o que trouxe ninguém aqui a meio de um sábado.
+
+            Sem torneio, o bloco de números sobe para o topo e o histórico vem a seguir, que é o que
+            resta para ver.
+          */}
+          {activeEvent && <ActiveEventSection event={activeEvent} />}
           <StatsBlock eventCount={events.length} winRate={overallWR} />
-          {activeEvent && (
-            <ActiveEventSection event={activeEvent} />
-          )}
           <HistoryEntryPoint />
           <CollectionEntryPoint />
         </ScrollView>

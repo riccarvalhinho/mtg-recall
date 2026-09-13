@@ -51,8 +51,9 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `SetSelector`, `CardSearchModal` — lista de sets e procura de cartas da Scryfall, com cache
 
 ### Écrans
-- [x] **Home** — empty state (com entrada para a colecção) e variante com dados (StatsBlock +
-      evento activo, já com o recorte da arte)
+- [x] **Home** — empty state (com entrada para a colecção) e variante com dados: o **evento activo
+      em grande**, 52% da altura do ecrã com a arte a encher, o resultado e o botão de registar a
+      ronda lá dentro, seguido do StatsBlock e do histórico
 - [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
       nome do evento, local e adversário (`domain/search.ts`)
 - [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento

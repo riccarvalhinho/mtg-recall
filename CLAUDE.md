@@ -244,6 +244,13 @@ Draft existiram para um torneio só (`isEventDeck`, em `domain/deck.ts`). Contin
 registo, mas um Limited por mês soterrava os decks a sério ao fim de um ano. A regra é o formato e
 mais nada: não há campo novo no ficheiro.
 
+**A Home é o evento activo.** Quando há um torneio a decorrer, ele é um cartão-herói com a arte a
+encher **52% da altura do ecrã**, com o resultado em grande e o botão de registar a ronda lá dentro
+— e vem **antes** do bloco de números. Na esmagadora maioria dos dias há zero ou um evento activo,
+nunca uma lista, e quando há um entrou-se na app entre rondas para registar um resultado. Sem evento
+activo a secção não existe e o resto sobe sozinho: não há decisão a tomar. Spec em
+`design/handoff.md` §3.3.
+
 **A colecção não é um tab de propósito:** cinco tabs num telemóvel já é o limite, e a colecção
 consulta-se de vez em quando, não entre rondas.
 

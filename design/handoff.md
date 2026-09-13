@@ -208,8 +208,8 @@ SafeAreaView (bg: #130F0A)
 │   ├── Left: label "Scholar's Archive" (goldDim, italic 11px) + H1 "Home" (Playfair 700, 30px, textPrim)
 │   └── Right: Button "Novo Evento" (gold gradient pill)
 ├── ScrollView
+│   ├── [Se evento activo] SecçãoEventoActivo (ver 3.3)   ← primeiro, e é o herói
 │   ├── StatsBlock (ver 3.2)
-│   ├── [Se evento activo] SecçãoEventoActivo (ver 3.3)
 │   ├── OrnamentDivider
 │   └── SecçãoEventosRecentes (ver 3.4)
 └── TabBar (Home activo)
@@ -235,14 +235,35 @@ Cada célula do grid: `bg: colors.bg, borderRadius 8, padding 8×10`.
 
 ### 3.3 Secção Evento Activo
 
+**É o herói da Home.** Não é um cartão numa lista: ocupa **52% da altura do ecrã** (mínimo 340,
+máximo 520), com a arte do evento a encher. A razão é o uso — na esmagadora maioria dos dias há zero
+ou um torneio a decorrer, nunca uma lista, e quando há um entra-se na app entre rondas, de pé, para
+registar um resultado. Um cartão da altura de uma linha obrigava a procurar o que devia saltar à
+vista.
+
+Quando há evento activo vem **antes** do StatsBlock. O total de eventos e o win rate de sempre são
+números de referência e lêem-se igual de bem por baixo; não são o que trouxe ninguém à app a meio de
+um sábado. Sem evento activo a secção não existe e o StatsBlock sobe sozinho ao topo — não há
+decisão a tomar, o espaço vai para quem o ocupa.
+
 ```
 Label "Evento Activo" (gold, italic uppercase 11px) com accent bar (3×14 gold gradient)
-EventCard (o evento com active: true)
-Button "Adicionar Match"
-  ├── Ícone círculo gold (32×32, gold+18 bg, border gold+55)
-  ├── Texto "Adicionar Match" (Playfair 600, 14px, textPrim)
-  └── Subtítulo "Ronda N · [Nome Evento]" (EB Garamond italic 11px, textSec)
+Card (altura 52% do ecrã, borderRadius 16, border gold+55, overflow hidden)
+├── Arte a preencher (expo-image, contentFit cover) — sem deck ligado: emblema "award" sobre bgCard
+├── Véu: gradiente vertical em quatro paragens (0.62 → transparente → 0.70 → 0.97)
+│     Dois véus e não um: em cima para os badges, em baixo para o texto. O meio fica limpo.
+├── Topo: badge "Live" (ponto gold + texto) à esquerda, TypeBadge à direita
+└── Base
+    ├── Nome do evento (Playfair 700, 26px, 2 linhas no máximo)
+    ├── Meta: mana pips + data
+    ├── Score row: W–L–D (Playfair 700, 30px, cores win/loss/draw) | win rate | pontos
+    │     Zero rondas jogadas mostra "—" e não "0%" — um 0% aqui lia-se como derrota.
+    └── Botão "Register round N" (fundo gold sólido, texto colors.bg) — **dentro** do cartão
 ```
+
+Tocar na arte abre o Event Detail; tocar no botão vai directo ao registo da ronda. O botão vive
+dentro do cartão de propósito: era uma linha à parte por baixo, do tamanho de todos os outros
+elementos, e assim está onde já se está a olhar.
 
 ### 3.4 Secção Eventos Recentes
 
