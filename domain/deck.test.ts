@@ -11,6 +11,8 @@ import {
   primaryType,
   rankDecks,
   typeCounts,
+  isEventDeck,
+  splitByPurpose,
 } from './deck';
 import type { Deck, DeckCard, Event, Match } from '../types';
 
@@ -332,5 +334,39 @@ describe('groupByType', () => {
     const comSide = [...cards, card({ name: 'Side', quantity: 3, typeLine: 'Instant', board: 'side' })];
     expect(groupByType(comSide, 'side')).toHaveLength(1);
     expect(groupByType(comSide, 'side')[0].count).toBe(3);
+  });
+});
+
+describe('isEventDeck / splitByPurpose', () => {
+  function deckOf(id: string, format?: Deck['format']): Deck {
+    return { id, name: id, colors: { main: [], splash: [] }, format };
+  }
+
+  it('Sealed e Draft são decks de um evento só', () => {
+    expect(isEventDeck(deckOf('a', 'Sealed'))).toBe(true);
+    expect(isEventDeck(deckOf('b', 'Draft'))).toBe(true);
+  });
+
+  it('os formatos construídos ficam na colecção', () => {
+    expect(isEventDeck(deckOf('c', 'Modern'))).toBe(false);
+    expect(isEventDeck(deckOf('d', 'Standard'))).toBe(false);
+  });
+
+  it('um deck sem formato fica com os que se guardam', () => {
+    // Quem não diz o formato está a montar um deck seu, não a registar um Sealed de há um ano.
+    expect(isEventDeck(deckOf('e'))).toBe(false);
+  });
+
+  it('separa sem mexer na ordem de cada grupo', () => {
+    const entries = [
+      { deck: deckOf('modern', 'Modern') },
+      { deck: deckOf('sealed1', 'Sealed') },
+      { deck: deckOf('legacy', 'Legacy') },
+      { deck: deckOf('draft1', 'Draft') },
+    ];
+
+    const { kept, oneOff } = splitByPurpose(entries);
+    expect(kept.map(e => e.deck.id)).toEqual(['modern', 'legacy']);
+    expect(oneOff.map(e => e.deck.id)).toEqual(['sealed1', 'draft1']);
   });
 });

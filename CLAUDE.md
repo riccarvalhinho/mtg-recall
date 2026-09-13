@@ -230,7 +230,14 @@ Modals (presentation: 'modal'):
 Params de navegação:
 - `match-registration`: `{ eventId, round, eventName, mode? }` — `mode: 'edit'` corrige a ronda
   indicada em vez de registar uma nova
-- `deck-editor`: `{ deckId? }` — sem `deckId` cria um deck novo
+- `deck-editor`: `{ deckId?, linkToEventId?, presetFormat?, presetName? }` — sem `deckId` cria um
+  deck novo; com `linkToEventId` (vindo do Event Detail) o deck criado fica ligado a esse evento, e
+  os *preset* chegam preenchidos a partir do torneio
+
+**O tab Decks tem duas secções:** os decks que se guardam e, em baixo, os de **Limited** — Sealed e
+Draft existiram para um torneio só (`isEventDeck`, em `domain/deck.ts`). Continuam a valer pelo
+registo, mas um Limited por mês soterrava os decks a sério ao fim de um ano. A regra é o formato e
+mais nada: não há campo novo no ficheiro.
 
 **A colecção não é um tab de propósito:** cinco tabs num telemóvel já é o limite, e a colecção
 consulta-se de vez em quando, não entre rondas.

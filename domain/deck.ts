@@ -324,3 +324,33 @@ export function groupByType(cards: DeckCard[] | undefined, board: DeckBoard = 'm
 export function canAnalyse(deck: Deck): boolean {
   return manaCurve(deck.cards).length > 0 || typeCounts(deck.cards).length > 0;
 }
+
+// ─── Decks que ficam e decks que passam ───────────────────────────────────────
+
+/**
+ * Um deck que existiu para um evento só.
+ *
+ * Em Sealed e Draft o deck constrói-se no torneio com as cartas que saíram das boosters, joga-se
+ * nesse dia e desfaz-se. **Continua a valer a pena guardá-lo** — é dele que sai o registo de como
+ * correu, e a decklist que se fotografou — mas não pertence à mesma lista de um deck de Modern que
+ * se afina durante meses. Um Sealed por mês soterrava os decks a sério ao fim de um ano.
+ *
+ * A regra é o formato e mais nada: não há campo novo no ficheiro, e um deck muda de secção sozinho
+ * se lhe corrigirem o formato.
+ */
+export function isEventDeck(deck: Deck): boolean {
+  return deck.format === 'Sealed' || deck.format === 'Draft';
+}
+
+/**
+ * Separa os decks em dois grupos, preservando a ordem de cada um.
+ *
+ * A ordem que chega é a que interessa (o ranking por desempenho, tipicamente) e não se mexe nela —
+ * só se parte a lista em duas.
+ */
+export function splitByPurpose<T extends { deck: Deck }>(entries: T[]): { kept: T[]; oneOff: T[] } {
+  return {
+    kept: entries.filter(entry => !isEventDeck(entry.deck)),
+    oneOff: entries.filter(entry => isEventDeck(entry.deck)),
+  };
+}

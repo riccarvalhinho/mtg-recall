@@ -200,6 +200,7 @@ function DeckSection({ event }: { event: Event }) {
 
       <DeckPicker
         visible={picking}
+        event={event}
         currentId={event.deckId}
         decks={decks}
         onPick={choose}
@@ -281,14 +282,31 @@ const settings = StyleSheet.create({
   body: { paddingBottom: 4 },
 });
 
-/** Escolher entre os decks que existem. Criar um novo é trabalho do tab Decks, não daqui. */
-function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
+/**
+ * Escolher entre os decks que existem — ou criar um aqui mesmo.
+ *
+ * Criar daqui não é conveniência: em Sealed e Draft o deck **nasce no torneio**, com as cartas que
+ * saíram das boosters, e mandar alguém ao tab Decks a meio de um registo era um beco sem saída
+ * disfarçado de instrução ("cria um lá e ele aparece aqui").
+ *
+ * O editor abre com o formato e o nome do evento já preenchidos, e o deck fica ligado sozinho ao
+ * voltar. É lá que está a procura de cartas e o scan por fotografia.
+ */
+function DeckPicker({ visible, event, currentId, decks, onPick, onCancel }: {
   visible: boolean;
+  event: Event;
   currentId: string | undefined;
   decks: Deck[];
   onPick: (deckId: string | undefined) => void;
   onCancel: () => void;
 }) {
+  function createAndLink() {
+    onCancel();
+    router.push({
+      pathname: '/deck-editor',
+      params: { linkToEventId: event.id, presetFormat: event.type, presetName: event.name },
+    });
+  }
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onCancel}>
       <Pressable style={picker.overlay} onPress={onCancel}>
@@ -297,7 +315,7 @@ function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
 
           {decks.length === 0 ? (
             <Text style={picker.empty}>
-              No decks yet. Create one in the Decks tab and it shows up here.
+              No decks yet — build this event's deck now and it gets linked here.
             </Text>
           ) : (
             <ScrollView style={{ maxHeight: 320 }}>
@@ -321,6 +339,15 @@ function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
             </ScrollView>
           )}
 
+          {/* Sempre visível, e não só na lista vazia: o deck de um Sealed é novo de cada vez. */}
+          <Pressable
+            onPress={createAndLink}
+            style={({ pressed }) => [picker.createRow, pressed && { opacity: 0.7 }]}
+          >
+            <Feather name="plus" size={15} color={colors.gold} />
+            <Text style={picker.createText}>Build a new deck for this event</Text>
+          </Pressable>
+
           <View style={picker.actions}>
             <Pressable style={picker.actionBtn} onPress={onCancel}>
               <Text style={picker.cancelText}>Cancel</Text>
@@ -338,6 +365,17 @@ function DeckPicker({ visible, currentId, decks, onPick, onCancel }: {
 }
 
 const picker = StyleSheet.create({
+  createRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    minHeight: 48,
+    marginTop: 6,
+    paddingHorizontal: 2,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  createText: { fontFamily: fonts.body, fontSize: 14, color: colors.gold },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',

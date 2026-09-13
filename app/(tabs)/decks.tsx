@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { Deck } from '../../types';
-import { DeckPerformance, cardCount, rankDecks } from '../../domain/deck';
+import { DeckPerformance, cardCount, rankDecks, splitByPurpose } from '../../domain/deck';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -168,6 +168,11 @@ const empty = StyleSheet.create({
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
+/** Uma linha da lista: ou um cabeçalho de secção, ou um deck com o seu desempenho. */
+type DeckRowItem =
+  | { kind: 'header'; label: string }
+  | { kind: 'deck'; deck: Deck; performance: DeckPerformance };
+
 export default function DecksScreen() {
   const decks  = useEventsStore(s => s.decks);
   const events = useEventsStore(s => s.events);
@@ -187,6 +192,31 @@ export default function DecksScreen() {
         entry.deck !== undefined,
       );
   }, [decks, events]);
+
+  /**
+   * A lista, em duas secções.
+   *
+   * Os decks de Sealed e Draft existiram para um torneio só e nunca mais se jogam — continuam a
+   * valer pelo registo, mas ao fim de um ano de Limited mensal soterravam os decks a sério. Ficam
+   * em baixo, com o título a dizer porquê. Sem secção vazia: quem nunca jogou Limited não vê
+   * cabeçalho nenhum.
+   */
+  const rows = useMemo((): DeckRowItem[] => {
+    const { kept, oneOff } = splitByPurpose(ranked);
+    const list: DeckRowItem[] = [];
+
+    if (kept.length > 0) {
+      list.push({ kind: 'header', label: `${kept.length} ${kept.length === 1 ? 'deck' : 'decks'} · best first` });
+      list.push(...kept.map((entry): DeckRowItem => ({ ...entry, kind: 'deck' })));
+    }
+
+    if (oneOff.length > 0) {
+      list.push({ kind: 'header', label: `Limited · ${oneOff.length} built for one event` });
+      list.push(...oneOff.map((entry): DeckRowItem => ({ ...entry, kind: 'deck' })));
+    }
+
+    return list;
+  }, [ranked]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -210,25 +240,24 @@ export default function DecksScreen() {
         <EmptyState />
       ) : (
         <FlatList
-          data={ranked}
-          keyExtractor={item => item.deck.id}
+          data={rows}
+          keyExtractor={row => (row.kind === 'header' ? `h-${row.label}` : row.deck.id)}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.list}
-          ListHeaderComponent={
-            <Text style={styles.sectionLabel}>
-              {decks.length === 1 ? '1 deck · best first' : `${decks.length} decks · best first`}
-            </Text>
+          renderItem={({ item: row }) =>
+            row.kind === 'header' ? (
+              <Text style={styles.sectionLabel}>{row.label}</Text>
+            ) : (
+              <DeckRow
+                deck={row.deck}
+                performance={row.performance}
+                onPress={() => router.push({
+                  pathname: '/deck/[id]',
+                  params: { id: row.deck.id },
+                })}
+              />
+            )
           }
-          renderItem={({ item }) => (
-            <DeckRow
-              deck={item.deck}
-              performance={item.performance}
-              onPress={() => router.push({
-                pathname: '/deck/[id]',
-                params: { id: item.deck.id },
-              })}
-            />
-          )}
         />
       )}
     </SafeAreaView>

@@ -125,10 +125,17 @@ const basics = StyleSheet.create({
 });
 
 export default function DeckEditorScreen() {
-  const { deckId } = useLocalSearchParams<{ deckId?: string }>();
+  const { deckId, linkToEventId, presetFormat, presetName } = useLocalSearchParams<{
+    deckId?: string;
+    /** Veio do Event Detail: ao gravar, o deck novo fica ligado a este evento. */
+    linkToEventId?: string;
+    presetFormat?: string;
+    presetName?: string;
+  }>();
 
   const deck = useEventsStore(s => (deckId ? s.decks.find(d => d.id === deckId) : undefined));
   const createDeck = useEventsStore(s => s.createDeck);
+  const setEventDeck = useEventsStore(s => s.setEventDeck);
   const updateDeck = useEventsStore(s => s.updateDeck);
   const deleteDeck = useEventsStore(s => s.deleteDeck);
 
@@ -136,9 +143,13 @@ export default function DeckEditorScreen() {
   // vez de ficar preso num formulário vazio a dizer "Edit Deck"
   const isEdit = deck !== undefined;
 
-  const [name, setName]           = useState(deck?.name ?? '');
+  // Vindo de um evento, o nome e o formato chegam preenchidos: o deck de um Sealed chama-se, na
+  // prática, o nome do torneio, e o formato é o dele. Continua tudo editável.
+  const [name, setName]           = useState(deck?.name ?? presetName ?? '');
   const [colorStates, setColorStates] = useState(manaStatesFrom(deck?.colors));
-  const [format, setFormat]       = useState<EventType | undefined>(deck?.format);
+  const [format, setFormat]       = useState<EventType | undefined>(
+    deck?.format ?? (presetFormat as EventType | undefined),
+  );
   const [archetype, setArchetype] = useState(deck?.archetype ?? '');
   const [notes, setNotes]         = useState(deck?.notes ?? '');
   const [saving, setSaving]       = useState(false);
@@ -192,8 +203,13 @@ export default function DeckEditorScreen() {
       thumbnailCardId,
     };
 
-    if (isEdit && deckId) await updateDeck(deckId, data);
-    else await createDeck(data);
+    if (isEdit && deckId) {
+      await updateDeck(deckId, data);
+    } else {
+      const newId = await createDeck(data);
+      // Criado a partir de um evento: ligar é o que evita ter de voltar ao selector para o escolher.
+      if (linkToEventId) await setEventDeck(linkToEventId, newId);
+    }
 
     setSaving(false);
     router.back();
