@@ -191,10 +191,19 @@ function DeckSection({ event }: { event: Event }) {
         <Feather name="chevron-right" size={16} color={colors.textDim} style={{ opacity: 0.5 }} />
       </Pressable>
 
+      {/*
+        Trocar o deck é raro — em Sealed e Draft ele é feito na hora e o que se faz a seguir é
+        editá-lo, não substituí-lo por outro. Uma linha inteira com texto dava-lhe o destaque de uma
+        acção frequente. Fica um ícone no canto, com área de toque a sério por baixo dele.
+      */}
       {(linked || legacyName) && (
-        <Pressable style={deck.changeRow} onPress={() => setPicking(true)}>
-          <Feather name="repeat" size={13} color={colors.textDim} />
-          <Text style={deck.changeText}>{linked ? 'Change deck' : 'Link to a deck'}</Text>
+        <Pressable
+          onPress={() => setPicking(true)}
+          hitSlop={10}
+          accessibilityLabel={linked ? 'Change deck' : 'Link to a deck'}
+          style={({ pressed }) => [deck.swapBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Feather name="repeat" size={15} color={colors.textDim} />
         </Pressable>
       )}
 
@@ -444,19 +453,14 @@ const deck = StyleSheet.create({
     fontSize: 14,
     color: colors.textDim,
   },
-  changeRow: {
-    flexDirection: 'row',
+  swapBtn: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    height: 44,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  changeText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.textDim,
   },
   card: {
     backgroundColor: colors.bgCard,
