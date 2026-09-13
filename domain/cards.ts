@@ -225,6 +225,7 @@ export function toDeckCard(card: PickedCard, quantity: number, board: DeckBoard 
   return {
     ...entry,
     scryfallId: card.scryfallId,
+    setCode: card.setCode,
     manaCost: card.manaCost,
     cmc: card.cmc,
     typeLine: card.typeLine,
@@ -296,6 +297,48 @@ export function completeFromCatalogue(
       // `board` mantém-se: mudar uma carta do sideboard para o main ao completá-la seria mexer
       // numa decisão do utilizador a pretexto de lhe preencher o tipo.
       ...toDeckCard(match, card.quantity, card.board === 'side' ? 'side' : 'main'),
+      quantity: card.quantity,
+    };
+  });
+}
+
+/**
+ * Uma carta cuja impressão já está escolhida mas a quem falta informação.
+ *
+ * Acontece a quem gravou um deck antes de um campo existir — o `setCode` é o caso: as cartas têm
+ * `scryfallId` e mesmo assim não sabem de que set são. Estas resolvem-se **pelo id** e não pelo
+ * nome, o que garante que volta a mesma impressão e não outra qualquer com o mesmo nome.
+ */
+export function printingsToRefresh(cards: DeckCard[]): string[] {
+  const ids = new Set<string>();
+
+  for (const card of cards) {
+    if (!card.scryfallId) continue;
+    if (card.setCode && card.typeLine) continue;
+    ids.add(card.scryfallId);
+  }
+
+  return [...ids];
+}
+
+/**
+ * Preenche o que falta às cartas cuja impressão já está escolhida.
+ *
+ * Ao contrário do `completeFromCatalogue`, aqui a carta não muda de identidade: é a mesma impressão,
+ * só com os campos que faltavam. Por isso a quantidade, o board **e o id** ficam como estão.
+ */
+export function completeFromPrintings(
+  cards: DeckCard[],
+  byId: Map<string, ScryfallCard>,
+): DeckCard[] {
+  return cards.map(card => {
+    if (!card.scryfallId) return card;
+
+    const printing = byId.get(card.scryfallId);
+    if (!printing) return card;
+
+    return {
+      ...toDeckCard(printing, card.quantity, card.board === 'side' ? 'side' : 'main'),
       quantity: card.quantity,
     };
   });

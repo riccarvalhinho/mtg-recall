@@ -17,6 +17,8 @@ import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { TypeBadge } from '../../components/TypeBadge';
 import { CardArtThumb } from '../../components/CardArtThumb';
+import { CardImageOverlay } from '../../components/CardImageOverlay';
+import { SetSymbol } from '../../components/SetSymbol';
 import { ManaCost } from '../../components/ManaCost';
 import {
   canAnalyse,
@@ -259,29 +261,56 @@ function ViewToggle({ value, onChange }: {
   );
 }
 
-/** Uma linha da decklist. Tocar numa carta ainda não faz nada — por isso não é um Pressable. */
-function CardRow({ card, view }: { card: DeckCard; view: DeckView }) {
+/**
+ * Uma linha da decklist. Tocar abre a carta inteira por cima.
+ *
+ * A arte é **grande e encostada à margem**: é ela que faz reconhecer a carta de relance, e uma
+ * miniatura pequena no meio de espaço vazio lê-se pior do que nome nenhum. O espaçamento entre
+ * linhas é curto pela mesma razão — numa lista de quarenta cartas, o ar entre elas é o que obriga a
+ * percorrer o écran três vezes.
+ */
+function CardRow({ card, view, onOpen }: { card: DeckCard; view: DeckView; onOpen: () => void }) {
   if (view === 'compact') {
     return (
-      <View style={cardList.compactRow}>
+      <Pressable
+        onPress={onOpen}
+        style={({ pressed }) => [cardList.compactRow, pressed && { opacity: 0.6 }]}
+      >
         <Text style={cardList.quantity}>{card.quantity}×</Text>
         <Text style={cardList.name} numberOfLines={1}>{card.name}</Text>
+        <SetSymbol setCode={card.setCode} size={12} />
         <ManaCost cost={card.manaCost} size={13} />
-      </View>
+      </Pressable>
     );
   }
 
   return (
-    <View style={cardList.artRow}>
-      <CardArtThumb url={card.artCropUrl} />
+    <Pressable
+      onPress={onOpen}
+      style={({ pressed }) => [cardList.artRow, pressed && { opacity: 0.6 }]}
+    >
+      <CardArtThumb url={card.artCropUrl} width={ART_WIDTH} height={ART_HEIGHT} />
       <View style={cardList.artText}>
-        <Text style={cardList.artName} numberOfLines={1}>{card.name}</Text>
-        <ManaCost cost={card.manaCost} size={13} />
+        <View style={cardList.artNameRow}>
+          <SetSymbol setCode={card.setCode} size={13} />
+          <Text style={cardList.artName} numberOfLines={1}>{card.name}</Text>
+        </View>
+        <ManaCost cost={card.manaCost} size={14} />
       </View>
       <Text style={cardList.artQuantity}>{card.quantity}×</Text>
-    </View>
+    </Pressable>
   );
 }
+
+/**
+ * A arte, maior do que estava (era 58×42).
+ *
+ * A referência do ManaBox usa cerca de 76 de largura num telemóvel de 411 — e sobretudo encosta-a
+ * à margem esquerda, o que a faz parecer maior do que o número diz. A proporção é a do `art_crop`
+ * da Scryfall (626×457), para não haver corte nem barras.
+ */
+const ART_WIDTH = 78;
+const ART_HEIGHT = Math.round(ART_WIDTH * (457 / 626));
 
 /**
  * A decklist: primeiro pelo board, depois agrupada por tipo dentro de cada um.
@@ -290,13 +319,15 @@ function CardRow({ card, view }: { card: DeckCard; view: DeckView }) {
  * fim em vez de desaparecerem, que é o que acontece a um deck escrito à mão.
  */
 function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
+  const [open, setOpen] = useState<DeckCard | undefined>(undefined);
+
   const boards: { label: string; board: DeckBoard }[] = [
     { label: 'Main', board: 'main' },
     { label: 'Sideboard', board: 'side' },
   ];
 
   return (
-    <View style={{ gap: 22 }}>
+    <View style={{ gap: 20 }}>
       {boards.map(({ label, board }) => {
         const groups = groupByType(cards, board);
         if (groups.length === 0) return null;
@@ -308,7 +339,7 @@ function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
             <Text style={cardList.boardLabel}>{label} · {total}</Text>
 
             {groups.map(group => (
-              <View key={group.type} style={{ gap: view === 'art' ? 8 : 2 }}>
+              <View key={group.type} style={{ gap: view === 'art' ? 3 : 2 }}>
                 <View style={cardList.groupHeader}>
                   <Text style={cardList.groupLabel}>
                     {groupHeading(group.type)} · {group.count}
@@ -317,13 +348,20 @@ function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
                 </View>
 
                 {group.cards.map((card, index) => (
-                  <CardRow key={`${board}-${group.type}-${card.name}-${index}`} card={card} view={view} />
+                  <CardRow
+                    key={`${board}-${group.type}-${card.name}-${index}`}
+                    card={card}
+                    view={view}
+                    onOpen={() => setOpen(card)}
+                  />
                 ))}
               </View>
             ))}
           </View>
         );
       })}
+
+      <CardImageOverlay card={open} onClose={() => setOpen(undefined)} />
     </View>
   );
 }
@@ -711,11 +749,15 @@ const cardList = StyleSheet.create({
   artRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    minHeight: 50,
+    gap: 11,
+    // A arte encosta à margem esquerda: a secção tem 20 de padding e a linha desfá-lo só do lado
+    // de fora. É isto que a faz parecer maior, mais do que o número de pixels.
+    marginLeft: -20,
+    paddingRight: 2,
   },
-  artText: { flex: 1, gap: 2 },
-  artName: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrim },
+  artText: { flex: 1, gap: 3 },
+  artNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  artName: { flex: 1, fontFamily: fonts.bodyMed, fontSize: 16, color: colors.textPrim },
   artQuantity: {
     fontFamily: fonts.displayMed,
     fontSize: 15,

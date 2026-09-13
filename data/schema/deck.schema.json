@@ -5,7 +5,11 @@
   "description": "Um deck, num ficheiro por deck em data/decks/<id>.json. Existe para a mesma pergunta poder ser feita em vários eventos: 'com que deck é que eu ganho mais?'. Antes disto o deck era texto livre dentro do evento e não se reutilizava. As decisões estão em data-model.md.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "name", "colors"],
+  "required": [
+    "id",
+    "name",
+    "colors"
+  ],
   "properties": {
     "id": {
       "description": "Slug único, igual ao nome do ficheiro sem extensão.",
@@ -17,11 +21,21 @@
       "type": "string",
       "minLength": 1
     },
-    "colors": { "$ref": "#/definitions/manaSelection" },
+    "colors": {
+      "$ref": "#/definitions/manaSelection"
+    },
     "format": {
       "description": "Formato para que o deck foi construído. A mesma lista dos eventos.",
       "type": "string",
-      "enum": ["Sealed", "Draft", "Standard", "Modern", "Pioneer", "Legacy", "Commander"]
+      "enum": [
+        "Sealed",
+        "Draft",
+        "Standard",
+        "Modern",
+        "Pioneer",
+        "Legacy",
+        "Commander"
+      ]
     },
     "archetype": {
       "description": "Arquétipo, à mão (ex.: Izzet Prowess). Não é uma taxonomia: não há lista fechada de arquétipos que sobreviva a uma rotação.",
@@ -36,29 +50,46 @@
     "cards": {
       "description": "A lista de cartas. OPCIONAL de propósito: escrever 60 cartas no telemóvel é trabalho a sério, e um deck sem cartas já serve para saber com que deck se ganha mais. Sem isto, o Deck Analyser não aparece — o resto funciona na mesma.",
       "type": "array",
-      "items": { "$ref": "#/definitions/deckCard" }
+      "items": {
+        "$ref": "#/definitions/deckCard"
+      }
     },
-    "notes": { "type": "string" }
+    "notes": {
+      "type": "string"
+    }
   },
   "definitions": {
     "manaColor": {
       "type": "string",
-      "enum": ["W", "U", "B", "R", "G"]
+      "enum": [
+        "W",
+        "U",
+        "B",
+        "R",
+        "G"
+      ]
     },
     "manaSelection": {
       "description": "Cores principais e cores de splash, separadas. Uma cor não pode estar nas duas.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["main", "splash"],
+      "required": [
+        "main",
+        "splash"
+      ],
       "properties": {
         "main": {
           "type": "array",
-          "items": { "$ref": "#/definitions/manaColor" },
+          "items": {
+            "$ref": "#/definitions/manaColor"
+          },
           "uniqueItems": true
         },
         "splash": {
           "type": "array",
-          "items": { "$ref": "#/definitions/manaColor" },
+          "items": {
+            "$ref": "#/definitions/manaColor"
+          },
           "uniqueItems": true
         }
       }
@@ -67,7 +98,10 @@
       "description": "Uma entrada da lista. Os campos vindos da Scryfall são copiados para aqui de propósito: os dados de uma impressão não mudam — o custo de mana de uma carta é o que é — e copiá-los deixa o Deck Analyser funcionar sem rede e sem cache, que é a regra 3 do projecto. O que muda com o tempo são os preços, e esses ficam de fora (Fase 4).",
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "quantity"],
+      "required": [
+        "name",
+        "quantity"
+      ],
       "properties": {
         "name": {
           "description": "Nome da carta, como aparece na Scryfall.",
@@ -82,12 +116,20 @@
         "board": {
           "description": "Deck principal ou sideboard. Ausente significa main.",
           "type": "string",
-          "enum": ["main", "side"]
+          "enum": [
+            "main",
+            "side"
+          ]
         },
         "scryfallId": {
           "description": "Id da carta na Scryfall. Ausente quando o nome foi escrito à mão.",
           "type": "string",
           "minLength": 1
+        },
+        "setCode": {
+          "description": "Código do set da impressão, minúsculas. Serve o ícone do set ao lado do nome na decklist. Ausente numa carta escrita à mão, que não passou pela Scryfall.",
+          "type": "string",
+          "pattern": "^[a-z0-9]{3,6}$"
         },
         "manaCost": {
           "description": "Custo de mana em notação Scryfall, ex.: {1}{U}{U}.",
@@ -105,7 +147,9 @@
         "colors": {
           "description": "Cores da carta em si, para a distribuição de cores.",
           "type": "array",
-          "items": { "$ref": "#/definitions/manaColor" },
+          "items": {
+            "$ref": "#/definitions/manaColor"
+          },
           "uniqueItems": true
         },
         "artCropUrl": {

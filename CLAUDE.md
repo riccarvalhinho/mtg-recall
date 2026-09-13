@@ -75,8 +75,8 @@ conhecimento prévio de padrões ou convenções.
   opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
 /components                 ManaPip, ManaCost, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, CardArtThumb, CardArtPicker, ConfirmModal,
-                            SetSelector, CardSearchModal
+                            CardThumbnailPlaceholder, CardArtThumb, CardArtPicker, SetSymbol,
+                            CardImageOverlay, ConfirmModal, SetSelector, CardSearchModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates
@@ -296,7 +296,9 @@ Os passos todos — token, Pages, build, restauro — estão em `docs/ops/telemo
 Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que vem a seguir.
 
 **Fase 5, quase fechada.** A decklist do Deck Detail mostra o **recorte da arte** (`artCropUrl`) de
-cada carta, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
+cada carta — grande e encostada à margem, com o ícone do set ao lado do nome (`SetSymbol`, URL
+construído a partir do `setCode`) e a carta inteira numa sobreposição ao toque (`CardImageOverlay`,
+URL construído a partir do `scryfallId`) —, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
 `CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
 com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
 

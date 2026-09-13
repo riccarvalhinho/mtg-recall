@@ -101,6 +101,7 @@ function serializeDeckCard(card: DeckCard) {
     // `main` é o valor por omissão do schema: escrevê-lo dava ruído em todas as linhas do diff.
     board: card.board === 'side' ? 'side' : undefined,
     scryfallId: trimmed(card.scryfallId),
+    setCode: trimmed(card.setCode)?.toLowerCase(),
     manaCost: trimmed(card.manaCost),
     cmc: card.cmc,
     typeLine: trimmed(card.typeLine),

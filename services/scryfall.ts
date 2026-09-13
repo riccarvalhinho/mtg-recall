@@ -353,6 +353,39 @@ export interface ResolveResult {
  * a app sempre aceitou. É a promessa do offline-first: numa loja sem sinal o deck entra na mesma, e
  * completa-se depois.
  */
+/**
+ * Completa cartas cuja impressão já está escolhida, perguntando **pelo id**.
+ *
+ * Volta sempre a mesma impressão e não outra com o mesmo nome — é o que permite completar um deck
+ * antigo (por exemplo, cartas gravadas antes de o `setCode` existir) sem lhe trocar as cartas por
+ * baixo. Nunca atira: sem rede devolve o que tiver.
+ */
+export async function resolveCardPrintings(ids: string[]): Promise<Map<string, ScryfallCard>> {
+  const byId = new Map<string, ScryfallCard>();
+  const wanted = ids.map(id => id.trim()).filter(Boolean);
+  if (wanted.length === 0) return byId;
+
+  try {
+    for (let start = 0; start < wanted.length; start += COLLECTION_BATCH) {
+      const batch = wanted.slice(start, start + COLLECTION_BATCH);
+      const payload = (await scryfallPost(
+        'https://api.scryfall.com/cards/collection',
+        { identifiers: batch.map(id => ({ id })) },
+        'os dados das impressões',
+      )) as { data?: unknown[] };
+
+      for (const raw of payload.data ?? []) {
+        const card = normalizeCard(raw);
+        if (card) byId.set(card.scryfallId, card);
+      }
+    }
+  } catch {
+    // Sem rede não se completa nada, e está bem assim: as cartas continuam a servir como estão.
+  }
+
+  return byId;
+}
+
 export async function resolveCardNames(names: string[]): Promise<ResolveResult> {
   const found = new Map<string, ScryfallCard>();
   const notFound: string[] = [];

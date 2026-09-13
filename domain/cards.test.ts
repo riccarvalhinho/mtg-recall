@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cardNameKey,
   completeFromCatalogue,
+  completeFromPrintings,
   isScryfallCard,
   isSearchableQuery,
   isValidCardName,
@@ -9,6 +10,7 @@ import {
   normalizeCardSearch,
   namesToResolve,
   normalizeQuery,
+  printingsToRefresh,
   toDeckCard,
   toManualCard,
 } from './cards.ts';
@@ -175,10 +177,13 @@ describe('toDeckCard', () => {
       quantity: 4,
       board: undefined,
       scryfallId: card.scryfallId,
+      // O set vem junto: é ele que dá o ícone ao lado do nome na decklist.
+      setCode: card.setCode,
       manaCost: '{R}',
       cmc: 1,
       typeLine: 'Instant',
       colors: ['R'],
+      artCropUrl: card.artCropUrl,
     });
   });
 
@@ -268,5 +273,42 @@ describe('completar cartas que só têm nome', () => {
       { name: 'The Black Arrow', quantity: 1, scryfallId: 'ja-tem' },
     ];
     expect(namesToResolve(lista)).toEqual(['Mountain']);
+  });
+});
+
+describe('completar cartas com impressão já escolhida', () => {
+  const arrow: ScryfallCard = {
+    scryfallId: 'arrow-1',
+    name: 'The Black Arrow',
+    manaCost: '{3}',
+    cmc: 3,
+    typeLine: 'Artifact — Equipment',
+    setCode: 'ltr',
+    artCropUrl: 'http://art/arrow.jpg',
+  };
+  const byId = new Map([[arrow.scryfallId, arrow]]);
+
+  it('uma carta a que falta o set precisa de ser refrescada', () => {
+    // O caso real: cartas gravadas antes de o `setCode` existir no schema.
+    const lista: DeckCard[] = [{ name: 'The Black Arrow', quantity: 2, scryfallId: 'arrow-1', typeLine: 'Artifact' }];
+    expect(printingsToRefresh(lista)).toEqual(['arrow-1']);
+  });
+
+  it('uma carta completa não é perguntada outra vez', () => {
+    const lista: DeckCard[] = [
+      { name: 'The Black Arrow', quantity: 1, scryfallId: 'arrow-1', setCode: 'ltr', typeLine: 'Artifact' },
+    ];
+    expect(printingsToRefresh(lista)).toEqual([]);
+  });
+
+  it('uma carta só com nome não entra aqui — essa resolve-se pelo nome', () => {
+    expect(printingsToRefresh([{ name: 'Sol Ring', quantity: 1 }])).toEqual([]);
+  });
+
+  it('preenche sem trocar a impressão nem a quantidade', () => {
+    const lista: DeckCard[] = [{ name: 'The Black Arrow', quantity: 2, scryfallId: 'arrow-1' }];
+    const [card] = completeFromPrintings(lista, byId);
+
+    expect(card).toMatchObject({ scryfallId: 'arrow-1', setCode: 'ltr', quantity: 2 });
   });
 });

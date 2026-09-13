@@ -33,8 +33,13 @@ import { useEventsStore } from '../store/useEventsStore';
 import { useScanStore } from '../store/useScanStore';
 import { ManaPip } from '../components/ManaPip';
 import { useFocusEffect } from 'expo-router';
-import { completeFromCatalogue, namesToResolve } from '../domain/cards';
-import { resolveCardNames } from '../services/scryfall';
+import {
+  completeFromCatalogue,
+  completeFromPrintings,
+  namesToResolve,
+  printingsToRefresh,
+} from '../domain/cards';
+import { resolveCardNames, resolveCardPrintings } from '../services/scryfall';
 import { CardArtPicker } from '../components/CardArtPicker';
 import { CardSearchModal } from '../components/CardSearchModal';
 import { toDeckCard } from '../domain/cards';
@@ -203,24 +208,33 @@ export default function DeckEditorScreen() {
    * Não mexe nas cartas que já têm impressão escolhida, nem nas quantidades.
    */
   async function completeCards() {
-    const pending = namesToResolve(cardList);
-    if (pending.length === 0 || matching) return;
+    const names = namesToResolve(cardList);
+    const printings = printingsToRefresh(cardList);
+    if ((names.length === 0 && printings.length === 0) || matching) return;
 
     setMatching(true);
     setMatchNote(null);
 
-    const { found, notFound, message } = await resolveCardNames(pending);
-    setCardList(current => completeFromCatalogue(current, found));
+    // Duas perguntas diferentes: as cartas que só têm nome resolvem-se **pelo nome**, e as que já
+    // têm impressão escolhida mas estão a meio resolvem-se **pelo id**, para voltar a mesma carta.
+    const { found, notFound, message } = await resolveCardNames(names);
+    const byId = await resolveCardPrintings(printings);
 
+    setCardList(current => completeFromPrintings(completeFromCatalogue(current, found), byId));
+
+    const completed = found.size + byId.size;
     setMatching(false);
     setMatchNote(
       message
         ? message
         : notFound.length > 0
-          ? `Matched ${found.size}. Scryfall does not know: ${notFound.join(', ')}.`
-          : `Matched ${found.size} card${found.size === 1 ? '' : 's'}.`,
+          ? `Completed ${completed}. Scryfall does not know: ${notFound.join(', ')}.`
+          : `Completed ${completed} card${completed === 1 ? '' : 's'}.`,
     );
   }
+
+  /** Quantas cartas estão por completar — por nome ou por impressão a meio. */
+  const incomplete = namesToResolve(cardList).length + printingsToRefresh(cardList).length;
 
   async function handleSave() {
     if (!canSave) return;
@@ -515,7 +529,7 @@ export default function DeckEditorScreen() {
 
             {/* Só aparece quando há o que completar — e some quando já não há, que é a confirmação
                 de que correu bem. */}
-            {namesToResolve(cardList).length > 0 && (
+            {incomplete > 0 && (
               <Pressable
                 onPress={() => void completeCards()}
                 disabled={matching}
@@ -523,9 +537,7 @@ export default function DeckEditorScreen() {
               >
                 <Feather name="download-cloud" size={15} color={colors.gold} />
                 <Text style={styles.addCardText}>
-                  {matching
-                    ? 'Matching…'
-                    : `Get card data for ${namesToResolve(cardList).length} card${namesToResolve(cardList).length === 1 ? '' : 's'}`}
+                  {matching ? 'Matching…' : `Get card data for ${incomplete} card${incomplete === 1 ? '' : 's'}`}
                 </Text>
               </Pressable>
             )}

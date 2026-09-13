@@ -102,6 +102,8 @@ export interface DeckCard {
   quantity: number;
   board?: DeckBoard;
   scryfallId?: string;
+  /** Código do set da impressão. Dá o ícone ao lado do nome na decklist. */
+  setCode?: string;
   manaCost?: string;
   cmc?: number;
   typeLine?: string;
