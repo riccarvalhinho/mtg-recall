@@ -55,6 +55,28 @@ export const colors = {
 };
 ```
 
+### 1.2b Cores das raridades
+
+Vivem em `components/SetSymbol.tsx` e **não** em `theme/colors.ts`, de propósito: a paleta da app é
+quente e estas têm de ser neutras. Um cinzento morno lê-se como dourado ao lado de um dourado a
+sério, e a raridade deixa de se ver.
+
+```ts
+common:   '#FFFFFF'   // branco — o preto do baralho físico seria invisível em #130F0A
+uncommon: '#7D95A1'   // azul-aço
+rare:     '#A39676'   // dourado apagado
+mythic:   '#D2703A'   // laranja
+special:  '#B98BD0'   // roxo (e bonus igual)
+// sem raridade conhecida:
+unknown:  '#5E5E5E'   // cinzento apagado — não reclama raridade nenhuma
+```
+
+As quatro primeiras estão **medidas** numa captura do ManaBox, que resolve bem o mesmo problema. A
+regra que se tira delas é a que interessa guardar: **a raridade distingue-se pela matiz, não pelo
+brilho**. Num símbolo de 12 px com traços de um pixel, dois cinzentos separados só por claridade
+são o mesmo cinzento — foi o que aconteceu à primeira tentativa, com a comum e a incomum
+indistinguíveis.
+
 ### 1.3 Símbolos de mana MTG
 
 ```ts

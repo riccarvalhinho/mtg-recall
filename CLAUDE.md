@@ -300,7 +300,7 @@ Ver `project-overview.md` para o detalhe e `docs/product/roadmap.md` para o que 
 **Fase 5, quase fechada.** A decklist do Deck Detail mostra o **recorte da arte** (`artCropUrl`) de
 cada carta — grande e encostada à margem, com o ícone do set ao lado do nome (`SetSymbol`, URL
 construído a partir do `setCode`, **colorido pela raridade** — um símbolo só, como nas cartas a
-sério) e a carta inteira numa sobreposição ao toque (`CardImageOverlay`,
+sério; as cores estão em `design/handoff.md` §1.2b e distinguem-se pela matiz, não pelo brilho) e a carta inteira numa sobreposição ao toque (`CardImageOverlay`,
 URL construído a partir do `scryfallId`) —, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
 `CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
 com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
