@@ -443,14 +443,23 @@ export default function DeckDetailScreen() {
         <View style={styles.header}>
           <Text style={styles.name}>{deck.name}</Text>
 
-          <View style={styles.pips}>
-            {deck.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={20} />)}
-            {deck.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={20} isSplash />)}
-          </View>
+          {/*
+            Cores à esquerda, formato e arquétipo à direita, na **mesma linha**. Eram duas, e as
+            duas com meia dúzia de elementos cada — altura gasta a separar coisas que cabiam lado a
+            lado. Num telemóvel o espaço vertical é o que falta primeiro.
+          */}
+          <View style={styles.identity}>
+            <View style={styles.pips}>
+              {deck.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={20} />)}
+              {deck.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={20} isSplash />)}
+            </View>
 
-          <View style={styles.badges}>
-            {deck.format && <TypeBadge type={deck.format} />}
-            {deck.archetype && <Text style={styles.archetype}>{deck.archetype}</Text>}
+            <View style={styles.badges}>
+              {deck.format && <TypeBadge type={deck.format} />}
+              {deck.archetype && (
+                <Text style={styles.archetype} numberOfLines={1}>{deck.archetype}</Text>
+              )}
+            </View>
           </View>
         </View>
 
@@ -590,10 +599,16 @@ const styles = StyleSheet.create({
   editBtn: { fontFamily: fonts.body, fontSize: 16, color: colors.gold },
   content: { paddingBottom: 48 },
   header: { paddingHorizontal: 20, gap: 10, marginBottom: 20 },
+  identity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   name: { fontFamily: fonts.display, fontSize: 27, color: colors.textPrim, lineHeight: 34 },
   pips: { flexDirection: 'row', gap: 5 },
-  badges: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  archetype: { fontFamily: fonts.bodyItal, fontSize: 14, color: colors.textSec },
+  badges: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  archetype: { fontFamily: fonts.bodyItal, fontSize: 14, color: colors.textSec, flexShrink: 1 },
   hint: {
     fontFamily: fonts.body,
     fontSize: 14,
