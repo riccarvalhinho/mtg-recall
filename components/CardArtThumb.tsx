@@ -10,7 +10,7 @@
 // `CardThumbnailPlaceholder`. Uma linha sem imagem desalinhava a lista toda.
 
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { colors } from '../theme/colors';
 import { CardThumbnailPlaceholder } from './CardThumbnailPlaceholder';
@@ -35,21 +35,44 @@ interface CardArtThumbProps {
   width?: number;
   /** Só quando há uma razão para fugir à proporção da arte. Por omissão sai da largura. */
   height?: number;
+  /**
+   * A arte toma a **altura da linha** em vez de um tamanho fixo, e a largura sai da proporção.
+   *
+   * Serve as linhas cuja altura é definida pelo texto ao lado: com tamanho fixo, a arte ficava
+   * centrada com espaço morto por cima e por baixo. A esticar, o cartão fica com a mesma altura e
+   * a imagem ocupa-a toda.
+   */
+  stretch?: boolean;
 }
 
-export function CardArtThumb({ url, width = 78, height = artHeightFor(width) }: CardArtThumbProps) {
+export function CardArtThumb({
+  url,
+  width = 78,
+  height = artHeightFor(width),
+  stretch = false,
+}: CardArtThumbProps) {
   // Guarda-se o URL que falhou, e não um booleano: se a carta da linha mudar, a nova imagem tem
   // direito a ser tentada em vez de herdar a falha da anterior.
   const [failedUrl, setFailedUrl] = useState<string | undefined>(undefined);
 
+  // A proporção faz o trabalho da largura: `alignSelf: stretch` dá a altura da linha, e o
+  // `aspectRatio` deduz o resto.
+  const size = stretch
+    ? { alignSelf: 'stretch' as const, aspectRatio: 1 / ART_RATIO }
+    : { width, height };
+
   if (!url || failedUrl === url) {
-    return <CardThumbnailPlaceholder width={width} height={height} />;
+    return stretch ? (
+      <View style={[styles.image, styles.empty, size]} />
+    ) : (
+      <CardThumbnailPlaceholder width={width} height={height} />
+    );
   }
 
   return (
     <Image
       source={{ uri: url }}
-      style={[styles.image, { width, height }]}
+      style={[styles.image, size]}
       contentFit="cover"
       transition={120}
       cachePolicy="memory-disk"
@@ -60,6 +83,8 @@ export function CardArtThumb({ url, width = 78, height = artHeightFor(width) }: 
 }
 
 const styles = StyleSheet.create({
+  /** A esticar não há placeholder com tamanho: fica a superfície, com a mesma moldura. */
+  empty: { backgroundColor: colors.bgCard },
   image: {
     borderRadius: 6,
     borderWidth: 1,

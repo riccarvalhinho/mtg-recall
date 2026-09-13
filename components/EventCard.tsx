@@ -51,7 +51,7 @@ export function EventCard({ event, onPress, showThumbnail = true, artUrl }: Even
       <View style={[styles.row, isActive(event) && styles.rowActive]}>
         {/* Thumbnail */}
         {showThumbnail && (
-          <CardArtThumb url={artUrl} width={66} />
+          <CardArtThumb url={artUrl} stretch />
         )}
 
         {/* Info */}
@@ -126,10 +126,12 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // `stretch` e não `center`: é isto que dá à arte a altura da linha. O texto ao lado continua
+    // centrado pelo seu próprio contentor.
+    alignItems: 'stretch',
     gap: 12,
-    padding: 14,
-    paddingHorizontal: 16,
+    padding: 10,
+    paddingHorizontal: 12,
   },
   rowActive: {
     paddingLeft: 20, // espaço para a accent bar
@@ -137,6 +139,7 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     gap: 4,
+    justifyContent: 'center',
   },
   badges: {
     flexDirection: 'row',
@@ -179,6 +182,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   right: {
+    justifyContent: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
