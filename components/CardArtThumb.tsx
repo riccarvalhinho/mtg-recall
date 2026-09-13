@@ -15,14 +15,29 @@ import { Image } from 'expo-image';
 import { colors } from '../theme/colors';
 import { CardThumbnailPlaceholder } from './CardThumbnailPlaceholder';
 
+/**
+ * A proporção do `art_crop` da Scryfall: 626×457, ou seja **deitada**.
+ *
+ * Está aqui e não em cada écran porque já foi esquecida uma vez: o Event Detail pedia 38×52, uma
+ * caixa ao alto, e o `contentFit: cover` cortava a arte a meio para a encher. O resultado era um
+ * pedaço de imagem que não se percebia — pior do que não ter imagem nenhuma.
+ */
+const ART_RATIO = 457 / 626;
+
+/** A altura que uma arte deve ter para uma dada largura. */
+export function artHeightFor(width: number): number {
+  return Math.round(width * ART_RATIO);
+}
+
 interface CardArtThumbProps {
   /** O recorte da arte. Ausente numa carta escrita à mão, sem passar pela Scryfall. */
   url?: string;
   width?: number;
+  /** Só quando há uma razão para fugir à proporção da arte. Por omissão sai da largura. */
   height?: number;
 }
 
-export function CardArtThumb({ url, width = 58, height = 42 }: CardArtThumbProps) {
+export function CardArtThumb({ url, width = 78, height = artHeightFor(width) }: CardArtThumbProps) {
   // Guarda-se o URL que falhou, e não um booleano: se a carta da linha mudar, a nova imagem tem
   // direito a ser tentada em vez de herdar a falha da anterior.
   const [failedUrl, setFailedUrl] = useState<string | undefined>(undefined);
@@ -46,7 +61,7 @@ export function CardArtThumb({ url, width = 58, height = 42 }: CardArtThumbProps
 
 const styles = StyleSheet.create({
   image: {
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.bgCard,

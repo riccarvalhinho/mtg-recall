@@ -18,11 +18,11 @@ import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { thumbnailChoices } from '../domain/thumbnails';
 import type { DeckCard } from '../types';
-import { CardArtThumb } from './CardArtThumb';
+import { CardArtThumb, artHeightFor } from './CardArtThumb';
 
 /** A arte é mais larga do que alta — é um recorte, não a carta inteira. */
 const ART_WIDTH = 92;
-const ART_HEIGHT = 68;
+const ART_HEIGHT = artHeightFor(ART_WIDTH);
 
 interface CardArtPickerProps {
   /** As cartas do deck. No editor são as da lista que está a ser editada, não as gravadas. */
@@ -75,7 +75,7 @@ export function CardArtPicker({ cards, value, onChange, label = 'Deck art' }: Ca
                 ]}
               >
                 <View>
-                  <CardArtThumb url={choice.artCropUrl} width={ART_WIDTH} height={ART_HEIGHT} />
+                  <CardArtThumb url={choice.artCropUrl} width={ART_WIDTH} />
                   {selected && (
                     <View style={styles.check}>
                       <Feather name="check" size={12} color={colors.bg} />

@@ -156,7 +156,7 @@ function DeckSection({ event }: { event: Event }) {
         style={deck.header}
         onPress={() => (linked ? router.push({ pathname: '/deck/[id]', params: { id: linked.id } }) : setPicking(true))}
       >
-        <CardArtThumb url={artUrl} width={38} height={52} />
+        <CardArtThumb url={artUrl} width={112} />
 
         <View style={deck.info}>
           <Text style={deck.label}>Deck</Text>

@@ -51,7 +51,7 @@ export function EventCard({ event, onPress, showThumbnail = true, artUrl }: Even
       <View style={[styles.row, isActive(event) && styles.rowActive]}>
         {/* Thumbnail */}
         {showThumbnail && (
-          <CardArtThumb url={artUrl} width={36} height={50} />
+          <CardArtThumb url={artUrl} width={66} />
         )}
 
         {/* Info */}

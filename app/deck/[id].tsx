@@ -16,7 +16,7 @@ import { fonts } from '../../theme/typography';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { TypeBadge } from '../../components/TypeBadge';
-import { CardArtThumb } from '../../components/CardArtThumb';
+import { CardArtThumb, artHeightFor } from '../../components/CardArtThumb';
 import { CardImageOverlay } from '../../components/CardImageOverlay';
 import { SetSymbol } from '../../components/SetSymbol';
 import { ManaCost } from '../../components/ManaCost';
@@ -289,7 +289,7 @@ function CardRow({ card, view, onOpen }: { card: DeckCard; view: DeckView; onOpe
       onPress={onOpen}
       style={({ pressed }) => [cardList.artRow, pressed && { opacity: 0.6 }]}
     >
-      <CardArtThumb url={card.artCropUrl} width={ART_WIDTH} height={ART_HEIGHT} />
+      <CardArtThumb url={card.artCropUrl} width={ART_WIDTH} />
       <View style={cardList.artText}>
         <View style={cardList.artNameRow}>
           <SetSymbol setCode={card.setCode} size={13} />
@@ -310,7 +310,7 @@ function CardRow({ card, view, onOpen }: { card: DeckCard; view: DeckView; onOpe
  * da Scryfall (626×457), para não haver corte nem barras.
  */
 const ART_WIDTH = 78;
-const ART_HEIGHT = Math.round(ART_WIDTH * (457 / 626));
+const ART_HEIGHT = artHeightFor(ART_WIDTH);
 
 /**
  * A decklist: primeiro pelo board, depois agrupada por tipo dentro de cada um.
