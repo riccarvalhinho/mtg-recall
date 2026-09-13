@@ -35,6 +35,7 @@ import {
   type ScryfallCard,
 } from '../domain/cards';
 import { normalizeSets, type MtgSet } from '../domain/sets';
+import { BASIC_LANDS } from '../domain/basicLands';
 
 const SETS_KEY = 'mtgrecall.scryfall.sets';
 const SETS_URL = 'https://api.scryfall.com/sets';
@@ -427,4 +428,110 @@ export async function resolveCardNames(names: string[]): Promise<ResolveResult> 
           : 'No connection — cards keep the names they were read with.',
     };
   }
+}
+
+// ─── Terrenos básicos com a arte da colecção do deck ─────────────────────────
+
+const BASICS_KEY = 'mtgrecall.scryfall.basics';
+
+/** Sobe quando a forma desta cache mudar, para uma app nova não ler o que uma antiga escreveu. */
+const BASICS_CACHE_VERSION = 1;
+
+/** Colecções lembradas. Cada uma são seis cartas no máximo — quarenta cabem à vontade. */
+const MAX_CACHED_BASIC_SETS = 40;
+
+interface BasicsCache {
+  version: number;
+  /** Código da colecção → os básicos dela. Uma lista vazia quer dizer "esta não tem básicos". */
+  sets: Record<string, { fetchedAt: number; cards: ScryfallCard[] }>;
+}
+
+function emptyBasicsCache(): BasicsCache {
+  return { version: BASICS_CACHE_VERSION, sets: {} };
+}
+
+async function readBasicsCache(): Promise<BasicsCache> {
+  try {
+    const raw = await AsyncStorage.getItem(BASICS_KEY);
+    if (!raw) return emptyBasicsCache();
+
+    const cache = JSON.parse(raw) as BasicsCache;
+    if (cache.version !== BASICS_CACHE_VERSION || !cache.sets || typeof cache.sets !== 'object') {
+      return emptyBasicsCache();
+    }
+    return cache;
+  } catch {
+    return emptyBasicsCache();
+  }
+}
+
+async function writeBasicsCache(cache: BasicsCache): Promise<void> {
+  // As colecções mais velhas caem primeiro. Sem tecto isto crescia a cada deck de uma colecção
+  // nova, e o AsyncStorage do Android não é infinito.
+  const codes = Object.keys(cache.sets).sort(
+    (a, b) => (cache.sets[b]?.fetchedAt ?? 0) - (cache.sets[a]?.fetchedAt ?? 0),
+  );
+
+  const trimmed: BasicsCache = { version: BASICS_CACHE_VERSION, sets: {} };
+  for (const code of codes.slice(0, MAX_CACHED_BASIC_SETS)) trimmed.sets[code] = cache.sets[code];
+
+  try {
+    await AsyncStorage.setItem(BASICS_KEY, JSON.stringify(trimmed));
+  } catch (error) {
+    console.warn('[scryfall] não foi possível guardar a cache dos básicos:', error);
+  }
+}
+
+/**
+ * Os terrenos básicos de uma colecção, por nome em minúsculas.
+ *
+ * **Pergunta sempre pelos seis**, mesmo que o deck só precise de dois. São seis identificadores num
+ * pedido só, e a cache fica completa à primeira: o deck seguinte, que talvez precise da Montanha,
+ * já não vai à rede. Pedir só o que faz falta obrigava a uma cache parcial — saber o que já se
+ * perguntou e o que falta — para poupar zero pedidos.
+ *
+ * A cache não tem validade de propósito. As impressões de uma colecção já publicada não mudam
+ * mais; uma validade só faria voltar à rede para receber a mesma resposta.
+ *
+ * Uma colecção **sem** básicos (há muitas) fica guardada como lista vazia, e é isso que impede a
+ * app de perguntar outra vez de cada vez que se abre o deck. Uma falha de rede, essa, não se
+ * guarda — senão um minuto sem sinal apagava a arte para sempre.
+ *
+ * **Nunca atira.** Sem rede devolve o que houver em cache, ou nada — e nada é como era antes de
+ * isto existir: o básico fica com o placeholder.
+ */
+export async function resolveBasicLands(setCode: string): Promise<Map<string, ScryfallCard>> {
+  const code = setCode.trim().toLowerCase();
+  const found = new Map<string, ScryfallCard>();
+  if (!code) return found;
+
+  const cache = await readBasicsCache();
+  const cached = cache.sets[code];
+
+  if (cached) {
+    for (const card of cached.cards) found.set(card.name.trim().toLowerCase(), card);
+    return found;
+  }
+
+  let cards: ScryfallCard[];
+  try {
+    const payload = (await scryfallPost(
+      'https://api.scryfall.com/cards/collection',
+      { identifiers: BASIC_LANDS.map(land => ({ name: land.name, set: code })) },
+      'os terrenos básicos da colecção',
+    )) as { data?: unknown[] };
+
+    cards = (payload.data ?? [])
+      .map(raw => normalizeCard(raw))
+      .filter((card): card is ScryfallCard => card !== null);
+  } catch {
+    // Sem rede fica como estava. Não se guarda nada: a colecção pode muito bem ter básicos.
+    return found;
+  }
+
+  cache.sets[code] = { fetchedAt: Date.now(), cards };
+  await writeBasicsCache(cache);
+
+  for (const card of cards) found.set(card.name.trim().toLowerCase(), card);
+  return found;
 }

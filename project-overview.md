@@ -62,7 +62,9 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
 - [x] **Deck Detail** — desempenho do deck, curva de mana, cores, tipos e **subtipos** com selector
-      de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta
+      de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta. Os
+      terrenos básicos mostram a arte da colecção de onde vem a maioria das cartas do deck —
+      deduzida, não gravada no ficheiro
 - [x] **Stats** — gráfico de tendência, desempenho por cor, pirâmide de classificações e
       **Opponents** (nemesis, melhor matchup e mais enfrentados), que abrem o Opponent Detail
 - [x] **Collection** — valor, evolução, procura, e ligar uma carta escrita à mão a uma impressão

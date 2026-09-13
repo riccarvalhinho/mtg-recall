@@ -259,6 +259,9 @@ consulta-se de vez em quando, não entre rondas.
   7 dias.
 - `GET /cards/search` alimenta a procura de cartas. Cache em `mtgrecall.scryfall.cards`, validade de
   1 dia — o que uma procura devolve muda quando sai uma colecção nova.
+- `POST /cards/collection` serve dois fins: completar cartas lidas só pelo nome (ADR 0009) e ir
+  buscar os **terrenos básicos de uma colecção**, pelos seis nomes de uma vez. Cache em
+  `mtgrecall.scryfall.basics`, **sem validade** — as impressões de uma colecção publicada não mudam.
 - **É cache, não são dados nossos**: não passa pela outbox nem pelo `localStore`, e por isso nunca
   aparece num commit.
 - **Sem rede nada falha**: o set escreve-se à mão, a carta acrescenta-se só pelo nome. O schema só
@@ -304,6 +307,16 @@ sério; as cores estão em `design/handoff.md` §1.2b e distinguem-se pela matiz
 URL construído a partir do `scryfallId`) —, por `components/CardArtThumb.tsx` — `expo-image` com cache em disco, e recuo para o
 `CardThumbnailPlaceholder` quando não há URL ou a imagem falha. O mesmo écran alterna entre lista
 com arte e lista compacta, agrupa por tipo (`groupByType`) e analisa subtipos (`subtypeCounts`).
+
+**Os terrenos básicos ganham a arte da colecção do deck.** Um Sealed sai todo da mesma caixa e os
+básicos que se jogam são os dessa caixa — mas entram na app sem impressão escolhida, de propósito
+(perguntar qual das centenas de Ilhas se tem no deck é trabalho a troco de nada). A colecção
+**deduz-se**: `dominantSetCode` em `domain/basicLands.ts` conta as cartas por quantidade e só
+decide quando uma colecção é **maioria absoluta** — um Sealed passa com folga, um Commander de
+trinta colecções não passa nenhuma, que é o que se quer. A arte é emprestada só a quem se desenha
+(`withBasicLandArt`, no écran); **o ficheiro do deck não muda**, porque a colecção dominante é um
+campo calculado e um deck que troca de cartas trocaria de colecção. Um básico com impressão
+escolhida à mão fica sempre como está.
 
 **A ordem do Deck Detail serve o uso:** a decklist primeiro, a análise a seguir (é sobre a lista), e
 o desempenho no fim. Em Sealed e Draft o deck joga um torneio só e o win rate dele é o mesmo do

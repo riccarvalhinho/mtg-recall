@@ -6,7 +6,7 @@
 //
 // As contas estão todas em `domain/deck.ts` e têm testes. Aqui só se desenha.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -31,6 +31,13 @@ import {
   typeCounts,
   type CardType,
 } from '../../domain/deck';
+import {
+  basicLandsToIllustrate,
+  dominantSetCode,
+  withBasicLandArt,
+  type BasicLandPrinting,
+} from '../../domain/basicLands';
+import { resolveBasicLands } from '../../services/scryfall';
 import { manaColors } from '../../theme/mana';
 import type { DeckBoard, DeckCard } from '../../types';
 
@@ -368,6 +375,45 @@ function CardList({ cards, view }: { cards: DeckCard[]; view: DeckView }) {
 
 // ─── Écran ────────────────────────────────────────────────────────────────────
 
+/**
+ * Dá aos terrenos básicos a arte da colecção de onde vem a maior parte do deck.
+ *
+ * Num Sealed as vinte e três cartas saem todas da mesma caixa, e os básicos que se jogam são os
+ * dessa caixa — mas entram na app sem impressão escolhida, porque perguntar qual das centenas de
+ * Ilhas se tem no deck seria trabalho a troco de nada (ver `domain/basicLands.ts`). A colecção
+ * **deduz-se** do resto do deck em vez de se perguntar.
+ *
+ * O resultado vive aqui e não no ficheiro: é um campo calculado, e muda sozinho quando o deck muda.
+ *
+ * Sem rede e sem cache não acontece nada — os básicos ficam com o placeholder, como ficavam antes.
+ */
+function useBasicLandArt(cards: DeckCard[] | undefined): DeckCard[] {
+  const [printings, setPrintings] = useState<Map<string, BasicLandPrinting>>(new Map());
+
+  const setCode = useMemo(() => dominantSetCode(cards), [cards]);
+  const wanted = useMemo(() => basicLandsToIllustrate(cards).join(','), [cards]);
+
+  useEffect(() => {
+    if (!setCode || wanted.length === 0) {
+      setPrintings(new Map());
+      return;
+    }
+
+    // O ecrã pode desaparecer antes de a Scryfall responder; escrever estado depois disso é um
+    // aviso do React e uma actualização que ninguém vê.
+    let alive = true;
+    resolveBasicLands(setCode).then(found => {
+      if (alive) setPrintings(found);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [setCode, wanted]);
+
+  return useMemo(() => withBasicLandArt(cards, printings), [cards, printings]);
+}
+
 export default function DeckDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -377,6 +423,10 @@ export default function DeckDetailScreen() {
   // Estado de vista. Os hooks ficam antes do early return do deck que não existe — a ordem dos
   // hooks não pode depender de condições.
   const [view, setView] = useState<DeckView>('art');
+
+  // Os básicos ganham a arte da colecção do deck **só para desenhar**: o ficheiro do deck
+  // continua a não ter impressão nenhuma escolhida para eles.
+  const listCards = useBasicLandArt(deck?.cards);
   const [chosenType, setChosenType] = useState<CardType | null>(null);
 
   // Só entram no selector os tipos que este deck tem **e** que dão subtipos: um deck cheio de
@@ -477,7 +527,7 @@ export default function DeckDetailScreen() {
             label={`Decklist · ${total}${sideTotal > 0 ? ` + ${sideTotal}` : ''}`}
             right={<ViewToggle value={view} onChange={setView} />}
           >
-            <CardList cards={deck.cards} view={view} />
+            <CardList cards={listCards} view={view} />
           </Section>
         )}
 
