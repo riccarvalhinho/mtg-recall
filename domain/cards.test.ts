@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardNameKey,
+  completeFromCatalogue,
   isScryfallCard,
   isSearchableQuery,
   isValidCardName,
   normalizeCard,
   normalizeCardSearch,
+  namesToResolve,
   normalizeQuery,
   toDeckCard,
   toManualCard,
 } from './cards.ts';
+import type { ScryfallCard } from './cards.ts';
+import type { DeckCard } from '../types';
 
 /** Uma carta crua como a Scryfall a devolve, com o mínimo que interessa. */
 function rawCard(overrides: Record<string, unknown> = {}) {
@@ -201,5 +206,67 @@ describe('nomes escritos à mão', () => {
   it('distingue uma carta da Scryfall de um nome escrito à mão', () => {
     expect(isScryfallCard(normalizeCard(rawCard())!)).toBe(true);
     expect(isScryfallCard({ name: 'Sol Ring' })).toBe(false);
+  });
+});
+
+describe('completar cartas que só têm nome', () => {
+  const bilbo: ScryfallCard = {
+    scryfallId: 'abc',
+    name: "Bilbo's Deadly Slice",
+    manaCost: '{1}{B}',
+    cmc: 2,
+    typeLine: 'Instant',
+    colors: ['B'],
+    setCode: 'ltr',
+    artCropUrl: 'http://art/bilbo.jpg',
+  };
+  const found = new Map([[cardNameKey(bilbo.name), bilbo]]);
+
+  it('a chave ignora a pontuação que o OCR come', () => {
+    expect(cardNameKey("Bilbo's Deadly Slice")).toBe(cardNameKey('Bilbos Deadly Slice'));
+    expect(cardNameKey('Dori, Bearer of friends')).toBe(cardNameKey('Dori Bearer of Friends'));
+  });
+
+  it('preenche tipo, custo, cores e arte — sem isto o deck não se analisa', () => {
+    const lista: DeckCard[] = [{ name: "Bilbo's deadly slice", quantity: 2 }];
+    const [card] = completeFromCatalogue(lista, found);
+
+    expect(card).toMatchObject({
+      scryfallId: 'abc',
+      name: "Bilbo's Deadly Slice",
+      typeLine: 'Instant',
+      cmc: 2,
+      artCropUrl: 'http://art/bilbo.jpg',
+    });
+  });
+
+  it('a quantidade é do utilizador e não se toca', () => {
+    const lista: DeckCard[] = [{ name: "Bilbo's Deadly Slice", quantity: 3 }];
+    expect(completeFromCatalogue(lista, found)[0].quantity).toBe(3);
+  });
+
+  it('uma carta do sideboard continua no sideboard', () => {
+    const lista: DeckCard[] = [{ name: "Bilbo's Deadly Slice", quantity: 1, board: 'side' }];
+    expect(completeFromCatalogue(lista, found)[0].board).toBe('side');
+  });
+
+  it('uma carta que já tem impressão escolhida fica como está', () => {
+    // Escolher outra impressão só porque o nome bate certo desfazia uma decisão de alguém.
+    const lista: DeckCard[] = [{ name: "Bilbo's Deadly Slice", quantity: 1, scryfallId: 'outra' }];
+    expect(completeFromCatalogue(lista, found)[0].scryfallId).toBe('outra');
+  });
+
+  it('o que a Scryfall não conhece fica intacto, e não desaparece', () => {
+    const lista: DeckCard[] = [{ name: 'Carta Inventada', quantity: 1 }];
+    expect(completeFromCatalogue(lista, found)).toEqual(lista);
+  });
+
+  it('namesToResolve traz só as que ainda não têm impressão, sem repetir', () => {
+    const lista: DeckCard[] = [
+      { name: 'Mountain', quantity: 8 },
+      { name: 'Mountain', quantity: 2, board: 'side' },
+      { name: 'The Black Arrow', quantity: 1, scryfallId: 'ja-tem' },
+    ];
+    expect(namesToResolve(lista)).toEqual(['Mountain']);
   });
 });

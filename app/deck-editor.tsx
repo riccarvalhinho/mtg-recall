@@ -33,6 +33,8 @@ import { useEventsStore } from '../store/useEventsStore';
 import { useScanStore } from '../store/useScanStore';
 import { ManaPip } from '../components/ManaPip';
 import { useFocusEffect } from 'expo-router';
+import { completeFromCatalogue, namesToResolve } from '../domain/cards';
+import { resolveCardNames } from '../services/scryfall';
 import { CardArtPicker } from '../components/CardArtPicker';
 import { CardSearchModal } from '../components/CardSearchModal';
 import { toDeckCard } from '../domain/cards';
@@ -157,6 +159,8 @@ export default function DeckEditorScreen() {
   const [thumbnailCardId, setThumbnailCardId] = useState<string | undefined>(deck?.thumbnailCardId);
   const [searchOpen, setSearchOpen] = useState(false);
   const takeScan = useScanStore(s => s.take);
+  const [matching, setMatching] = useState(false);
+  const [matchNote, setMatchNote] = useState<string | null>(null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
   /** Quantos eventos impedem o apagar. `null` enquanto ninguém tentou. */
@@ -187,6 +191,35 @@ export default function DeckEditorScreen() {
   /** Tocar no formato activo larga-o: o formato é opcional e tinha de haver forma de o desfazer. */
   function chooseFormat(next: EventType) {
     setFormat(current => (current === next ? undefined : next));
+  }
+
+  /**
+   * Vai buscar à Scryfall o que falta às cartas que só têm nome.
+   *
+   * Serve dois casos: um deck lido de uma fotografia sem rede, e um deck escrito à mão. Em ambos as
+   * cartas entram com nome e quantidade e mais nada — e sem tipo, custo e arte o Deck Detail não
+   * tem o que analisar.
+   *
+   * Não mexe nas cartas que já têm impressão escolhida, nem nas quantidades.
+   */
+  async function completeCards() {
+    const pending = namesToResolve(cardList);
+    if (pending.length === 0 || matching) return;
+
+    setMatching(true);
+    setMatchNote(null);
+
+    const { found, notFound, message } = await resolveCardNames(pending);
+    setCardList(current => completeFromCatalogue(current, found));
+
+    setMatching(false);
+    setMatchNote(
+      message
+        ? message
+        : notFound.length > 0
+          ? `Matched ${found.size}. Scryfall does not know: ${notFound.join(', ')}.`
+          : `Matched ${found.size} card${found.size === 1 ? '' : 's'}.`,
+    );
   }
 
   async function handleSave() {
@@ -479,6 +512,25 @@ export default function DeckEditorScreen() {
                 <Text style={styles.addCardText}>Scan photo</Text>
               </Pressable>
             </View>
+
+            {/* Só aparece quando há o que completar — e some quando já não há, que é a confirmação
+                de que correu bem. */}
+            {namesToResolve(cardList).length > 0 && (
+              <Pressable
+                onPress={() => void completeCards()}
+                disabled={matching}
+                style={({ pressed }) => [styles.addCardBtn, matching && { opacity: 0.5 }, pressed && { opacity: 0.75 }]}
+              >
+                <Feather name="download-cloud" size={15} color={colors.gold} />
+                <Text style={styles.addCardText}>
+                  {matching
+                    ? 'Matching…'
+                    : `Get card data for ${namesToResolve(cardList).length} card${namesToResolve(cardList).length === 1 ? '' : 's'}`}
+                </Text>
+              </Pressable>
+            )}
+
+            {matchNote && <Text style={styles.listNoticeText}>{matchNote}</Text>}
 
             <Text style={styles.listNoticeText}>
               A deck works without a list — it still tracks its record across events.

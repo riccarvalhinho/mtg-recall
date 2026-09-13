@@ -243,3 +243,73 @@ export function toManualCard(name: string): ManualCard | null {
   const trimmed = name.trim();
   return trimmed.length > 0 ? { name: trimmed } : null;
 }
+
+// ─── Completar cartas que só têm nome ─────────────────────────────────────────
+
+/**
+ * A chave por que se casa um nome lido com uma carta do catálogo.
+ *
+ * Minúsculas, sem acentos e sem pontuação: o OCR come apóstrofos e vírgulas, e "Bilbo's Deadly
+ * Slice" tem de bater certo com "Bilbos deadly slice". É a mesma normalização que o
+ * `domain/ocrDecklist.ts` usa para comparar — aqui só não há tolerância a erros, porque quem
+ * responde é a Scryfall e ela já faz a procura difusa do lado dela.
+ */
+export function cardNameKey(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    // O apóstrofo **desaparece**, em vez de virar espaço: o OCR tanto lê "Bilbo's" como "Bilbos",
+    // e se um deles ficasse "bilbo s" e o outro "bilbos" nunca se encontravam. O resto da
+    // pontuação vira espaço, que é o que separa palavras a sério.
+    .replace(/['’`]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/**
+ * Preenche as cartas que só têm nome com os dados a sério.
+ *
+ * Uma carta acrescentada pelo nome — escrita à mão ou lida de uma fotografia — entra com `name` e
+ * `quantity` e mais nada. Sem `typeLine` não há agrupamento por tipo, sem `cmc` não há curva de
+ * mana, sem `artCropUrl` não há arte: o deck fica registado mas não se pode analisar, que é metade
+ * da razão de o registar.
+ *
+ * O que **não** se toca: a quantidade e o board são do utilizador, e ficam. E uma carta que já
+ * tenha `scryfallId` passa incólume — já foi escolhida uma impressão concreta, e substituí-la por
+ * outra só porque o nome bate certo seria desfazer uma decisão que alguém tomou.
+ *
+ * O nome passa a ser o da Scryfall: se o OCR leu "Dori, Bearer of friends" com f minúsculo, é a
+ * grafia certa que fica.
+ */
+export function completeFromCatalogue(
+  cards: DeckCard[],
+  found: Map<string, ScryfallCard>,
+): DeckCard[] {
+  return cards.map(card => {
+    if (card.scryfallId) return card;
+
+    const match = found.get(cardNameKey(card.name));
+    if (!match) return card;
+
+    return {
+      // `board` mantém-se: mudar uma carta do sideboard para o main ao completá-la seria mexer
+      // numa decisão do utilizador a pretexto de lhe preencher o tipo.
+      ...toDeckCard(match, card.quantity, card.board === 'side' ? 'side' : 'main'),
+      quantity: card.quantity,
+    };
+  });
+}
+
+/** As cartas da lista que ainda só têm nome — as que vale a pena ir perguntar à Scryfall. */
+export function namesToResolve(cards: DeckCard[]): string[] {
+  const names = new Set<string>();
+
+  for (const card of cards) {
+    if (card.scryfallId) continue;
+    const name = card.name?.trim();
+    if (name) names.add(name);
+  }
+
+  return [...names];
+}

@@ -27,6 +27,8 @@ import {
   type OcrDecklist,
 } from '../domain/ocrDecklist';
 import { isAvailable, readDeckPhoto } from '../services/ocr';
+import { resolveCardNames } from '../services/scryfall';
+import { completeFromCatalogue } from '../domain/cards';
 import { useEventsStore } from '../store/useEventsStore';
 import { useScanStore } from '../store/useScanStore';
 import type { DeckCard } from '../types';
@@ -45,6 +47,8 @@ export default function DeckScanScreen() {
   const [batches, setBatches] = useState<OcrDecklist[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [matching, setMatching] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Os nomes que a app já conhece. Não é o catálogo do Magic inteiro e não precisa de ser: um deck
   // é quase todo feito de cartas que já passaram por aqui, e o que faltar escreve-se à mão.
@@ -79,13 +83,28 @@ export default function DeckScanScreen() {
     }
   }
 
-  function confirm() {
-    const cards: DeckCard[] = merged.cards.map(card => ({
+  /**
+   * Completa os nomes lidos com os dados a sério e entrega a lista ao editor.
+   *
+   * Sem isto o deck entra com nomes e mais nada: sem tipo não há agrupamento, sem custo não há
+   * curva de mana e sem arte não há imagem — o deck fica registado e não se pode analisar.
+   *
+   * Falhar não impede nada: sem rede as cartas entram com o nome, como sempre foi, e completam-se
+   * depois pelo botão do editor.
+   */
+  async function confirm() {
+    const read: DeckCard[] = merged.cards.map(card => ({
       name: card.name,
       quantity: card.quantity,
     }));
 
-    handOff(cards);
+    setMatching(true);
+    const { found, message } = await resolveCardNames(read.map(card => card.name));
+    setMatching(false);
+
+    if (message) setNotice(message);
+
+    handOff(completeFromCatalogue(read, found));
     router.back();
   }
 
@@ -257,16 +276,20 @@ export default function DeckScanScreen() {
         )}
       </View>
 
+      {notice && <Text style={styles.footnote}>{notice}</Text>}
+
       <Pressable
-        onPress={confirm}
-        disabled={merged.cards.length === 0}
+        onPress={() => void confirm()}
+        disabled={merged.cards.length === 0 || matching}
         style={({ pressed }) => [
           styles.primary,
-          merged.cards.length === 0 && { opacity: 0.4 },
+          (merged.cards.length === 0 || matching) && { opacity: 0.4 },
           pressed && { opacity: 0.8 },
         ]}
       >
-        <Text style={styles.primaryText}>Add to deck</Text>
+        <Text style={styles.primaryText}>
+          {matching ? 'Matching cards…' : 'Add to deck'}
+        </Text>
       </Pressable>
     </Screen>
   );

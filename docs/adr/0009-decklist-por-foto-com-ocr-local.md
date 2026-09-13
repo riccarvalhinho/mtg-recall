@@ -165,6 +165,26 @@ Fica de fora só o que nem cara de nome tem: pedaços de custo de mana que o ML 
 linhas próprias ("3", "3e)"). Esses continuam a aparecer, à parte, porque nada é descartado em
 silêncio.
 
+### Um nome não chega (a segunda lição da mesma fotografia)
+
+Aceitar a leitura como nome resolveu a lista vazia e criou o problema seguinte: as cartas entravam
+com `name` e `quantity` e mais nada. No Deck Detail isso dá 22 cartas em **"NO TYPE LINE"**, sem
+arte, sem curva de mana e sem cores — o deck fica registado e não se pode analisar, que é metade da
+razão de o registar. Um registo que não se pode ler não vale o trabalho de o fazer.
+
+Por isso a confirmação do scan passa a **completar os nomes contra a Scryfall** antes de entregar a
+lista ao editor: `POST /cards/collection`, 75 cartas por pedido, pelo mesmo portão que serializa
+tudo o que vai para lá. Um deck de Limited resolve-se num pedido; um Commander em dois.
+
+Isto **não** contradiz o offline-first. Falhar não impede nada: sem rede as cartas entram com o
+nome, exactamente como antes, e o editor tem um botão — *Get card data* — que faz o mesmo mais
+tarde, quando houver sinal. O botão só aparece quando há cartas por completar, e desaparece quando
+já não há, o que serve de confirmação.
+
+O que nunca se toca: a quantidade e o board são do utilizador, e uma carta que já tenha impressão
+escolhida passa incólume — trocá-la por outra só porque o nome bate certo desfazia uma decisão de
+alguém.
+
 **A vigiar:** se o passo de confirmação der mais trabalho a corrigir do que dava a escrever a lista
 de raiz, a funcionalidade não está a cumprir. Em particular, se as fotografias reais mostrarem muito
 lixo por a mesa não ter ficado bem tapada, a resposta é melhorar o aviso e a confirmação — **não**

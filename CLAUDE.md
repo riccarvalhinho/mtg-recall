@@ -326,6 +326,12 @@ saía vazia. Agora o catálogo serve para corrigir a grafia, e o que ele não co
 nome tal como foi lido, marcado na confirmação como `as read`. Só fica de fora o que nem cara de
 nome tem, como um pedaço de custo de mana.
 
+**E um nome não chega:** a confirmação completa os nomes contra a Scryfall (`resolveCardNames`,
+`POST /cards/collection`, 75 por pedido) antes de entregar a lista ao editor — sem `typeLine`,
+`cmc` e `artCropUrl` o Deck Detail não tem o que analisar. Sem rede as cartas entram só com o nome
+e completam-se depois pelo botão *Get card data* do editor, que só aparece quando há o que
+completar.
+
 ---
 
 ## Regras de Trabalho

@@ -27,7 +27,9 @@ import {
   type CardCache,
 } from '../domain/cardCache';
 import {
+  cardNameKey,
   isSearchableQuery,
+  normalizeCard,
   normalizeCardSearch,
   normalizeQuery,
   type ScryfallCard,
@@ -135,6 +137,43 @@ async function scryfallFetch(url: string, what: string): Promise<unknown> {
   };
 
   // Encadeia no pedido anterior em vez de o substituir.
+  const queued = pending.then(run, run);
+  pending = queued.then(
+    () => undefined,
+    () => undefined,
+  );
+  return queued;
+}
+
+/**
+ * O mesmo portão, para os pedidos que levam corpo.
+ *
+ * Partilha a fila e o intervalo com o `scryfallFetch` — se tivesse fila própria, dois pedidos
+ * podiam sair ao mesmo tempo e o rate limit deixava de ser respeitado.
+ */
+async function scryfallPost(url: string, body: unknown, what: string): Promise<unknown> {
+  const run = async () => {
+    const since = Date.now() - lastRequestAt;
+    if (since < MIN_INTERVAL_MS) await wait(MIN_INTERVAL_MS - since);
+    lastRequestAt = Date.now();
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'User-Agent': 'MTGRecall/1.0',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`A Scryfall respondeu ${response.status} ao pedir ${what}.`);
+    }
+
+    return response.json();
+  };
+
   const queued = pending.then(run, run);
   pending = queued.then(
     () => undefined,
@@ -283,4 +322,76 @@ export async function searchCards(query: string): Promise<CardSearchResult> {
 
 export async function clearCardCache(): Promise<void> {
   await AsyncStorage.removeItem(CARDS_KEY);
+}
+
+// ─── Completar cartas lidas só pelo nome (ADR 0009) ──────────────────────────
+
+/** O `POST /cards/collection` aceita 75 identificadores por pedido. */
+const COLLECTION_BATCH = 75;
+
+export interface ResolveResult {
+  /** Chave de `cardNameKey` → a carta da Scryfall. */
+  found: Map<string, ScryfallCard>;
+  /** Os nomes que a Scryfall não reconheceu. Ficam como estão, e mostram-se. */
+  notFound: string[];
+  /** Porque é que não foi possível perguntar. `undefined` quando correu bem. */
+  message?: string;
+}
+
+/**
+ * Vai buscar à Scryfall os dados a sério das cartas que só têm nome.
+ *
+ * Uma decklist lida de uma fotografia traz nomes e mais nada. Sem `typeLine` não há agrupamento por
+ * tipo, sem `cmc` não há curva de mana e sem `artCropUrl` não há arte — o deck fica registado mas
+ * não se pode analisar, que é metade da razão de o registar.
+ *
+ * Um pedido por cada 75 cartas, e não um por carta: um deck de Limited resolve-se num pedido só,
+ * um Commander em dois. Cem pedidos seguidos a 100 ms seriam dez segundos de espera e um convite a
+ * que a Scryfall nos feche a porta.
+ *
+ * **Nunca atira.** Sem rede devolve o que tiver e explica; as cartas ficam com o nome, que é o que
+ * a app sempre aceitou. É a promessa do offline-first: numa loja sem sinal o deck entra na mesma, e
+ * completa-se depois.
+ */
+export async function resolveCardNames(names: string[]): Promise<ResolveResult> {
+  const found = new Map<string, ScryfallCard>();
+  const notFound: string[] = [];
+
+  const wanted = names.map(name => name.trim()).filter(Boolean);
+  if (wanted.length === 0) return { found, notFound };
+
+  try {
+    for (let start = 0; start < wanted.length; start += COLLECTION_BATCH) {
+      const batch = wanted.slice(start, start + COLLECTION_BATCH);
+
+      const payload = (await scryfallPost(
+        'https://api.scryfall.com/cards/collection',
+        { identifiers: batch.map(name => ({ name })) },
+        'os dados das cartas',
+      )) as { data?: unknown[]; not_found?: { name?: string }[] };
+
+      for (const raw of payload.data ?? []) {
+        const card = normalizeCard(raw);
+        // A chave é a do **nome devolvido**: é por ele que `completeFromCatalogue` procura, depois
+        // de normalizar o que o OCR leu.
+        if (card) found.set(cardNameKey(card.name), card);
+      }
+
+      for (const missing of payload.not_found ?? []) {
+        const name = missing?.name?.trim();
+        if (name) notFound.push(name);
+      }
+    }
+
+    return { found, notFound };
+  } catch (error) {
+    return {
+      found,
+      notFound: [],
+      message:
+        error instanceof Error && /respondeu/.test(error.message)
+          ? 'Scryfall is not answering — cards keep the names they were read with.'
+          : 'No connection — cards keep the names they were read with.',
+    };
+  }
 }
