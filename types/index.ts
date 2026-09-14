@@ -29,11 +29,28 @@ export interface ManaSelection {
   splash: ManaColor[];
 }
 
+/**
+ * A vida com que cada um acabou um game.
+ *
+ * Vem do contador de vida e mais de lado nenhum. Os dois números são obrigatórios juntos: meia
+ * pontuação — saber que acabei a 14 sem saber a quanto ficou o adversário — não conta uma história
+ * nenhuma, e obrigar aos dois evita ter de perguntar em cada écran se o outro lado existe.
+ *
+ * Não tem mínimo. Perde-se a menos de zero, e limitar isto a zero seria gravar um número que não
+ * aconteceu só porque é mais bonito.
+ */
+export interface GameLife {
+  me: number;
+  opponent: number;
+}
+
 // Um game individual dentro de um match — permite saber que um 2-1 foi 2-1
 export interface Game {
   number: number;
   result: GameResult;
   wentFirst?: boolean;
+  /** Ausente num game registado à mão: quem carrega um torneio de memória não sabe a vida. */
+  life?: GameLife;
 }
 
 // Um match individual dentro de um evento

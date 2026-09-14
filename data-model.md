@@ -69,9 +69,9 @@ A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collec
       "result": "W",
       "wentFirst": true,
       "games": [
-        { "number": 1, "result": "W", "wentFirst": true },
-        { "number": 2, "result": "L", "wentFirst": false },
-        { "number": 3, "result": "W", "wentFirst": true }
+        { "number": 1, "result": "W", "wentFirst": true, "life": { "me": 14, "opponent": 0 } },
+        { "number": 2, "result": "L", "wentFirst": false, "life": { "me": 3, "opponent": 20 } },
+        { "number": 3, "result": "W", "wentFirst": true, "life": { "me": 12, "opponent": 7 } }
       ],
       "notes": "Removal a mais do outro lado no game 2."
     }
@@ -106,6 +106,7 @@ Dentro do array `matches` do evento.
 | `result` | sim | `W`, `L` ou `D` |
 | `wentFirst` | não | `true` se fui eu a jogar primeiro na ronda |
 | `games` | não | Registo game a game — permite saber que um 2-1 foi 2-1. Sem `D` num game |
+| `games[].life` | não | `{ "me": n, "opponent": n }` — a vida com que o game acabou. Só existe quando veio do contador |
 | `notes` | não | |
 
 **Um match pode não ter adversário.** Carregar torneios antigos de memória é um caso real: sabe-se
@@ -120,6 +121,19 @@ desempenho do deck; só não conta para as contas sobre pessoas.
 Quando há `games`, o `result` do match tem de ser coerente com eles: dois `W` dão `W`, dois `L` dão
 `L`, um a um com um game não jogado dá `D`. A validação verifica isso — um match a dizer `W` com dois
 games perdidos é um erro de dedo, não uma opção.
+
+**A vida de cada game vem do contador e de mais lado nenhum.** Quem regista um match à mão não a
+tem, e por isso `life` é opcional: um torneio carregado de memória sabe o resultado e não sabe a
+quanto se ficou. Os dois números andam juntos — saber que acabei a 14 sem saber a quanto ficou o
+outro não conta história nenhuma.
+
+Não há mínimo. Perde-se a menos de zero, e um `-3` é a verdade do que aconteceu; forçar um zero
+seria escrever no ficheiro um número mais bonito do que o jogo. Também não há máximo: a vida sobe
+sem limite e inventar um só criava um erro de validação onde não há erro nenhum.
+
+A `life` **não entra em conta nenhuma**. Não decide o resultado — quem o decide são os `games`, como
+já decidia — e não aparece em nenhuma estatística. Está no ficheiro para se poder ler mais tarde o
+que aconteceu numa ronda, que é para isso que a app tem o nome que tem.
 
 ## Adversários
 

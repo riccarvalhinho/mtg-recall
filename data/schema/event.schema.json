@@ -197,6 +197,23 @@
               },
               "wentFirst": {
                 "type": "boolean"
+              },
+              "life": {
+                "description": "A vida com que cada um acabou o game. Vem do contador de vida; ausente num game registado a mao. Sem minimo: perde-se a menos de zero, e forcar um zero seria escrever uma coisa que nao aconteceu.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "me",
+                  "opponent"
+                ],
+                "properties": {
+                  "me": {
+                    "type": "integer"
+                  },
+                  "opponent": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           }
