@@ -2,7 +2,7 @@
 
 > Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica
 > for tomada, ou o estado mudar.
-> Última actualização: 2026-09-11
+> Última actualização: 2026-09-14
 
 ---
 
@@ -72,6 +72,10 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Collection** — valor, evolução, procura, e ligar uma carta escrita à mão a uma impressão
 - [x] **Deck Scan** — decklist por fotografia: aviso da montagem, porções acumuladas e confirmação
       antes de entregar as cartas ao editor. Falta correr num APK com o ML Kit lá dentro
+- [x] **Life Counter** — contador de vida em mesa partilhada (ecrã ao meio, a metade do adversário
+      virada para ele), com fim de game proposto sozinho, gaveta de opções para a vida inicial e
+      resumo à saída. Entrega os games ao registo de match já com a vida de cada um. Falta usá-lo
+      numa mesa a sério — ver Q13
 - [x] **Basic lands** (em Settings) — a colecção de básicos e a arte de cada um, para os decks que
       não têm colecção própria. Guardada no telemóvel, fora de `data/` (ADR 0010)
 - [x] **Settings** — token (verificado antes de guardar), estado da sincronização, sincronizar
@@ -85,6 +89,7 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 ### Decisões
 - [x] `docs/adr/0001` a `0006` — GitHub como source of truth, dados JSON versionados, app nativa em
       vez de PWA, escrita por outbox, repositório público, utilizador único
+- [x] `docs/adr/0011` — o contador de vida é efémero; o que fica no ficheiro é `games[].life`
 - [x] `data-model.md` reescrito para o modelo de ficheiros
 
 ### Dados e ferramentas
@@ -113,8 +118,14 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       de expandir o histórico em acordeão e passa a navegar para aqui
 - [x] `domain/dates.ts` (puro) — formatação de datas `AAAA-MM-DD` sem passar pelo `Date`, que as lê
       em UTC e num fuso negativo recua um dia
+- [x] `domain/lifeCounter.ts` (puro) — o contador de vida: totais, fim de game proposto, sequência
+      de games e a conversão para `Game[]`. O resultado do match continua a sair de
+      `resultFromGames`, sem segundo caminho até ao ficheiro
+- [x] `services/lifeSession.ts` — a partida a meio, no AsyncStorage e com chave da ronda; nunca
+      atira, como as preferências
+- [x] `store/useLifeStore.ts` — a gaveta que entrega os games contados ao registo de match
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
-- [x] 46 testes nos módulos puros
+- [x] 439 testes nos módulos puros
 
 ---
 

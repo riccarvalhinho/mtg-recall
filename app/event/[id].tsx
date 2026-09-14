@@ -533,28 +533,58 @@ const deck = StyleSheet.create({
 
 // ─── Botão Add Match ────────────────────────────────────────────────────
 
-function AddMatchButton({ onPress }: { onPress: () => void }) {
+/**
+ * Acrescentar uma ronda — a escrever, ou a contar.
+ *
+ * As duas levam ao mesmo sítio. Registar continua a ser o caminho normal e fica com a largura toda
+ * que sobra; contar a vida é o quadrado ao lado, para quem vai jogar agora e regista no fim.
+ */
+function AddMatchButton({ onPress, onCount }: { onPress: () => void; onCount: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [addBtn.btn, pressed && { borderColor: colors.goldDim }]}
-    >
-      <View style={addBtn.circle}>
-        <Text style={addBtn.plus}>+</Text>
-      </View>
-      <Text style={addBtn.text}>Add Match</Text>
-    </Pressable>
+    <View style={addBtn.row}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [addBtn.btn, pressed && { borderColor: colors.goldDim }]}
+      >
+        <View style={addBtn.circle}>
+          <Text style={addBtn.plus}>+</Text>
+        </View>
+        <Text style={addBtn.text}>Add Match</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={onCount}
+        style={({ pressed }) => [addBtn.life, pressed && { opacity: 0.8 }]}
+      >
+        <Feather name="heart" size={19} color={colors.gold} />
+      </Pressable>
+    </View>
   );
 }
 
 const addBtn = StyleSheet.create({
-  btn: {
+  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    gap: 10,
     marginHorizontal: 16,
     marginTop: 8,
     marginBottom: 24,
+  },
+  life: {
+    width: 52,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.gold + '80',
+    backgroundColor: colors.gold + '17',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 13,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -622,6 +652,18 @@ export default function EventDetailScreen() {
   function goToMatchRegistration() {
     router.push({
       pathname: '/match-registration',
+      params: {
+        eventId: event!.id,
+        round: String(event!.matches.length + 1),
+        eventName: event!.name,
+      },
+    });
+  }
+
+  /** Contar a vida da ronda seguinte. À saída, o contador abre o registo já preenchido. */
+  function goToLifeCounter() {
+    router.push({
+      pathname: '/life-counter',
       params: {
         eventId: event!.id,
         round: String(event!.matches.length + 1),
@@ -724,7 +766,7 @@ export default function EventDetailScreen() {
 
         {/* Botão adicionar match */}
         {isActive(event) && (
-          <AddMatchButton onPress={goToMatchRegistration} />
+          <AddMatchButton onPress={goToMatchRegistration} onCount={goToLifeCounter} />
         )}
 
         {/* Botão concluir torneio */}

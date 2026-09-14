@@ -71,6 +71,15 @@ export default function RootLayout() {
           name="deck-scan"
           options={{ presentation: 'modal' }}
         />
+        {/*
+          O contador abre por cima do registo — é a ferramenta que serve o formulário, não um écran
+          irmão. `fullScreenModal` porque a mesa partilhada precisa do ecrã todo: um modal normal
+          deixaria uma faixa do écran de trás por cima da metade do adversário.
+        */}
+        <Stack.Screen
+          name="life-counter"
+          options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+        />
       </Stack>
     </>
   );

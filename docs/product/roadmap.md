@@ -1,7 +1,7 @@
 # MTG Recall — Roadmap
 
 > O que vem a seguir e por que ordem. Actualizar quando uma fase fechar ou quando a ordem mudar.
-> Última actualização: 2026-09-12
+> Última actualização: 2026-09-14
 
 A app é de utilizador único (ADR 0006) e os dados são ficheiros no repositório (ADR 0002). Tudo o que
 está aqui assume isso.
@@ -34,6 +34,15 @@ O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em ne
 
 **Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
 com o evento completo.
+
+### Contador de vida — escrito, por provar numa mesa
+
+Feito e testado (`domain/lifeCounter.ts`, 39 testes), mas nunca usado num torneio. O que falta é
+usá-lo entre rondas e ver se a disposição aguenta — Q13. Ver ADR 0011 para as decisões.
+
+- [ ] Contar uma ronda a sério com o telemóvel pousado entre os dois jogadores
+- [ ] Confirmar que o ecrã fica aceso a ronda inteira (`expo-keep-awake` nunca correu num APK)
+- [ ] Confirmar que a vida aparece no ficheiro do evento depois de registar a ronda
 
 ### Por confirmar no telemóvel
 

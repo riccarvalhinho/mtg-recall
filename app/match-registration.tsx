@@ -2,18 +2,20 @@
 // Spec: design/handoff.md § 6
 // Print: design/screen-match-registration.png
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import { Game, GameResult, ManaColor, MatchResult } from '../types';
 import { useEventsStore } from '../store/useEventsStore';
+import { useLifeStore } from '../store/useLifeStore';
 import { ManaPip } from '../components/ManaPip';
 import {
   MANA_ORDER,
@@ -325,6 +327,8 @@ export default function MatchRegistrationScreen() {
       : undefined,
   );
 
+  const takeLife = useLifeStore(s => s.take);
+
   const [opponent, setOpponent]   = useState(existing?.opponent ?? '');
   const [result, setResult]       = useState<MatchResult | null>(existing?.result ?? null);
   const [colorStates, setColorStates] = useState<ManaStates>(
@@ -358,6 +362,32 @@ export default function MatchRegistrationScreen() {
   }
 
   const hasAnyColor = hasAnyMana(colorStates);
+
+  /**
+   * Os games contados no contador de vida entram aqui ao voltar.
+   *
+   * `take` esvazia a gaveta, portanto voltar a este écran não acrescenta o mesmo jogo duas vezes.
+   * Substituem o que estivesse na lista em vez de somar: o contador contou o match inteiro, e
+   * juntá-lo a uma lista meio escrita à mão daria rondas de seis games.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      const counted = takeLife();
+      if (!counted || counted.length === 0) return;
+      setGames(counted);
+      setGamesOpen(true);
+    }, [takeLife]),
+  );
+
+  function openLifeCounter() {
+    router.push({
+      pathname: '/life-counter',
+      params: { eventId, round: String(roundNum), eventName, returnTo: 'form' },
+    });
+  }
+
+  /** Quantos games vieram do contador — é o que dá a legenda da pastilha. */
+  const trackedGames = games.filter(game => game.life).length;
 
   async function handleSave() {
     if (!canSave || !eventId || effectiveResult === null) return;
@@ -434,6 +464,27 @@ export default function MatchRegistrationScreen() {
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
+          {/*
+            A entrada principal do contador. Está no topo de propósito: se se vai contar a vida, é
+            antes de a ronda começar — e o resto do formulário preenche-se no fim, quando já se sabe
+            contra quem se jogou.
+          */}
+          <Pressable
+            onPress={openLifeCounter}
+            style={({ pressed }) => [styles.lifeRow, pressed && { opacity: 0.85 }]}
+          >
+            <Feather name="heart" size={20} color={colors.gold} />
+            <View style={styles.lifeText}>
+              <Text style={styles.lifeTitle}>Life counter</Text>
+              <Text style={styles.lifeHint}>
+                {trackedGames > 0
+                  ? `${trackedGames} ${trackedGames === 1 ? 'game' : 'games'} tracked · tap to reopen`
+                  : 'Count this round and bring the games back'}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={16} color={colors.goldDim} />
+          </Pressable>
+
           {/* Nome do adversário */}
           <View style={styles.field}>
             <Text style={styles.fieldLabel}>Opponent name (optional)</Text>
@@ -646,6 +697,20 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 24,
   },
+  lifeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 62,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gold + '73',
+    backgroundColor: colors.gold + '12',
+  },
+  lifeText: { flex: 1, gap: 1 },
+  lifeTitle: { fontFamily: fonts.displaySemi, fontSize: 15, color: colors.textPrim },
+  lifeHint: { fontFamily: fonts.bodyItal, fontSize: 11, color: colors.goldDim },
   field: {
     gap: 10,
   },
