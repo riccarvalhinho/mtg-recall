@@ -87,9 +87,15 @@ export interface Event {
   date: string;
   location?: string;
   status: EventStatus;
-  /** Classificação final, introduzida à mão (ex.: "1st", "Top 8"). */
-  rank?: string;
+  /**
+   * Posição final: 1 é o primeiro lugar. Os escalões (Top 8, Top 16) deduzem-se daqui em runtime,
+   * por `domain/placement.ts` — ver ADR 0012.
+   */
+  placement?: number;
+  /** Quantos jogadores tinha o torneio. Sem isto a posição não se compara entre torneios. */
   playersCount?: number;
+  /** Legado: o escalão escrito à mão que existia antes do `placement`. Lê-se, não se escreve. */
+  rank?: string;
   /** Referência a `data/decks/<id>.json`. Quando existe, manda sobre deckName/deckColors. */
   deckId?: string;
   /** Legado: eventos anteriores à Fase 2 só têm isto. Continuam a ler-se. */

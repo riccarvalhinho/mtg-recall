@@ -41,7 +41,7 @@ const fullEvent: Event = {
   date: '2026-04-12',
   location: 'Nave Espacial, Lisboa',
   status: 'completed',
-  rank: '3rd',
+  placement: 3,
   playersCount: 16,
   deckId: 'selesnya-midrange',
   deckName: 'Selesnya Midrange',
@@ -101,6 +101,21 @@ describe('serializeEvent', () => {
     expect(file).not.toHaveProperty('location');
     expect(file).not.toHaveProperty('rank');
     expect(file).not.toHaveProperty('notes');
+  });
+
+  it('escreve a posição final e o número de jogadores', () => {
+    const file = parsed(fullEvent) as Record<string, unknown>;
+    expect(file.placement).toBe(3);
+    expect(file.playersCount).toBe(16);
+  });
+
+  it('continua a escrever o rank antigo dos eventos que só têm isso', () => {
+    // Nada novo escreve `rank` (ADR 0012), mas um evento antigo restaurado do repositório volta a
+    // ser gravado à primeira alteração — e perder o resultado nessa gravação seria apagá-lo.
+    const legacy: Event = { ...minimalEvent, rank: 'Top 8' };
+    const file = parsed(legacy) as Record<string, unknown>;
+    expect(file.rank).toBe('Top 8');
+    expect(validateEvent(file)).toBe(true);
   });
 
   it('omite deckColors quando não há cor nenhuma escolhida', () => {

@@ -59,14 +59,20 @@
         "completed"
       ]
     },
-    "rank": {
-      "description": "Classificação final, introduzida à mão (ex.: 1st, Top 8).",
-      "type": "string",
-      "minLength": 1
-    },
-    "playersCount": {
+    "placement": {
+      "description": "Posição final no torneio: 1 é o primeiro lugar. É este o campo a sério. Os escalões (Top 8, Top 16, …) não se guardam — deduzem-se daqui em runtime, por domain/placement.ts, como o win rate e os pontos. Ver docs/adr/0012-posicao-final-em-vez-de-escalao.md.",
       "type": "integer",
       "minimum": 1
+    },
+    "playersCount": {
+      "description": "Quantos jogadores tinha o torneio. Sem isto a posição não se compara entre torneios — um 5.º lugar vale coisas diferentes em 8 e em 128 — e o escalão fica por confirmar. Nunca menor do que placement.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "rank": {
+      "description": "Legado: o escalão escrito à mão (\"Top 8\", \"1st Place\") que existia antes de haver placement. Continua a ler-se para os eventos antigos não perderem o resultado, mas nada novo o escreve — ADR 0012.",
+      "type": "string",
+      "minLength": 1
     },
     "deckId": {
       "description": "Referência a data/decks/<id>.json. É a forma nova de dizer com que deck se jogou. Quando existe, manda sobre deckName/deckColors.",

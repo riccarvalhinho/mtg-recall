@@ -2,7 +2,7 @@
 // Spec: design/handoff.md § 5
 // Print: design/screen-event-detail.png
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -15,6 +15,14 @@ import { formatDate } from '../../domain/dates';
 import { deckPerformance } from '../../domain/deck';
 import { isLimitedFormat } from '../../domain/sets';
 import { eventThumbnailUrl, thumbnailChoices } from '../../domain/thumbnails';
+import {
+  cleanStanding,
+  eventTier,
+  formatPlacement,
+  ordinal,
+  tierFor,
+  tierLabel,
+} from '../../domain/placement';
 import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -24,7 +32,128 @@ import { CardArtPicker } from '../../components/CardArtPicker';
 import { SetSelector } from '../../components/SetSelector';
 import { ConfirmModal } from '../../components/ConfirmModal';
 
-const RANK_OPTIONS = ['1st Place', 'Top 2', 'Top 4', 'Top 8', 'Top 16', 'Top 32', 'Other'];
+// ─── Classificação final ──────────────────────────────────────────────────────
+
+/**
+ * Os dois números que fecham um torneio, enquanto ainda são texto no teclado.
+ *
+ * Guardam-se como string e não como número porque um campo a meio de ser escrito ("3" a caminho de
+ * "32") não é um número que se queira gravar — e um `undefined` a passar pelo `value` de um
+ * `TextInput` apagava o que lá estava por baixo dos dedos de quem escreve.
+ */
+interface StandingDraft {
+  placement: string;
+  playersCount: string;
+}
+
+/** O texto de um campo como posição, ou `undefined` enquanto ainda não for uma. */
+function toPosition(text: string): number | undefined {
+  const value = parseInt(text.trim(), 10);
+  return Number.isInteger(value) && value >= 1 ? value : undefined;
+}
+
+/**
+ * Lê o rascunho. `contradictory` é o único erro possível aqui: um campo mais pequeno do que a
+ * posição. Repare-se que se detecta **antes** do `cleanStanding`, que resolve a contradição
+ * deitando o campo fora — e quem escreve tem de ver o aviso, não o número a desaparecer.
+ */
+function readStanding(draft: StandingDraft) {
+  const placement = toPosition(draft.placement);
+  const playersCount = toPosition(draft.playersCount);
+
+  return {
+    placement,
+    playersCount,
+    contradictory:
+      placement !== undefined && playersCount !== undefined && playersCount < placement,
+  };
+}
+
+/** O rascunho de um evento que já existe, para os campos abrirem com o que lá está. */
+function draftFrom(event: Event): StandingDraft {
+  return {
+    placement: event.placement ? String(event.placement) : '',
+    playersCount: event.playersCount ? String(event.playersCount) : '',
+  };
+}
+
+/**
+ * A linha por baixo dos campos, que diz em que escalão a posição cai — ou porque não cai em nenhum.
+ *
+ * É ela que faz a diferença entre pedir dois números e pedir dois números com sentido: mostra ali
+ * mesmo que um 5.º entre 6 não é Top 8 nenhum, em vez de o deixar descobrir nas estatísticas.
+ */
+function standingPreview(reading: ReturnType<typeof readStanding>): string {
+  const { placement, playersCount, contradictory } = reading;
+
+  if (contradictory) {
+    return `Only ${playersCount} players — ${ordinal(placement!)} doesn't fit.`;
+  }
+
+  if (placement === undefined) {
+    return playersCount === undefined
+      ? 'Leave both empty if there is no finish worth recording.'
+      : 'Add the finishing position to place this tournament.';
+  }
+
+  const label = playersCount === undefined
+    ? ordinal(placement)
+    : `${ordinal(placement)} of ${playersCount}`;
+
+  const tier = tierFor(placement, playersCount);
+  if (tier !== null) return `${label} · counts as ${tierLabel(tier)}`;
+  if (playersCount === undefined) return `${label} · add the field size to confirm a bracket`;
+
+  return `${label} · outside the brackets`;
+}
+
+/** Os dois campos e a pré-visualização. Serve para fechar o torneio e para corrigir depois. */
+function StandingFields({ draft, onChange, onCommit }: {
+  draft: StandingDraft;
+  onChange: (next: StandingDraft) => void;
+  /** Chamado ao sair de um campo, para quem grava à medida em vez de ter botão de confirmar. */
+  onCommit?: () => void;
+}) {
+  const reading = readStanding(draft);
+
+  return (
+    <View style={complete.group}>
+      <View style={complete.pair}>
+        <View style={complete.half}>
+          <Text style={complete.label}>Finished</Text>
+          <TextInput
+            style={[complete.input, reading.contradictory && complete.inputBad]}
+            value={draft.placement}
+            onChangeText={placement => onChange({ ...draft, placement })}
+            onBlur={onCommit}
+            placeholder="e.g. 5"
+            placeholderTextColor={colors.textDim}
+            keyboardType="number-pad"
+            returnKeyType="done"
+          />
+        </View>
+
+        <View style={complete.half}>
+          <Text style={complete.label}>Out of</Text>
+          <TextInput
+            style={[complete.input, reading.contradictory && complete.inputBad]}
+            value={draft.playersCount}
+            onChangeText={playersCount => onChange({ ...draft, playersCount })}
+            onBlur={onCommit}
+            placeholder="e.g. 32"
+            placeholderTextColor={colors.textDim}
+            keyboardType="number-pad"
+            returnKeyType="done"
+          />
+        </View>
+      </View>
+
+      <Text style={[complete.preview, reading.contradictory && complete.previewBad]}>
+        {standingPreview(reading)}
+      </Text>
+    </View>
+  );
+}
 
 // ─── StatsBar ─────────────────────────────────────────────────────────────────
 
@@ -251,14 +380,37 @@ function EventSettings({ event }: { event: Event }) {
   const decks = useEventsStore(s => s.decks);
   const setEventSetCode = useEventsStore(s => s.setEventSetCode);
   const setEventDeckThumbnail = useEventsStore(s => s.setEventDeckThumbnail);
+  const setEventStanding = useEventsStore(s => s.setEventStanding);
 
   const [open, setOpen] = useState(false);
+  const [standing, setStanding] = useState<StandingDraft>(() => draftFrom(event));
+
+  // Os campos seguem o que está gravado. Sem isto, concluir o torneio com este écran montado
+  // deixava-os vazios por cima de uma posição que já existe — e a gravação ao sair apagava-a.
+  // Enquanto se escreve nada muda: o que grava é o `commitStanding`, e ele grava o mesmo valor.
+  useEffect(() => {
+    setStanding(draftFrom(event));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.placement, event.playersCount]);
 
   const linked = decks.find(d => d.id === event.deckId);
   const showSet = isLimitedFormat(event.type);
   const showArt = thumbnailChoices(linked?.cards).length > 0;
+  // Só depois de o torneio fechar: a meio dele ainda não há posição nenhuma para corrigir.
+  const showStanding = !isActive(event);
 
-  if (!showSet && !showArt) return null;
+  /**
+   * Grava ao sair do campo, e não a cada tecla: a meio de escrever "32" passa-se por "3", que é uma
+   * posição válida e ficaria gravada. A contradição não se grava de todo — o aviso fica no écran
+   * até os dois números fazerem sentido.
+   */
+  function commitStanding() {
+    const { placement, playersCount, contradictory } = readStanding(standing);
+    if (contradictory) return;
+    void setEventStanding(event.id, { placement, playersCount });
+  }
+
+  if (!showSet && !showArt && !showStanding) return null;
 
   return (
     <View style={settings.wrap}>
@@ -274,6 +426,13 @@ function EventSettings({ event }: { event: Event }) {
 
       {open && (
         <View style={settings.body}>
+          {showStanding && (
+            <View style={settings.standing}>
+              <Text style={settings.sectionLabel}>Final standing</Text>
+              <StandingFields draft={standing} onChange={setStanding} onCommit={commitStanding} />
+            </View>
+          )}
+
           {showSet && (
             <SetSelector
               value={event.setCode}
@@ -307,6 +466,14 @@ const settings = StyleSheet.create({
     letterSpacing: 0.8,
   },
   body: { paddingBottom: 4 },
+  standing: { gap: 8, paddingBottom: 14 },
+  sectionLabel: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 11,
+    color: colors.textDim,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
 });
 
 /**
@@ -627,8 +794,7 @@ export default function EventDetailScreen() {
   // All useState calls must be above any early return
   const [deleteEventModal,   setDeleteEventModal]   = useState(false);
   const [completeEventModal, setCompleteEventModal] = useState(false);
-  const [rank,               setRank]               = useState<string | null>(null);
-  const [playersCount,       setPlayersCount]       = useState('');
+  const [standing,           setStanding]           = useState<StandingDraft>({ placement: '', playersCount: '' });
   const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ round: number; opponent: string } | null>(null);
 
   if (!event) {
@@ -640,6 +806,11 @@ export default function EventDetailScreen() {
   }
 
   const stats = calcEventStats(event);
+  const reading = readStanding(standing);
+
+  // O resultado final, para o cabeçalho. `formatPlacement` já trata do `rank` antigo.
+  const standingLabel = formatPlacement(event);
+  const standingTier  = eventTier(event);
 
   // O set do torneio, ao lado do formato. `setCode` é o campo a sério e só existe em Limited; o
   // pedaço do nome a seguir ao travessão é o que se fazia antes de o campo ter interface, e
@@ -731,6 +902,17 @@ export default function EventDetailScreen() {
               </View>
             )}
           </View>
+
+          {/* O resultado final. Antes disto só se escrevia e nunca mais se via. */}
+          {standingLabel && (
+            <View style={styles.standing}>
+              <Feather name="award" size={13} color={colors.gold} />
+              <Text style={styles.standingText}>{standingLabel}</Text>
+              {standingTier !== null && (
+                <Text style={styles.standingTier}>{tierLabel(standingTier)}</Text>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Stats Bar */}
@@ -799,36 +981,7 @@ export default function EventDetailScreen() {
             <Text style={complete.title}>Complete Tournament</Text>
             <Text style={complete.subtitle}>{event.name}</Text>
 
-
-            <View style={complete.field}>
-              <Text style={complete.label}>Final ranking (optional)</Text>
-              <View style={complete.rankGrid}>
-                {RANK_OPTIONS.map(option => (
-                  <Pressable
-                    key={option}
-                    onPress={() => setRank(rank === option ? null : option)}
-                    style={[complete.rankBtn, rank === option && complete.rankBtnActive]}
-                  >
-                    <Text style={[complete.rankBtnText, rank === option && complete.rankBtnTextActive]}>
-                      {option}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <View style={complete.field}>
-              <Text style={complete.label}>Number of players (optional)</Text>
-              <TextInput
-                style={complete.input}
-                value={playersCount}
-                onChangeText={setPlayersCount}
-                placeholder="e.g. 32"
-                placeholderTextColor={colors.textDim}
-                keyboardType="number-pad"
-                returnKeyType="done"
-              />
-            </View>
+            <StandingFields draft={standing} onChange={setStanding} />
 
             <View style={complete.actions}>
               <Pressable
@@ -838,14 +991,18 @@ export default function EventDetailScreen() {
                 <Text style={complete.cancelLabel}>Cancel</Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [complete.btn, complete.confirmBtn, pressed && { opacity: 0.7 }]}
+                // Dois números que não podem ser verdade ao mesmo tempo não se gravam: o aviso já
+                // está no écran e corrigir é mudar um algarismo.
+                disabled={reading.contradictory}
+                style={({ pressed }) => [
+                  complete.btn,
+                  complete.confirmBtn,
+                  reading.contradictory && complete.btnDisabled,
+                  pressed && { opacity: 0.7 },
+                ]}
                 onPress={async () => {
                   setCompleteEventModal(false);
-                  await completeEvent(
-                    event.id,
-                    rank ?? undefined,
-                    playersCount ? parseInt(playersCount, 10) : undefined,
-                  );
+                  await completeEvent(event.id, cleanStanding(reading));
                   router.replace('/(tabs)/');
                 }}
               >
@@ -945,31 +1102,31 @@ const complete = StyleSheet.create({
     fontSize: 16,
     color: colors.textPrim,
   },
-  rankGrid: {
+  group: {
+    gap: 10,
+  },
+  pair: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    gap: 10,
+  },
+  half: {
+    flex: 1,
     gap: 8,
   },
-  rankBtn: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    backgroundColor: colors.bgCard,
+  inputBad: {
+    borderColor: colors.lossBorder,
   },
-  rankBtnActive: {
-    borderColor: colors.gold,
-    backgroundColor: colors.gold + '22',
-  },
-  rankBtnText: {
-    fontFamily: fonts.body,
-    fontSize: 13,
+  preview: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
     color: colors.textSec,
+    lineHeight: 17,
   },
-  rankBtnTextActive: {
-    color: colors.gold,
-    fontFamily: fonts.bodyMed,
+  previewBad: {
+    color: colors.loss,
+  },
+  btnDisabled: {
+    opacity: 0.4,
   },
   actions: {
     flexDirection: 'row',
@@ -1130,6 +1287,26 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 12,
     color: colors.textDim,
+  },
+  standing: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: 10,
+  },
+  standingText: {
+    fontFamily: fonts.displaySemi,
+    fontSize: 15,
+    color: colors.gold,
+    includeFontPadding: false,
+  },
+  standingTier: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
+    color: colors.textSec,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+    paddingLeft: 7,
   },
   matchesHeader: {
     flexDirection: 'row',

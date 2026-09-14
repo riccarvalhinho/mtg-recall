@@ -21,25 +21,39 @@ import {
   rankOpponents,
 } from '../../domain/opponents';
 import { compareDates, monthLabel } from '../../domain/dates';
+import {
+  TIERS,
+  Tier,
+  bestFinish,
+  hasStanding,
+  tierCounts,
+  tierLabel,
+  trendPoint,
+} from '../../domain/placement';
 
 const SCREEN_W   = Dimensions.get('window').width;
 const MANA_ORDER: ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
 
-// ─── Rank helpers ─────────────────────────────────────────────────────────────
+// ─── Escalões ─────────────────────────────────────────────────────────────────
 
-const RANK_TO_LEVEL: Record<string, number> = {
-  'Top 32': 1, 'Top 16': 2, 'Top 8': 3, 'Top 4': 4, 'Top 2': 5, '1st Place': 6,
+/**
+ * Os degraus da pirâmide. A largura e a cor são desenho; **os escalões em si vêm de
+ * `domain/placement.ts`** e deduzem-se da posição final de cada evento — nenhum ficheiro guarda
+ * "Top 8" (ADR 0012).
+ *
+ * O último degrau não é um escalão: é o balde de quem chegou ao fim do torneio fora de todos eles,
+ * e existe para as percentagens dos outros serem sobre os torneios todos e não só sobre os bons.
+ */
+const TIER_STYLE: Record<Tier, { color: string; pct: number }> = {
+  1:  { color: '#C9A96E', pct: 0.42 },
+  2:  { color: '#B8904A', pct: 0.54 },
+  4:  { color: '#A07840', pct: 0.64 },
+  8:  { color: '#7A6855', pct: 0.74 },
+  16: { color: '#5A6268', pct: 0.83 },
+  32: { color: '#4A5858', pct: 0.91 },
 };
 
-const RANK_TIERS: { key: string; color: string; pct: number }[] = [
-  { key: '1st Place', color: '#C9A96E', pct: 0.42 },
-  { key: 'Top 2',    color: '#B8904A', pct: 0.54 },
-  { key: 'Top 4',    color: '#A07840', pct: 0.64 },
-  { key: 'Top 8',    color: '#7A6855', pct: 0.74 },
-  { key: 'Top 16',   color: '#5A6268', pct: 0.83 },
-  { key: 'Top 32',   color: '#4A5858', pct: 0.91 },
-  { key: 'Other',    color: '#606060', pct: 1.00 },
-];
+const OUTSIDE_STYLE = { color: '#606060', pct: 1.00 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -199,45 +213,57 @@ const PAD_TOP      = 8;
 const PAD_BOTTOM   = 22;
 const PLOT_W       = SVG_W - PAD_LEFT - PAD_RIGHT;
 const PLOT_H       = SVG_H - PAD_TOP - PAD_BOTTOM;
-const MAX_LEVEL    = 6;
 
+/**
+ * O eixo é **quanto do campo ficou atrás**, de 0 a 1 — e não a posição.
+ *
+ * A posição sozinha não se compara entre torneios: um 5.º lugar entre 8 e um 5.º entre 128 davam a
+ * mesma barra e não são a mesma coisa. Com o campo pelo meio, ganhar é sempre o topo e o resto
+ * arruma-se pela dificuldade (ADR 0012).
+ */
 const Y_GRID = [
-  { level: 6, label: '1st' },
-  { level: 5, label: '2nd' },
-  { level: 4, label: 'Top 4' },
-  { level: 3, label: 'Top 8' },
-  { level: 2, label: 'Top 16' },
+  { value: 1.00, label: '100%' },
+  { value: 0.75, label: '75%' },
+  { value: 0.50, label: '50%' },
+  { value: 0.25, label: '25%' },
 ];
 
-function levelToY(level: number): number {
-  return PAD_TOP + PLOT_H * (1 - level / MAX_LEVEL);
+function valueToY(value: number): number {
+  return PAD_TOP + PLOT_H * (1 - value);
 }
 
 function TrendChart({ events }: { events: Event[] }) {
-  const ranked = events
-    .filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined)
-    .sort((a, b) => compareDates(a.date, b.date));
+  const points = events
+    .slice()
+    .sort((a, b) => compareDates(a.date, b.date))
+    .map(event => ({ event, point: trendPoint(event) }))
+    .filter((entry): entry is { event: Event; point: NonNullable<ReturnType<typeof trendPoint>> } =>
+      entry.point !== null,
+    );
 
-  if (!ranked.length) {
+  if (!points.length) {
     return (
       <View style={chart.empty}>
-        <Text style={chart.emptyText}>Complete events with a ranking to see the trend.</Text>
+        <Text style={chart.emptyText}>Complete events with a finishing position to see the trend.</Text>
       </View>
     );
   }
 
-  const N        = ranked.length;
+  const N        = points.length;
   const slotW    = PLOT_W / N;
   const barW     = Math.max(6, Math.min(16, slotW * 0.55));
-  const baseY    = levelToY(0);
+  const baseY    = valueToY(0);
 
   const barCx = (i: number) => PAD_LEFT + i * slotW + slotW / 2;
+
+  // Há barras estimadas quando algum evento só tem escalão e não o número de jogadores.
+  const anyEstimated = points.some(entry => entry.point.estimated);
 
   // X-axis labels — only when month changes
   const xLabels: { cx: number; label: string }[] = [];
   let lastMonth = '';
-  ranked.forEach((e, i) => {
-    const m = monthLabel(e.date);
+  points.forEach(({ event }, i) => {
+    const m = monthLabel(event.date);
     if (m && m !== lastMonth) {
       xLabels.push({ cx: barCx(i), label: m });
       lastMonth = m;
@@ -248,8 +274,8 @@ function TrendChart({ events }: { events: Event[] }) {
     <View style={chart.card}>
       <Svg width={SVG_W} height={SVG_H}>
         {/* Grid lines */}
-        {Y_GRID.map(({ level, label }) => {
-          const y = levelToY(level);
+        {Y_GRID.map(({ value, label }) => {
+          const y = valueToY(value);
           return (
             <G key={label}>
               <Line
@@ -272,10 +298,9 @@ function TrendChart({ events }: { events: Event[] }) {
           );
         })}
 
-        {/* Bars */}
-        {ranked.map((event, i) => {
-          const level  = RANK_TO_LEVEL[event.rank!];
-          const topY   = levelToY(level);
+        {/* Bars — a barra estimada fica apagada, para não se ler como uma medição */}
+        {points.map(({ event, point }, i) => {
+          const topY   = valueToY(point.value);
           const barH   = baseY - topY;
           const x      = barCx(i) - barW / 2;
 
@@ -285,13 +310,14 @@ function TrendChart({ events }: { events: Event[] }) {
                 x={x} y={topY}
                 width={barW} height={barH}
                 fill={colors.gold}
-                fillOpacity={0.65}
+                fillOpacity={point.estimated ? 0.22 : 0.65}
                 rx={2}
               />
               <Circle
                 cx={barCx(i)} cy={topY}
                 r={3}
                 fill={colors.gold}
+                fillOpacity={point.estimated ? 0.4 : 1}
               />
             </G>
           );
@@ -311,6 +337,12 @@ function TrendChart({ events }: { events: Event[] }) {
           </SvgText>
         ))}
       </Svg>
+
+      {anyEstimated && (
+        <Text style={chart.legend}>
+          Faded bars are estimated from the bracket — those events have no player count.
+        </Text>
+      )}
     </View>
   );
 }
@@ -341,6 +373,14 @@ const chart = StyleSheet.create({
     color: colors.textDim,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  legend: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 10,
+    color: colors.textDim,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    lineHeight: 14,
   },
 });
 
@@ -719,13 +759,19 @@ const PCT_W      = 40;  // width of right percentage label area (and left phanto
 const PYRAMID_MAX = SCREEN_W - 32 - PCT_W * 2; // max row width for 100% tier
 
 function PositionsPyramid({ events }: { events: Event[] }) {
-  const totalRanked = events.filter(e => e.rank).length;
+  // Um só varrimento pelos eventos, em vez de um por degrau — e os escalões saem da posição final.
+  const { byTier, outside, total } = tierCounts(events);
+
+  const rows = [
+    ...TIERS.map(tier => ({ key: tierLabel(tier), count: byTier[tier], ...TIER_STYLE[tier] })),
+    { key: 'Outside', count: outside, ...OUTSIDE_STYLE },
+  ];
 
   return (
     <View style={pyramid.outer}>
-      {RANK_TIERS.map(tier => {
-        const count  = events.filter(e => e.rank === tier.key).length;
-        const pct    = totalRanked > 0 ? Math.round((count / totalRanked) * 100) : 0;
+      {rows.map(tier => {
+        const count  = tier.count;
+        const pct    = total > 0 ? Math.round((count / total) * 100) : 0;
         const rowW   = Math.round(tier.pct * PYRAMID_MAX);
 
         return (
@@ -804,7 +850,8 @@ export default function StatsScreen() {
   const events = useEventsStore(s => s.events);
   const opponents = useEventsStore(s => s.opponents);
 
-  const trendEvents = events.filter(e => !isActive(e) && e.rank && RANK_TO_LEVEL[e.rank] !== undefined);
+  const trendEvents = events.filter(e => !isActive(e) && hasStanding(e));
+  const best        = bestFinish(events);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -826,7 +873,7 @@ export default function StatsScreen() {
         <SectionHeader title="Opponents" />
         <OpponentsSection events={events} opponents={opponents} />
 
-        <SectionHeader title="Positions Reached" />
+        <SectionHeader title="Positions Reached" right={best && `best ${best}`} />
         <PositionsPyramid events={events} />
       </ScrollView>
     </SafeAreaView>

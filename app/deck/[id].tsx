@@ -38,6 +38,8 @@ import {
   type BasicLandPreference,
   type BasicLandPrinting,
 } from '../../domain/basicLands';
+import { formatDate } from '../../domain/dates';
+import { formatPlacement } from '../../domain/placement';
 import { resolveBasicLands } from '../../services/scryfall';
 import { readBasicLandPreference } from '../../services/preferences';
 import { manaColors } from '../../theme/mana';
@@ -636,19 +638,26 @@ export default function DeckDetailScreen() {
         {/* Eventos jogados com este deck */}
         {playedIn.length > 0 && (
           <Section label="Played in">
-            {playedIn.map(event => (
-              <Pressable
-                key={event.id}
-                style={({ pressed }) => [played.row, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={played.name} numberOfLines={1}>{event.name}</Text>
-                  <Text style={played.date}>{event.date}{event.rank ? ` · ${event.rank}` : ''}</Text>
-                </View>
-                <Feather name="chevron-right" size={14} color={colors.textDim} />
-              </Pressable>
-            ))}
+            {playedIn.map(event => {
+              // A data passa pelo `domain/dates` como todas as outras — CLAUDE.md § Convenções.
+              const standing = formatPlacement(event);
+
+              return (
+                <Pressable
+                  key={event.id}
+                  style={({ pressed }) => [played.row, pressed && { opacity: 0.7 }]}
+                  onPress={() => router.push({ pathname: '/event/[id]', params: { id: event.id } })}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={played.name} numberOfLines={1}>{event.name}</Text>
+                    <Text style={played.date}>
+                      {formatDate(event.date)}{standing ? ` · ${standing}` : ''}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={14} color={colors.textDim} />
+                </Pressable>
+              );
+            })}
           </Section>
         )}
 

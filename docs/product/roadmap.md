@@ -35,6 +35,16 @@ O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em ne
 **Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
 com o evento completo.
 
+### Classificação por posição — escrita, por usar num torneio
+
+O `rank` (`"Top 8"`) deu lugar a `placement` + `playersCount`, e os escalões passaram a
+calcular-se — ADR 0012. Falta o mesmo que falta a tudo o resto: um torneio a sério.
+
+- [ ] Fechar um torneio pelos dois campos novos e confirmar o escalão que a folha propõe
+- [ ] Confirmar que `placement` e `playersCount` aparecem no ficheiro do evento
+- [ ] Corrigir a posição em *Event details* depois do torneio fechado e ver o commit
+- [ ] Ver a pirâmide e o gráfico com mais do que um evento lá dentro
+
 ### Contador de vida — escrito, por provar numa mesa
 
 Feito e testado (`domain/lifeCounter.ts`, 39 testes), mas nunca usado num torneio. O que falta é
