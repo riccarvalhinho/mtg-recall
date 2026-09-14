@@ -121,11 +121,13 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `domain/lifeCounter.ts` (puro) — o contador de vida: totais, fim de game proposto, sequência
       de games e a conversão para `Game[]`. O resultado do match continua a sair de
       `resultFromGames`, sem segundo caminho até ao ficheiro
+- [x] `domain/holdRepeat.ts` (puro) — manter o dedo em baixo para repetir, com o temporizador único
+      que corrige o erro do primeiro feitio: a tocar depressa ficava uma repetição sem dono
 - [x] `services/lifeSession.ts` — a partida a meio, no AsyncStorage e com chave da ronda; nunca
       atira, como as preferências
 - [x] `store/useLifeStore.ts` — a gaveta que entrega os games contados ao registo de match
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
-- [x] 439 testes nos módulos puros
+- [x] 448 testes nos módulos puros
 
 ---
 

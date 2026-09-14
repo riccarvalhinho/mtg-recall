@@ -695,8 +695,10 @@ Metade minha (390, fundo bgCard) — igual, sem rotação, label "YOU"
 desses acerta-se sem olhar. O número está por cima com `pointerEvents: none`, senão o meio do painel
 — onde o dedo cai — seria um buraco morto.
 
-**Manter o dedo em baixo repete** (420 ms de espera, depois 90 ms por passo). Um ataque de 12 não se
-conta com doze toques.
+**Manter o dedo em baixo repete** (420 ms de espera, depois 90 ms por passo), por
+`domain/holdRepeat.ts`. Um ataque de 12 não se conta com doze toques. A lógica está fora do écran
+porque o primeiro feitio tinha um erro que só se via a tocar depressa — um temporizador sem dono a
+descontar vida sozinho —, e um teste apanha isso em 20 ms enquanto uma mesa demora um torneio.
 
 **A cor do número avisa:** `textPrim` acima de 5, `#B06A5A` de 5 para baixo, `colors.loss` a zero ou
 menos. Não é regra do jogo — é o aviso que já se dava a si próprio.

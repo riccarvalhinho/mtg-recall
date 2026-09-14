@@ -84,7 +84,7 @@ conhecimento prévio de padrões ou convenções.
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
-                            lifeCounter
+                            lifeCounter, holdRepeat
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
                             scryfall, imagePrefetch, ocr, preferences, lifeSession
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
@@ -390,6 +390,12 @@ parte-se ao meio, a metade do adversário virada para ele — e isso **é** a di
 duas: usa o telemóvel inteiro, portanto não há orientação a escolher nem selector para a escolher.
 Toca-se à esquerda de uma metade para tirar e à direita para pôr; manter o dedo em baixo repete,
 porque um ataque de 12 não se conta com doze toques.
+
+A repetição é `domain/holdRepeat.ts` e tem testes, incluindo o do erro que já lá esteve: a tocar
+depressa chegam dois `onPressIn` sem um `onPressOut` pelo meio, e a primeira versão deixava um
+temporizador sem dono a descontar vida sozinho, sem forma de o parar. **A invariante é existir no
+máximo um temporizador vivo** — `press` começa sempre por `release`, e cada passo confirma que o
+dedo ainda está em baixo.
 
 **O contador é uma ferramenta, não um registo.** Não escreve em `data/` e não passa pela outbox: ao
 sair entrega os games à `useLifeStore` — a mesma gaveta que o `deck-scan` usa para o editor — e é o
