@@ -1,0 +1,43 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "A · In play", "is_interactive": true },
+    { "file": "AGameEnd.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "A · Game ends" },
+    { "file": "Options.dc.html", "x": 940, "y": 0, "w": 390, "h": 844, "title": "A · Options" },
+    { "file": "DirectionB.dc.html", "x": 0, "y": 1000, "w": 390, "h": 844, "title": "B · In play", "is_interactive": true },
+    { "file": "BGameEnd.dc.html", "x": 470, "y": 1000, "w": 390, "h": 844, "title": "B · Game ends" },
+    { "file": "Exit.dc.html", "x": 0, "y": 2000, "w": 390, "h": 844, "title": "Leaving the counter" },
+    { "file": "EntryMatch.dc.html", "x": 470, "y": 2000, "w": 390, "h": 844, "title": "Back in the match form" },
+    { "file": "EntryHome.dc.html", "x": 940, "y": 2000, "w": 390, "h": 844, "title": "Entry points" }
+  ],
+  "annotations": [
+    {
+      "id": "dir-a",
+      "x": 0,
+      "y": -200,
+      "w": 860,
+      "text": "DIRECTION A — SPLIT TABLE\nThe phone lies between the two players. Each half belongs to one of them, the opponent's upside down; tap the left of a half to subtract, the right to add. The only chrome is the seam.\n\nWhy: it is the gesture every life app has trained into your hands, and your opponent can fix their own total without reaching across the table.\nCost: half the screen is upside down and useless to you, and the phone has to sit on the table to work — awkward if you keep it in your hand.\n\nThe two counters are live: tap the halves."
+    },
+    {
+      "id": "dir-b",
+      "x": 0,
+      "y": 880,
+      "w": 860,
+      "text": "DIRECTION B — PERSONAL LEDGER\nThe phone stays with you. Both totals read right way up, yours twice the size of theirs, and between them a ledger of the totals this game has passed through.\n\nWhy: you are the one holding the phone and the one keeping the record — and the ledger is the thing the app is named after. It also makes visible the life totals we decided to write into the file.\nCost: your opponent cannot reach their own number without you handing the phone over, and it is not the layout their muscle memory expects.\n\nLive too: tap either panel and watch the ledger grow."
+    },
+    {
+      "id": "shared",
+      "x": 0,
+      "y": 1880,
+      "w": 860,
+      "text": "SHARED — the same in both directions\nHow you leave the counter, what arrives in the match form, and where the counter is opened from. Three entry points: the pill inside the match form (the one you asked for), the square beside \"Register round 3\" on the home hero, and the small icon in the home header for a casual game with no event at all."
+    },
+    {
+      "id": "caveats",
+      "x": 1410,
+      "y": 0,
+      "w": 300,
+      "text": "Two stand-ins, not decisions:\n\n• The hero's card art is a drawn placeholder — the real screen pulls the deck's art from Scryfall.\n\n• Mana pips are lettered circles here; the app draws the official SVG symbols.\n\nEverything else — colours, type, radii, control heights — is lifted from theme/colors.ts, theme/typography.ts and the real screens."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

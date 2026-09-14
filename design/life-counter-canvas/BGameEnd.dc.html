@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+  <style>
+    body { margin: 0; background: #130F0A; }
+    a { color: #C9A96E; } a:hover { color: #8B7248; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #130F0A; position: relative; overflow: hidden; font-family: 'EB Garamond', Georgia, serif;">
+
+  <!-- The counter, dimmed behind the sheet -->
+  <div style="position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0.42;">
+    <div style="height: 58px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #3A3020;">
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #E8DCC8;">Round 3 &middot; Game 1</div>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; box-sizing: border-box;">
+      <div style="height: 190px; flex-shrink: 0; background: #1E1812; border: 1px solid #3A3020; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #8B7248;">Opponent</div>
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 86px; line-height: 1.05; color: #8B4A4A;">0</span>
+      </div>
+      <div style="flex-grow: 1; background: #1E1812; border: 1px solid rgba(201,169,110,0.33); border-radius: 16px;"></div>
+    </div>
+  </div>
+  <div style="position: absolute; inset: 0; background: rgba(10,8,5,0.72);"></div>
+
+  <!-- The sheet -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 430px; background: #16120D; border-top: 1px solid rgba(201,169,110,0.4); border-radius: 20px 20px 0 0; padding: 12px 20px 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
+
+    <div style="width: 40px; height: 4px; border-radius: 2px; background: #3A3020; align-self: center;"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 3px;">
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: #6B5C3E;">Game 1</div>
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 27px; line-height: 1.15; color: #E8DCC8;">Game 1 to you</div>
+    </div>
+
+    <!-- The two totals, in the result palette the app already uses -->
+    <div style="display: flex; gap: 10px;">
+      <div style="flex-grow: 1; height: 82px; border-radius: 12px; background: #1A3020; border: 1px solid #2E5A38; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; color: #5A8B5C;">14</span>
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #8B7248;">You</span>
+      </div>
+      <div style="flex-grow: 1; height: 82px; border-radius: 12px; background: #301A1A; border: 1px solid #5A2E2E; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; color: #8B4A4A;">0</span>
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #8B7248;">Opponent</span>
+      </div>
+    </div>
+
+    <!-- The ledger, kept: this is what gets written into the game -->
+    <div style="background: #1E1812; border: 1px solid #3A3020; border-radius: 12px; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px;">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #8B7248; width: 30px;">You</span>
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; color: #6B5C3E;">20&nbsp; 18&nbsp; 18&nbsp; 15&nbsp; <span style="color: #C9A96E; font-weight: 600;">14</span></span>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #8B7248; width: 30px;">Opp</span>
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 14px; color: #6B5C3E;">20&nbsp; 17&nbsp; 11&nbsp; 4&nbsp; <span style="color: #C9A96E; font-weight: 600;">0</span></span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+      <div style="height: 54px; border-radius: 12px; background: #C9A96E; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 15px; color: #130F0A;">Start game 2</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#130F0A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex-grow: 1; height: 48px; border-radius: 12px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center;">
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 14px; color: #A8967A;">Undo</span>
+        </div>
+        <div style="flex-grow: 1; height: 48px; border-radius: 12px; border: 1px solid rgba(201,169,110,0.45); display: flex; align-items: center; justify-content: center;">
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 14px; color: #C9A96E;">Finish match</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
