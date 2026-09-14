@@ -5,7 +5,7 @@
 // do adversário virada ao contrário. Com dois jogadores não há segunda disposição a escolher — esta
 // usa o telemóvel inteiro, e por isso não há selector de orientação nenhum (ADR 0011).
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Pressable, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
@@ -31,16 +31,13 @@ import {
   type LifeSession,
   type LifeSide,
 } from '../domain/lifeCounter';
+import { createHoldRepeat, type HoldRepeat } from '../domain/holdRepeat';
 import { readStartingLife, writeStartingLife } from '../services/preferences';
 import { clearStoredSession, readStoredSession, writeStoredSession } from '../services/lifeSession';
 import { useLifeStore } from '../store/useLifeStore';
 
 /** Abaixo disto o número muda de cor. Não é regra do jogo — é o aviso que já se dava a si próprio. */
 const LOW_LIFE = 5;
-
-/** Manter o dedo em baixo: espera isto antes de começar a repetir, e repete a este ritmo. */
-const HOLD_DELAY = 420;
-const HOLD_INTERVAL = 90;
 
 /** Quanto tempo a bolha do "−3" fica à vista depois do último toque. */
 const DELTA_LINGER = 1600;
@@ -99,6 +96,10 @@ function PlayerHalf({ label, life, delta, height, flipped, onChange }: {
  *
  * O manter existe porque um ataque de 12 não se conta com doze toques. Não muda nada no desenho —
  * é a mesma zona —, e quem não souber que existe continua a tocar uma vez de cada vez.
+ *
+ * A máquina de estados da repetição vive em `domain/holdRepeat.ts` e tem testes. Esteve aqui, e
+ * tinha um erro que só aparecia a tocar depressa: dois `onPressIn` seguidos deixavam um
+ * temporizador sem dono, a descontar vida sozinho e sem forma de o parar.
  */
 function HoldZone({ side, height, by, onChange }: {
   side: 'left' | 'right';
@@ -106,31 +107,22 @@ function HoldZone({ side, height, by, onChange }: {
   by: number;
   onChange: (by: number) => void;
 }) {
-  const delay = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const repeat = useRef<ReturnType<typeof setInterval> | null>(null);
+  // O repetidor cria-se uma vez e dura o que a zona durar. O que ele chama é lido de uma ref, para
+  // um redesenho a meio de um toque não o deixar preso a uma versão antiga da função.
+  const tick = useRef<() => void>(() => {});
+  tick.current = () => onChange(by);
 
-  const stop = useCallback(() => {
-    if (delay.current) clearTimeout(delay.current);
-    if (repeat.current) clearInterval(repeat.current);
-    delay.current = null;
-    repeat.current = null;
-  }, []);
+  const hold = useRef<HoldRepeat | null>(null);
+  if (hold.current === null) hold.current = createHoldRepeat(() => tick.current());
 
-  // Largar o écran com o dedo ainda em baixo — o modal a fechar-se, uma chamada a entrar — não pode
-  // deixar o contador a correr sozinho.
-  useEffect(() => stop, [stop]);
-
-  function start() {
-    onChange(by);
-    delay.current = setTimeout(() => {
-      repeat.current = setInterval(() => onChange(by), HOLD_INTERVAL);
-    }, HOLD_DELAY);
-  }
+  // Sair do écran com o dedo ainda em baixo — o modal a fechar-se, uma chamada a entrar — não pode
+  // deixar o contador a andar sozinho.
+  useEffect(() => () => hold.current?.release(), []);
 
   return (
     <Pressable
-      onPressIn={start}
-      onPressOut={stop}
+      onPressIn={() => hold.current?.press()}
+      onPressOut={() => hold.current?.release()}
       style={[half.zone, { height }, side === 'left' ? half.zoneLeft : half.zoneRight]}
     >
       <Text style={half.glyph}>{by > 0 ? '+' : '−'}</Text>
