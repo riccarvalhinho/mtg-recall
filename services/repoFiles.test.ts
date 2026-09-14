@@ -56,9 +56,9 @@ const fullEvent: Event = {
       result: 'W',
       wentFirst: true,
       games: [
-        { number: 1, result: 'W', wentFirst: true },
-        { number: 2, result: 'L', wentFirst: false },
-        { number: 3, result: 'W', wentFirst: true },
+        { number: 1, result: 'W', wentFirst: true, life: { me: 14, opponent: 0 } },
+        { number: 2, result: 'L', wentFirst: false, life: { me: 3, opponent: 20 } },
+        { number: 3, result: 'W', wentFirst: true, life: { me: 12, opponent: 7 } },
       ],
       notes: 'Removal a mais do outro lado no game 2.',
     },
@@ -118,6 +118,55 @@ describe('serializeEvent', () => {
     };
     const file = parsed(shuffled) as { matches: { round: number }[] };
     expect(file.matches.map((match) => match.round)).toEqual([1, 2]);
+  });
+
+  it('escreve a vida com que cada game acabou', () => {
+    const event = parsed(fullEvent) as { matches: { games: { life?: unknown }[] }[] };
+    expect(event.matches[0].games.map(game => game.life)).toEqual([
+      { me: 14, opponent: 0 },
+      { me: 3, opponent: 20 },
+      { me: 12, opponent: 7 },
+    ]);
+  });
+
+  it('não escreve a chave life num game registado à mão', () => {
+    // Quem carrega um torneio de memória não sabe a vida. Ausente tem de ser mesmo ausente: um
+    // `"life": null` no ficheiro seria chumbado pelo schema, que não admite outro tipo.
+    const byHand: Event = {
+      ...fullEvent,
+      matches: [{ ...fullEvent.matches[0], games: [{ number: 1, result: 'W' }] }],
+    };
+    expect(validateEvent(parsed(byHand))).toBe(true);
+    expect(serializeEvent(byHand)).not.toContain('life');
+  });
+
+  it('a vida negativa fica como está — perde-se a menos de zero', () => {
+    const dead: Event = {
+      ...fullEvent,
+      matches: [{
+        ...fullEvent.matches[0],
+        result: 'L',
+        games: [
+          { number: 1, result: 'L', life: { me: -3, opponent: 11 } },
+          { number: 2, result: 'L', life: { me: -1, opponent: 6 } },
+        ],
+      }],
+    };
+    expect(validateEvent(parsed(dead))).toBe(true);
+    expect(serializeEvent(dead)).toContain('"me": -3');
+  });
+
+  it('a vida não fica presa ao objecto que veio do contador', () => {
+    // O serializador copia em vez de partilhar: mexer no contador depois de gravar não pode mudar
+    // aquilo que já foi escrito.
+    const live = { me: 20, opponent: 20 };
+    const event: Event = {
+      ...fullEvent,
+      matches: [{ ...fullEvent.matches[0], games: [{ number: 1, result: 'W', life: live }] }],
+    };
+    const written = serializeEvent(event);
+    live.me = 1;
+    expect(written).toContain('"me": 20');
   });
 
   it('usa dois espaços e acaba com uma linha, como o resto de data/', () => {

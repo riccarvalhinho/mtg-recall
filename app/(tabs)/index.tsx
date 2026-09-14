@@ -109,6 +109,14 @@ function ActiveEventSection({ event }: { event: Event }) {
     });
   }
 
+  /** Contar a vida da ronda. Ao sair, o contador abre o registo com os games preenchidos. */
+  function goToLifeCounter() {
+    router.push({
+      pathname: '/life-counter',
+      params: { eventId: event.id, round: String(round), eventName: event.name },
+    });
+  }
+
   return (
     <View>
       {/* Label com accent bar */}
@@ -211,19 +219,33 @@ function ActiveEventSection({ event }: { event: Event }) {
             A acção vive **dentro** do cartão. Era uma linha à parte por baixo, do tamanho de tudo o
             resto; aqui está onde já se está a olhar, e o cartão passa a valer sozinho.
           */}
-          <Pressable
-            onPress={goToMatch}
-            style={({ pressed }) => [active.action, pressed && { opacity: 0.85 }]}
-          >
-            <Text style={active.actionPlus}>+</Text>
-            <Text style={active.actionText}>Register round {round}</Text>
-            <Feather
-              name="chevron-right"
-              size={16}
-              color={colors.bg}
-              style={{ marginLeft: 'auto' }}
-            />
-          </Pressable>
+          <View style={active.actionRow}>
+            <Pressable
+              onPress={goToMatch}
+              style={({ pressed }) => [active.action, pressed && { opacity: 0.85 }]}
+            >
+              <Text style={active.actionPlus}>+</Text>
+              <Text style={active.actionText}>Register round {round}</Text>
+              <Feather
+                name="chevron-right"
+                size={16}
+                color={colors.bg}
+                style={{ marginLeft: 'auto' }}
+              />
+            </Pressable>
+
+            {/*
+              Registar continua a ser a acção principal — fundo dourado cheio. Contar a vida é a
+              outra maneira de chegar ao mesmo sítio e fica ao lado, com contorno em vez de fundo:
+              dois botões cheios lado a lado não diriam qual é qual.
+            */}
+            <Pressable
+              onPress={goToLifeCounter}
+              style={({ pressed }) => [active.actionLife, pressed && { opacity: 0.8 }]}
+            >
+              <Feather name="heart" size={20} color={colors.gold} />
+            </Pressable>
+          </View>
         </View>
       </Pressable>
     </View>
@@ -362,15 +384,29 @@ const active = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
   action: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 4,
     paddingHorizontal: 16,
     paddingVertical: 13,
     borderRadius: 12,
     backgroundColor: colors.gold,
+  },
+  actionLife: {
+    width: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.gold + '80',
+    backgroundColor: colors.gold + '17',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionPlus: {
     fontFamily: fonts.displaySemi,
@@ -535,11 +571,28 @@ export default function HomeScreen() {
           <Text style={styles.archiveLabel}>Scholar's Archive</Text>
           <Text style={styles.headerTitle}>Home</Text>
         </View>
-        {hasEvents && (
-          <Pressable style={styles.newEventBtn} onPress={() => router.push('/add-event')}>
-            <Text style={styles.newEventBtnText}>+ New Event</Text>
+        <View style={styles.headerActions}>
+          {/*
+            O contador sem evento nenhum. Aparece sempre, e não só quando já há torneios: quem
+            instala a app antes do torneio seguinte também joga em casa, e nada se grava daí
+            (ADR 0011).
+          */}
+          <Pressable
+            onPress={() => router.push('/life-counter')}
+            hitSlop={6}
+            style={({ pressed }) => [styles.lifeBtn, pressed && { opacity: 0.6 }]}
+          >
+            <View style={styles.lifeBtnCircle}>
+              <Feather name="heart" size={17} color={colors.gold} />
+            </View>
           </Pressable>
-        )}
+
+          {hasEvents && (
+            <Pressable style={styles.newEventBtn} onPress={() => router.push('/add-event')}>
+              <Text style={styles.newEventBtnText}>+ New Event</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {/* Empty State */}
@@ -643,6 +696,27 @@ const styles = StyleSheet.create({
     fontSize: fontSize.h1,
     color: colors.textPrim,
     lineHeight: 34,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lifeBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  lifeBtnCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.gold + '73',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   newEventBtn: {
     backgroundColor: colors.gold,

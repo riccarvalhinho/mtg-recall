@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+  <style>
+    body { margin: 0; background: #130F0A; }
+    a { color: #C9A96E; } a:hover { color: #8B7248; }
+    .tap { -webkit-tap-highlight-color: transparent; cursor: pointer; user-select: none; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #130F0A; display: flex; flex-direction: column; overflow: hidden; font-family: 'EB Garamond', Georgia, serif;">
+
+  <!-- Opponent half — rotated so it reads from across the table -->
+  <div style="height: 390px; position: relative; background: #1A150F; transform: rotate(180deg);">
+    <div class="tap" onClick="{{ oppMinus }}" style="position: absolute; left: 0; top: 0; width: 195px; height: 390px; display: flex; align-items: center; justify-content: flex-start; padding-left: 44px; box-sizing: border-box;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 38px; line-height: 1; color: rgba(168,150,122,0.40);">&minus;</span>
+    </div>
+    <div class="tap" onClick="{{ oppPlus }}" style="position: absolute; right: 0; top: 0; width: 195px; height: 390px; display: flex; align-items: center; justify-content: flex-end; padding-right: 44px; box-sizing: border-box;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 38px; line-height: 1; color: rgba(168,150,122,0.40);">+</span>
+    </div>
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; pointer-events: none;">
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #8B7248;">Opponent</div>
+      <div style="position: relative; display: flex; align-items: flex-start;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 150px; line-height: 1; color: {{oppColor}};">{{opp}}</span>
+        <sc-if value="{{ oppDeltaOn }}" hint-placeholder-val="{{ true }}">
+          <span style="margin-left: 10px; margin-top: 22px; padding: 3px 9px; border-radius: 11px; background: rgba(201,169,110,0.14); border: 1px solid rgba(201,169,110,0.45); font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 15px; color: #C9A96E;">{{oppDelta}}</span>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seam: the only chrome on the screen -->
+  <div style="height: 64px; background: #16120D; border-top: 1px solid #3A3020; border-bottom: 1px solid #3A3020; display: flex; align-items: center; gap: 10px; padding: 0 10px; box-sizing: border-box;">
+    <div class="tap" onClick="{{ reset }}" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B5C3E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;">
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #6B5C3E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">FNM Sealed &mdash; Aetherdrift</div>
+      <div style="padding: 2px 9px; border-radius: 10px; background: rgba(201,169,110,0.13); border: 1px solid rgba(201,169,110,0.42);">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 10px; letter-spacing: 0.8px; color: #C9A96E;">ROUND 3 &middot; GAME 1</span>
+      </div>
+    </div>
+    <div class="tap" style="height: 44px; padding: 0 16px; border-radius: 12px; background: #C9A96E; display: flex; align-items: center; flex-shrink: 0;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #130F0A;">Done</span>
+    </div>
+  </div>
+
+  <!-- My half -->
+  <div style="height: 390px; position: relative; background: #1E1812;">
+    <div class="tap" onClick="{{ meMinus }}" style="position: absolute; left: 0; top: 0; width: 195px; height: 390px; display: flex; align-items: center; justify-content: flex-start; padding-left: 44px; box-sizing: border-box;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 38px; line-height: 1; color: rgba(168,150,122,0.40);">&minus;</span>
+    </div>
+    <div class="tap" onClick="{{ mePlus }}" style="position: absolute; right: 0; top: 0; width: 195px; height: 390px; display: flex; align-items: center; justify-content: flex-end; padding-right: 44px; box-sizing: border-box;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 38px; line-height: 1; color: rgba(168,150,122,0.40);">+</span>
+    </div>
+    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; pointer-events: none;">
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #8B7248;">You</div>
+      <div style="position: relative; display: flex; align-items: flex-start;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 150px; line-height: 1; color: {{meColor}};">{{me}}</span>
+        <sc-if value="{{ meDeltaOn }}" hint-placeholder-val="{{ true }}">
+          <span style="margin-left: 10px; margin-top: 22px; padding: 3px 9px; border-radius: 11px; background: rgba(201,169,110,0.14); border: 1px solid rgba(201,169,110,0.45); font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 15px; color: #C9A96E;">{{meDelta}}</span>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"start":{"editor":"int","default":20,"min":1,"max":60,"section":"Game"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { me: null, opp: null, meDelta: 0, oppDelta: 0 };
+    this.timers = {};
+  }
+
+  start() {
+    return this.props.start ?? 20;
+  }
+
+  // Um total ainda por tocar vale a vida inicial — assim mexer no tweak repõe os dois lados.
+  value(side) {
+    return this.state[side] === null ? this.start() : this.state[side];
+  }
+
+  bump(side, by) {
+    var deltaKey = side === 'me' ? 'meDelta' : 'oppDelta';
+    var next = {};
+    next[side] = this.value(side) + by;
+    next[deltaKey] = this.state[deltaKey] + by;
+    this.setState(next);
+
+    clearTimeout(this.timers[deltaKey]);
+    this.timers[deltaKey] = setTimeout(function () {
+      var clear = {};
+      clear[deltaKey] = 0;
+      this.setState(clear);
+    }.bind(this), 1600);
+  }
+
+  componentWillUnmount() {
+    var self = this;
+    Object.keys(this.timers).forEach(function (key) { clearTimeout(self.timers[key]); });
+  }
+
+  // Abaixo de 6 o número passa a vermelho de derrota: é a paleta a dizer o que o jogador já sabe.
+  lifeColor(value) {
+    if (value <= 0) return '#8B4A4A';
+    if (value <= 5) return '#B06A5A';
+    return '#E8DCC8';
+  }
+
+  signed(value) {
+    return value > 0 ? '+' + value : String(value);
+  }
+
+  renderVals() {
+    var me = this.value('me');
+    var opp = this.value('opp');
+    return {
+      me: me,
+      opp: opp,
+      meColor: this.lifeColor(me),
+      oppColor: this.lifeColor(opp),
+      meDelta: this.signed(this.state.meDelta),
+      oppDelta: this.signed(this.state.oppDelta),
+      meDeltaOn: this.state.meDelta !== 0,
+      oppDeltaOn: this.state.oppDelta !== 0,
+      meMinus: function () { this.bump('me', -1); }.bind(this),
+      mePlus: function () { this.bump('me', 1); }.bind(this),
+      oppMinus: function () { this.bump('opp', -1); }.bind(this),
+      oppPlus: function () { this.bump('opp', 1); }.bind(this),
+      reset: function () { this.setState({ me: null, opp: null, meDelta: 0, oppDelta: 0 }); }.bind(this),
+    };
+  }
+}
+</script>
+</body>
+</html>

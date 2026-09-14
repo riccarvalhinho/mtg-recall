@@ -46,6 +46,7 @@ conhecimento prévio de padrões ou convenções.
 | Sincronização | GitHub Contents API, por outbox (ADR 0004) |
 | Segredos | `expo-secure-store` (token do GitHub) |
 | Preferências | AsyncStorage, fora de `data/` — ADR 0010 |
+| Ecrã aceso | `expo-keep-awake`, só enquanto o contador de vida está aberto |
 | Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
 | Câmara / OCR | `expo-camera` + ML Kit Text Recognition, local (ADR 0009) |
 | Card data | Scryfall API |
@@ -63,6 +64,7 @@ conhecimento prévio de padrões ou convenções.
   add-event.tsx             modal: criar evento
   deck-editor.tsx           modal: criar/editar deck
   deck-scan.tsx             modal: decklist por fotografia (aviso, porções, confirmação)
+  life-counter.tsx          modal: contador de vida (mesa partilhada, ecrã inteiro)
   collection.tsx            a colecção (push, entra pela Home)
   basic-lands.tsx           definições: a colecção de básicos e a arte de cada um (push)
   (tabs)/
@@ -81,10 +83,12 @@ conhecimento prévio de padrões ou convenções.
                             CardImageOverlay, ConfirmModal, SetSelector, CardSearchModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
-                            cardCache, collection, opponents, thumbnails, ocrDecklist, dates
+                            cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
+                            lifeCounter
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
-                            scryfall, imagePrefetch, ocr, preferences
+                            scryfall, imagePrefetch, ocr, preferences, lifeSession
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
+                            + useLifeStore (a gaveta do contador de vida)
 /theme                      colors, typography, mana
 /types                      tipos TypeScript — derivam dos schemas
 /assets/mana/symbols.ts     símbolos de mana em SVG, locais (WUBRG)
@@ -105,7 +109,8 @@ conhecimento prévio de padrões ou convenções.
   ops/                      instalar no telemóvel, gerar o token
 /design                     handoff.md (spec de implementação), icon/ (o ícone: SVG originais,
                             export.py e o porquê), icon-brief.md, icon-canvas/ (as direcções
-                            exploradas) e prints de referência
+                            exploradas), life-counter-canvas/ (as duas direcções do contador de
+                            vida; a não escolhida ficou na segunda página) e prints de referência
 
 data-model.md               o modelo de dados explicado
 design-brief.md             conceito visual
@@ -228,11 +233,18 @@ Modals (presentation: 'modal'):
   add-event           ← a partir de Events List / Home
   deck-editor         ← a partir de Decks / Deck Detail
   deck-scan           ← a partir do editor de deck ("Scan photo")
+  life-counter        ← contador de vida, ecrã inteiro (`fullScreenModal`). Três entradas:
+                        a pastilha no registo de match, o quadrado ao lado de "Register round N"
+                        (Home e Event Detail), e o ícone no cabeçalho da Home — este sem evento
+                        nenhum, para uma partida casual
 ```
 
 Params de navegação:
 - `match-registration`: `{ eventId, round, eventName, mode? }` — `mode: 'edit'` corrige a ronda
   indicada em vez de registar uma nova
+- `life-counter`: `{ eventId?, round?, eventName?, returnTo? }` — sem `eventId` é uma partida casual
+  e nada se grava; `returnTo: 'form'` diz que veio de dentro do registo, e aí sair é voltar atrás em
+  vez de abrir um segundo formulário por cima do primeiro
 - `deck-editor`: `{ deckId?, linkToEventId?, presetFormat?, presetName? }` — sem `deckId` cria um
   deck novo; com `linkToEventId` (vindo do Event Detail) o deck criado fica ligado a esse evento, e
   os *preset* chegam preenchidos a partir do torneio
@@ -372,6 +384,28 @@ nome tem, como um pedaço de custo de mana.
 `cmc` e `artCropUrl` o Deck Detail não tem o que analisar. Sem rede as cartas entram só com o nome
 e completam-se depois pelo botão *Get card data* do editor, que só aparece quando há o que
 completar.
+
+**O contador de vida (ADR 0011).** Com dois jogadores o telemóvel fica entre os dois e o ecrã
+parte-se ao meio, a metade do adversário virada para ele — e isso **é** a disposição, não uma de
+duas: usa o telemóvel inteiro, portanto não há orientação a escolher nem selector para a escolher.
+Toca-se à esquerda de uma metade para tirar e à direita para pôr; manter o dedo em baixo repete,
+porque um ataque de 12 não se conta com doze toques.
+
+**O contador é uma ferramenta, não um registo.** Não escreve em `data/` e não passa pela outbox: ao
+sair entrega os games à `useLifeStore` — a mesma gaveta que o `deck-scan` usa para o editor — e é o
+registo de match que grava. O resultado continua a sair dos games por `resultFromGames`, sem caminho
+novo nenhum até ao ficheiro. Do jogo inteiro fica uma coisa só: a vida com que cada game acabou, em
+`games[].life`.
+
+`domain/lifeCounter.ts` é a lógica toda e tem testes. Três regras lá dentro que não são óbvias: os
+dois a zero **não** propõem resultado (em Magic é empate, e um game empatado não cabe no schema);
+fechar um game guarda a vida do momento em que se fecha, não a de quando alguém chegou a zero, para
+a correcção de um engano valer; e a sessão guardada tem chave da ronda, senão fechar a app a meio da
+ronda 2 trazia esses totais para dentro da ronda 3. O jogo a meio vive no AsyncStorage
+(`services/lifeSession.ts`), como as preferências e pela mesma razão.
+
+**Pela Home, sem evento, não se grava nada.** A app é um registo de torneios; meia dúzia de jogos na
+mesa da cozinha estragariam o win rate de sempre e a lista de adversários.
 
 ---
 

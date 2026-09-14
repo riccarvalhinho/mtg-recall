@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+  <style>
+    body { margin: 0; background: #130F0A; }
+    a { color: #C9A96E; } a:hover { color: #8B7248; }
+    .tap { -webkit-tap-highlight-color: transparent; cursor: pointer; user-select: none; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #130F0A; display: flex; flex-direction: column; overflow: hidden; font-family: 'EB Garamond', Georgia, serif;">
+
+  <!-- Header -->
+  <div style="height: 58px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 10px; box-sizing: border-box; border-bottom: 1px solid #3A3020;">
+    <div class="tap" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E8DCC8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0;">
+      <div style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #E8DCC8;">Round 3 &middot; Game 1</div>
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #6B5C3E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px;">FNM Sealed &mdash; Aetherdrift</div>
+    </div>
+    <div class="tap" onClick="{{ reset }}" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6B5C3E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9.6a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; box-sizing: border-box; min-height: 0;">
+
+    <!-- Opponent: smaller, upright, reachable -->
+    <div style="height: 190px; flex-shrink: 0; background: #1E1812; border: 1px solid #3A3020; border-radius: 16px; display: flex; align-items: center; padding: 0 14px; gap: 12px; box-sizing: border-box;">
+      <div class="tap" onClick="{{ oppMinus }}" style="width: 62px; height: 62px; border-radius: 31px; border: 1px solid #3A3020; background: #16120D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 30px; line-height: 1; color: #A8967A;">&minus;</span>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">
+        <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #8B7248;">Opponent</div>
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 86px; line-height: 1.05; color: {{oppColor}};">{{opp}}</span>
+      </div>
+      <div class="tap" onClick="{{ oppPlus }}" style="width: 62px; height: 62px; border-radius: 31px; border: 1px solid #3A3020; background: #16120D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 30px; line-height: 1; color: #A8967A;">+</span>
+      </div>
+    </div>
+
+    <!-- The ledger: what this game did, in order. The app is called Recall. -->
+    <div style="height: 86px; flex-shrink: 0; background: #16120D; border: 1px solid #3A3020; border-radius: 14px; padding: 10px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; letter-spacing: 1.4px; text-transform: uppercase; color: #6B5C3E;">This game</div>
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #8B7248; width: 30px; flex-shrink: 0;">You</span>
+        <div style="display: flex; align-items: baseline; gap: 7px; overflow: hidden;">
+          <sc-for list="{{meTrail}}" as="step" hint-placeholder-count="4">
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: {{step.weight}}; font-size: 15px; color: {{step.color}};">{{step.value}}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 11px; color: #8B7248; width: 30px; flex-shrink: 0;">Opp</span>
+        <div style="display: flex; align-items: baseline; gap: 7px; overflow: hidden;">
+          <sc-for list="{{oppTrail}}" as="step" hint-placeholder-count="4">
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: {{step.weight}}; font-size: 15px; color: {{step.color}};">{{step.value}}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mine: twice the opponent's, because it is the one I touch most -->
+    <div style="flex-grow: 1; min-height: 0; background: #1E1812; border: 1px solid rgba(201,169,110,0.33); border-radius: 16px; position: relative; overflow: hidden;">
+      <div class="tap" onClick="{{ meMinus }}" style="position: absolute; left: 0; top: 0; bottom: 0; width: 104px; display: flex; align-items: center; justify-content: center;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 40px; line-height: 1; color: rgba(168,150,122,0.45);">&minus;</span>
+      </div>
+      <div class="tap" onClick="{{ mePlus }}" style="position: absolute; right: 0; top: 0; bottom: 0; width: 104px; display: flex; align-items: center; justify-content: center;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-size: 40px; line-height: 1; color: rgba(168,150,122,0.45);">+</span>
+      </div>
+      <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; pointer-events: none;">
+        <div style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase; color: #C9A96E;">You</div>
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 132px; line-height: 1.05; color: {{meColor}};">{{me}}</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="height: 56px; flex-shrink: 0; display: flex; gap: 10px;">
+      <div class="tap" style="flex-grow: 1; border-radius: 12px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 15px; color: #A8967A;">End game</span>
+      </div>
+      <div class="tap" style="flex-grow: 1; border-radius: 12px; background: #C9A96E; display: flex; align-items: center; justify-content: center;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 15px; color: #130F0A;">Done</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"start":{"editor":"int","default":20,"min":1,"max":60,"section":"Game"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // O rasto guarda os totais por que se passou. O primeiro é a vida inicial.
+    this.state = { meTrail: null, oppTrail: null };
+  }
+
+  start() {
+    return this.props.start ?? 20;
+  }
+
+  trail(side) {
+    return this.state[side] === null ? [this.start()] : this.state[side];
+  }
+
+  bump(side, by) {
+    var current = this.trail(side);
+    var next = current.concat([current[current.length - 1] + by]);
+    var patch = {};
+    // Seis passos chegam para a largura do painel; o rasto inteiro fica no registo do match.
+    patch[side] = next.length > 6 ? next.slice(next.length - 6) : next;
+    this.setState(patch);
+  }
+
+  lifeColor(value) {
+    if (value <= 0) return '#8B4A4A';
+    if (value <= 5) return '#B06A5A';
+    return '#E8DCC8';
+  }
+
+  steps(trail) {
+    return trail.map(function (value, index) {
+      var last = index === trail.length - 1;
+      return {
+        value: String(value),
+        color: last ? '#C9A96E' : '#6B5C3E',
+        weight: last ? '600' : '400',
+      };
+    });
+  }
+
+  renderVals() {
+    var meTrail = this.trail('meTrail');
+    var oppTrail = this.trail('oppTrail');
+    var me = meTrail[meTrail.length - 1];
+    var opp = oppTrail[oppTrail.length - 1];
+    return {
+      me: me,
+      opp: opp,
+      meColor: this.lifeColor(me),
+      oppColor: this.lifeColor(opp),
+      meTrail: this.steps(meTrail),
+      oppTrail: this.steps(oppTrail),
+      meMinus: function () { this.bump('meTrail', -1); }.bind(this),
+      mePlus: function () { this.bump('meTrail', 1); }.bind(this),
+      oppMinus: function () { this.bump('oppTrail', -1); }.bind(this),
+      oppPlus: function () { this.bump('oppTrail', 1); }.bind(this),
+      reset: function () { this.setState({ meTrail: null, oppTrail: null }); }.bind(this),
+    };
+  }
+}
+</script>
+</body>
+</html>

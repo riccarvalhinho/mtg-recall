@@ -48,6 +48,9 @@ function serializeGame(game: Game) {
     number: game.number,
     result: game.result,
     wentFirst: game.wentFirst,
+    // Copiado e não espalhado: o objecto que vem do contador não pode ficar partilhado com o
+    // ficheiro, senão mexer nele depois da gravação mudava o que já foi escrito.
+    life: game.life ? { me: game.life.me, opponent: game.life.opponent } : undefined,
   };
 }
 

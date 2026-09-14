@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+  <style>
+    body { margin: 0; background: #130F0A; }
+    a { color: #C9A96E; } a:hover { color: #8B7248; }
+  </style>
+</helmet>
+<div style="width: 390px; height: 844px; background: #130F0A; display: flex; flex-direction: column; overflow: hidden; font-family: 'EB Garamond', Georgia, serif;">
+
+  <!-- NavBar, exactly as the modal has it today -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #3A3020; flex-shrink: 0;">
+    <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 16px; color: #A8967A;">Cancel</span>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 17px; color: #E8DCC8;">New Match</span>
+      <div style="background: rgba(201,169,110,0.13); border: 1px solid rgba(201,169,110,0.33); border-radius: 10px; padding: 2px 8px;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 10px; color: #C9A96E;">Round 3</span>
+      </div>
+    </div>
+    <div style="border-radius: 16px; padding: 7px 14px; background: linear-gradient(90deg, #C9A96E, #A07840);">
+      <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #130F0A;">Save</span>
+    </div>
+  </div>
+
+  <div style="flex-grow: 1; padding: 20px; display: flex; flex-direction: column; gap: 22px; box-sizing: border-box; min-height: 0;">
+
+    <!-- THE ENTRY POINT — shown here in its "already used" state -->
+    <div style="border: 1px solid rgba(201,169,110,0.45); background: rgba(201,169,110,0.07); border-radius: 12px; height: 62px; display: flex; align-items: center; gap: 12px; padding: 0 14px; flex-shrink: 0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 2.5-3.2 2.5-5.1A4.9 4.9 0 0 0 12 6.6 4.9 4.9 0 0 0 2.5 8.9C2.5 13 7 16.5 12 21c2.1-1.9 4.2-3.7 5.7-5.3"/></svg>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 15px; color: #E8DCC8;">Life counter</span>
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; color: #8B7248;">3 games tracked &middot; tap to reopen</span>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B7248" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+
+    <!-- Opponent name -->
+    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
+      <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: #6B5C3E;">Opponent name (optional)</span>
+      <div style="background: #1A1510; border: 1px solid #3A3020; border-radius: 12px; height: 52px; display: flex; align-items: center; padding: 0 16px;">
+        <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 18px; color: #6B5C3E;">e.g. John Smith &mdash; or leave blank</span>
+      </div>
+    </div>
+
+    <!-- Opponent colors -->
+    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
+      <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: #6B5C3E;">Opponent colors</span>
+      <div style="background: #1E1812; border: 1px solid #3A3020; border-radius: 14px; display: flex; justify-content: space-around; align-items: center; padding: 16px 8px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px;">
+          <div style="width: 44px; height: 44px; border-radius: 22px; background: #F2EDD0; border: 1px solid #C8B870; display: flex; align-items: center; justify-content: center; opacity: 0.3;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: #4A3A10;">W</span></div>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; color: #6B5C3E; opacity: 0;">main</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px;">
+          <div style="width: 44px; height: 44px; border-radius: 22px; background: #0E2A48; border: 1px solid #1E3A60; display: flex; align-items: center; justify-content: center; opacity: 0.3;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: #C8DCF0;">U</span></div>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; color: #6B5C3E; opacity: 0;">main</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px;">
+          <div style="width: 44px; height: 44px; border-radius: 22px; background: #1A1020; border: 1px solid #6A4A7A; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: #C0A8D0;">B</span></div>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; color: #C9A96E;">main</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px;">
+          <div style="width: 44px; height: 44px; border-radius: 22px; background: #7A1E1A; border: 1px solid #C03020; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: #F0C0A8;">R</span></div>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; color: #C9A96E;">main</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; width: 52px;">
+          <div style="width: 44px; height: 44px; border-radius: 22px; background: #0E2A18; border: 1px solid #1A3A22; display: flex; align-items: center; justify-content: center; opacity: 0.3;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 20px; color: #A8D0B0;">G</span></div>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 9px; color: #6B5C3E; opacity: 0;">main</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result — derived, exactly as domain/match.ts already decides -->
+    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; color: #6B5C3E;">Result</span>
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 12px; color: #C9A96E;">from games</span>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div style="flex-grow: 1; height: 62px; border-radius: 12px; background: #1A3020; border: 1px solid #2E5A38; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 26px; line-height: 30px; color: #5A8B5C;">W</span>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #5A8B5C;">Win</span>
+        </div>
+        <div style="flex-grow: 1; height: 62px; border-radius: 12px; background: #301A1A; border: 1px solid #5A2E2E; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; opacity: 0.35;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 26px; line-height: 30px; color: #8B4A4A;">L</span>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #6B5C3E;">Loss</span>
+        </div>
+        <div style="flex-grow: 1; height: 62px; border-radius: 12px; background: #252018; border: 1px solid #4A4030; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; opacity: 0.35;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 26px; line-height: 30px; color: #7A7060;">D</span>
+          <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #6B5C3E;">Draw</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game by game, arriving pre-filled with the life totals -->
+    <div style="display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="width: 18px; height: 18px; border-radius: 9px; background: rgba(201,169,110,0.13); border: 1px solid rgba(201,169,110,0.4); display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 12px; line-height: 12px; color: #C9A96E;">&minus;</span>
+        </div>
+        <span style="font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: 13px; color: #A8967A;">Game by game &middot; 2-1</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 14px; color: #A8967A; width: 26px;">G1</span>
+          <div style="display: flex; gap: 6px;">
+            <div style="width: 46px; height: 42px; border-radius: 9px; background: #1A3020; border: 1px solid #2E5A38; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #5A8B5C;">W</span></div>
+            <div style="width: 46px; height: 42px; border-radius: 9px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #6B5C3E;">L</span></div>
+          </div>
+          <div style="flex-grow: 1; height: 42px; border-radius: 9px; border: 1px solid rgba(201,169,110,0.28); background: rgba(201,169,110,0.05); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #C9A96E;">14</span>
+            <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 12px; color: #6B5C3E;">&ndash;</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #8B7248;">0</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 14px; color: #A8967A; width: 26px;">G2</span>
+          <div style="display: flex; gap: 6px;">
+            <div style="width: 46px; height: 42px; border-radius: 9px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #6B5C3E;">W</span></div>
+            <div style="width: 46px; height: 42px; border-radius: 9px; background: #301A1A; border: 1px solid #5A2E2E; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #8B4A4A;">L</span></div>
+          </div>
+          <div style="flex-grow: 1; height: 42px; border-radius: 9px; border: 1px solid rgba(201,169,110,0.28); background: rgba(201,169,110,0.05); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #C9A96E;">3</span>
+            <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 12px; color: #6B5C3E;">&ndash;</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #8B7248;">20</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 500; font-size: 14px; color: #A8967A; width: 26px;">G3</span>
+          <div style="display: flex; gap: 6px;">
+            <div style="width: 46px; height: 42px; border-radius: 9px; background: #1A3020; border: 1px solid #2E5A38; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #5A8B5C;">W</span></div>
+            <div style="width: 46px; height: 42px; border-radius: 9px; border: 1px solid #3A3020; display: flex; align-items: center; justify-content: center;"><span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 16px; color: #6B5C3E;">L</span></div>
+          </div>
+          <div style="flex-grow: 1; height: 42px; border-radius: 9px; border: 1px solid rgba(201,169,110,0.28); background: rgba(201,169,110,0.05); display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #C9A96E;">12</span>
+            <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 12px; color: #6B5C3E;">&ndash;</span>
+            <span style="font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 14px; color: #8B7248;">7</span>
+          </div>
+        </div>
+      </div>
+
+      <span style="font-family: 'EB Garamond', Georgia, serif; font-size: 10px; color: #6B5C3E; text-align: center;">Life totals came from the counter. Tap one to correct it.</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -46,3 +46,6 @@ site/data/
 
 # O canvas do ícone é gerado a partir dos .dc.html ao lado — 2 MB de editor que não vale a pena versionar
 design/icon-canvas/icone-mtg-recall.html
+
+# O mesmo para o canvas do contador de vida — gerado a partir dos .dc.html ao lado
+design/life-counter-canvas/mtg-recall-life-counter.html

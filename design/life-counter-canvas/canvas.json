@@ -1,0 +1,51 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Life counter" },
+    { "id": "page-2", "name": "Direction B — not taken" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "page": "page-1", "x": 0, "y": 0, "w": 390, "h": 844, "title": "In play", "is_interactive": true },
+    { "file": "AGameEnd.dc.html", "page": "page-1", "x": 470, "y": 0, "w": 390, "h": 844, "title": "Game ends" },
+    { "file": "Options.dc.html", "page": "page-1", "x": 940, "y": 0, "w": 390, "h": 844, "title": "Options" },
+    { "file": "Exit.dc.html", "page": "page-1", "x": 0, "y": 1000, "w": 390, "h": 844, "title": "Leaving the counter" },
+    { "file": "EntryMatch.dc.html", "page": "page-1", "x": 470, "y": 1000, "w": 390, "h": 844, "title": "Back in the match form" },
+    { "file": "EntryHome.dc.html", "page": "page-1", "x": 940, "y": 1000, "w": 390, "h": 844, "title": "Entry points" },
+    { "file": "DirectionB.dc.html", "page": "page-2", "x": 0, "y": 0, "w": 390, "h": 844, "title": "B · In play", "is_interactive": true },
+    { "file": "BGameEnd.dc.html", "page": "page-2", "x": 470, "y": 0, "w": 390, "h": 844, "title": "B · Game ends" }
+  ],
+  "annotations": [
+    {
+      "id": "dir-a",
+      "page": "page-1",
+      "x": 0,
+      "y": -230,
+      "w": 860,
+      "text": "THE COUNTER — chosen\nThe phone lies between the two players. Each half belongs to one of them, the opponent's upside down; tap the left of a half to subtract, the right to add. The only chrome is the seam, and the seam is where the round, the reset and the way out live.\n\nORIENTATION IS SETTLED: with two players the screen splits head to head and that is the layout, not one of two. It uses the whole phone, so there is nothing to choose and no chooser to build — the options drawer offers starting life and little else.\n\nThe first artboard is live: tap the halves. Below 6 life the number turns to the loss colour the app already uses."
+    },
+    {
+      "id": "shared",
+      "page": "page-1",
+      "x": 0,
+      "y": 880,
+      "w": 860,
+      "text": "LEAVING, AND GETTING IN\nHow you come out of the counter, what arrives in the match form, and where the counter is opened from. Three entry points: the pill inside the match form (the one you asked for), the square beside \"Register round 3\" on the home hero, and the small icon in the home header for a casual game with no event at all."
+    },
+    {
+      "id": "caveats",
+      "page": "page-1",
+      "x": 1410,
+      "y": 0,
+      "w": 300,
+      "text": "Two stand-ins, not decisions:\n\n• The hero's card art is a drawn placeholder — the real screen pulls the deck's art from Scryfall.\n\n• Mana pips are lettered circles here; the app draws the official SVG symbols.\n\nEverything else — colours, type, radii, control heights — is lifted from theme/colors.ts, theme/typography.ts and the real screens."
+    },
+    {
+      "id": "dir-b",
+      "page": "page-2",
+      "x": 0,
+      "y": -200,
+      "w": 860,
+      "text": "NOT TAKEN — kept as the record\nThe personal ledger: the phone stays with you, both totals read right way up, and a trail of the totals the game passed through sits between them. Set aside because the split table uses the whole screen and is the gesture already in your hands.\n\nOne idea from it is still worth having later: the trail is what makes the saved life totals visible while you play. If the counter ever feels blind about what it is recording, this is where to come back to."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}
