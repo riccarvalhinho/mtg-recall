@@ -109,7 +109,8 @@ conhecimento prévio de padrões ou convenções.
   ops/                      instalar no telemóvel, gerar o token
 /design                     handoff.md (spec de implementação), icon/ (o ícone: SVG originais,
                             export.py e o porquê), icon-brief.md, icon-canvas/ (as direcções
-                            exploradas) e prints de referência
+                            exploradas), life-counter-canvas/ (as duas direcções do contador de
+                            vida; a não escolhida ficou na segunda página) e prints de referência
 
 data-model.md               o modelo de dados explicado
 design-brief.md             conceito visual

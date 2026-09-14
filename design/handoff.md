@@ -659,3 +659,83 @@ Usar `@react-navigation/native` com `createBottomTabNavigator` e `createNativeSt
 6. **Safe Areas:** Usar `useSafeAreaInsets()` para padding top (status bar já existe em iOS mas Android varia) e bottom (home indicator + tab bar).
 
 7. **Scrollview vs FlatList:** Events List e Event Detail (matches) devem usar `FlatList` para performance. Home usa `ScrollView` (poucos itens).
+
+---
+
+## 11. Écran: Life Counter
+
+**Implementado:** `app/life-counter.tsx` · **Decisões:** ADR 0011 · **Desenho:**
+`design/life-counter-canvas/` (a direcção escolhida está na página *Life counter*; a alternativa
+ficou na segunda página, marcada como não escolhida)
+
+### 11.1 A disposição
+
+Mesa partilhada: o telemóvel pousado entre os dois jogadores, o ecrã dividido ao meio, a metade de
+cima virada 180° para o adversário. **Com dois jogadores é esta a disposição e não uma de duas** —
+usa o telemóvel inteiro, portanto não há orientação a escolher nem selector para a escolher.
+
+```
+Metade do adversário (390, rotate 180deg, fundo #1A150F)
+├── Zona de toque esquerda (50% × altura) → −1 · glifo "−" 38px, rgba(168,150,122,0.40), a 44 da margem
+├── Zona de toque direita  (50% × altura) → +1 · glifo "+" igual
+└── Centro (pointerEvents none)
+    ├── Label "OPPONENT" (EB Garamond italic 11, tracking 1.6, uppercase, goldDim)
+    └── Número (Playfair 700, 150px/158) + bolha do delta ("−3") quando há toques recentes
+
+Costura (64, fundo tabBar, border top/bottom)
+├── Recomeçar: círculo 44, border, ícone Feather rotate-ccw 18 textDim
+├── Centro: nome do evento (EB Garamond 11 textDim) + pastilha "ROUND 3 · GAME 1 · 2-1"
+│     (Playfair 600, 10px, gold sobre gold+21, border gold+6B) — tocar abre as opções
+└── Done: 44 de altura, fundo gold, texto bg
+
+Metade minha (390, fundo bgCard) — igual, sem rotação, label "YOU"
+```
+
+**Alvos de 195×390.** Conta-se vida de pé, com o telemóvel na mesa e a atenção nas cartas: um alvo
+desses acerta-se sem olhar. O número está por cima com `pointerEvents: none`, senão o meio do painel
+— onde o dedo cai — seria um buraco morto.
+
+**Manter o dedo em baixo repete** (420 ms de espera, depois 90 ms por passo). Um ataque de 12 não se
+conta com doze toques.
+
+**A cor do número avisa:** `textPrim` acima de 5, `#B06A5A` de 5 para baixo, `colors.loss` a zero ou
+menos. Não é regra do jogo — é o aviso que já se dava a si próprio.
+
+### 11.2 A faixa do fim de game
+
+Quando um dos totais chega a zero, a costura cresce para **244** e as duas metades encolhem para
+**300**. A faixa propõe o resultado sozinha: label "GAME n", veredicto (Playfair 700, 32px, win ou
+loss), o placar com "saved with the round" ao lado, e três acções — *Keep counting* (o engano de ter
+tirado vida a mais), *Game n+1* (dourada, some ao quinto game) e *Finish*.
+
+**Os dois a zero não abrem faixa nenhuma.** Em Magic é empate; no schema, um game é `W` ou `L`.
+
+### 11.3 Opções
+
+Gaveta a subir de baixo, aberta pela pastilha da costura. Só vida inicial (20/25/30/40/50/60) em
+chips de 48, e a escolha é lembrada. Mudar a vida a meio **recomeça o game a decorrer e não toca nos
+que já fecharam** — a vida deles é o que aconteceu.
+
+### 11.4 O resumo, à saída
+
+Écran inteiro com navbar própria. O placar em grande (Playfair 700, 56px), o badge do resultado na
+paleta win/loss/draw, e a lista de games com a vida de cada um — borda esquerda de 2px na cor do
+resultado.
+
+**Um game por fechar aparece aqui**, com *I won it* / *I lost it* / *Drop*. Concede-se o game 1 a
+toda a hora e nesse ninguém chega a zero: sem isto, o jogo mais comum de todos não tinha como ser
+fechado.
+
+O botão final diz *Continue to registration* numa ronda e *Done* numa partida casual — que não grava
+nada, e o écran diz isso em vez de fingir um botão que não leva a lado nenhum.
+
+### 11.5 Entradas
+
+| Onde | Aspecto |
+| :---- | :---- |
+| Registo de match | Pastilha no topo, 62 de altura, border gold+73 sobre gold+12, ícone `heart` |
+| Home (herói) e Event Detail | Quadrado de 50–52 ao lado da acção dourada, contorno em vez de fundo |
+| Home (cabeçalho) | Círculo de 36 dentro de um alvo de 44 — partida casual, aparece sempre |
+
+Dois botões cheios lado a lado não diriam qual é qual: registar continua a ser a acção principal e
+fica com o fundo dourado.

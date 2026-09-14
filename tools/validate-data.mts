@@ -64,7 +64,7 @@ interface MatchShape {
   opponentId: string;
   opponentColors?: ManaSelection;
   result: 'W' | 'L' | 'D';
-  games?: { number: number; result: 'W' | 'L' }[];
+  games?: { number: number; result: 'W' | 'L'; life?: { me: number; opponent: number } }[];
 }
 
 interface EventShape {
@@ -199,6 +199,22 @@ for (const entry of data.events) {
       match.games.forEach((game, gameIndex) => {
         if (game.number !== gameIndex + 1) {
           fail(entry.name, `${where}: game na posição ${gameIndex + 1} diz number ${game.number}`);
+        }
+
+        // Quem ganha um game costuma acabá-lo vivo, e um vencedor a zero é quase sempre um engano
+        // no contador — os dois lados trocados, por exemplo.
+        //
+        // **Aviso e não erro, e a razão é uma carta.** A Platinum Angel e a Angel's Grace deixam
+        // ganhar abaixo de zero, e isso acontece de facto numa mesa. Chumbar aqui seria o CI a
+        // recusar o registo de um torneio que correu mesmo assim, sem nada para corrigir a partir
+        // do telemóvel — o mesmo raciocínio do aviso dos eventos activos (Q6).
+        if (!game.life) return;
+        const winner = game.result === 'W' ? game.life.me : game.life.opponent;
+        if (winner <= 0) {
+          warnings.push(
+            `${entry.name} ${where} game ${game.number}: ganhou-se com ${winner} de vida — ` +
+            'possível engano no contador, a não ser que tenha sido mesmo com Platinum Angel',
+          );
         }
       });
     }
