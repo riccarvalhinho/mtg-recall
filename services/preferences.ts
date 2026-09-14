@@ -16,8 +16,10 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isBasicLandPreference, type BasicLandPreference } from '../domain/basicLands';
+import { DEFAULT_STARTING_LIFE } from '../domain/lifeCounter';
 
 const BASIC_LANDS_KEY = 'mtgrecall.preferences.basicLands';
+const STARTING_LIFE_KEY = 'mtgrecall.preferences.startingLife';
 
 /**
  * A colecção de básicos preferida, para os decks que não dizem de onde são.
@@ -46,5 +48,34 @@ export async function writeBasicLandPreference(
     else await AsyncStorage.setItem(BASIC_LANDS_KEY, JSON.stringify(preference));
   } catch (error) {
     console.warn('[preferences] não foi possível guardar a preferência dos básicos:', error);
+  }
+}
+
+/**
+ * A vida com que o contador abre.
+ *
+ * É gosto e não registo: joga-se sobretudo Standard a 20, mas quem passe um mês a jogar Commander
+ * não quer escolher 40 em cada partida. Guarda-se a última escolha e o contador abre logo num jogo,
+ * sem perguntar nada — que é o que serve quem abriu a app entre rondas.
+ */
+export async function readStartingLife(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(STARTING_LIFE_KEY);
+    if (!raw) return DEFAULT_STARTING_LIFE;
+
+    const value: unknown = JSON.parse(raw);
+    // Um valor estragado é o mesmo que não haver valor. Zero ou negativo não é vida inicial
+    // nenhuma, e deixaria o contador a começar com o jogo já perdido.
+    return Number.isInteger(value) && (value as number) > 0 ? (value as number) : DEFAULT_STARTING_LIFE;
+  } catch {
+    return DEFAULT_STARTING_LIFE;
+  }
+}
+
+export async function writeStartingLife(life: number): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STARTING_LIFE_KEY, JSON.stringify(life));
+  } catch (error) {
+    console.warn('[preferences] não foi possível guardar a vida inicial:', error);
   }
 }
