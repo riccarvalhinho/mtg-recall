@@ -29,6 +29,14 @@
           "result": "L"
         }
       ]
+    },
+    {
+      "round": 2,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
     }
   ]
 }
