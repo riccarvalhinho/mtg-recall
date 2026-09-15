@@ -13,6 +13,10 @@
     "status",
     "matches"
   ],
+  "$comment": "A posição e o campo andam juntos: uma posição sem número de jogadores não se compara com nada — Q15, resolvida na revisão do ADR 0012. É `dependencies` e não `dependentRequired` porque este schema é draft-07: a keyword de 2019-09 passa despercebida ao Ajv com strict: false, e a restrição não valeria nada.",
+  "dependencies": {
+    "placement": ["playersCount"]
+  },
   "properties": {
     "id": {
       "description": "Slug único, igual ao nome do ficheiro sem extensão. Começa pela data para o directório sair por ordem cronológica.",
@@ -60,12 +64,12 @@
       ]
     },
     "placement": {
-      "description": "Posição final no torneio: 1 é o primeiro lugar. É este o campo a sério. Os escalões (Top 8, Top 16, …) não se guardam — deduzem-se daqui em runtime, por domain/placement.ts, como o win rate e os pontos. Ver docs/adr/0012-posicao-final-em-vez-de-escalao.md.",
+      "description": "Posição final no torneio: 1 é o primeiro lugar. É este o campo a sério. Os escalões (Top 8, Top 16, …) não se guardam — deduzem-se daqui em runtime, por domain/placement.ts, como o win rate e os pontos. Exige playersCount (ver dependencies): uma posição sem campo não se compara com nada. Ver docs/adr/0012-posicao-final-em-vez-de-escalao.md.",
       "type": "integer",
       "minimum": 1
     },
     "playersCount": {
-      "description": "Quantos jogadores tinha o torneio. Sem isto a posição não se compara entre torneios — um 5.º lugar vale coisas diferentes em 8 e em 128 — e o escalão fica por confirmar. Nunca menor do que placement.",
+      "description": "Quantos jogadores tinha o torneio. Pode existir sozinho — um torneio de que se sabe o tamanho mas não em que lugar se ficou. Nunca menor do que placement.",
       "type": "integer",
       "minimum": 1
     },

@@ -13,6 +13,7 @@
  * indentação e uma linha em branco no fim, como todos os ficheiros de `data/`; e as chaves sempre
  * pela mesma ordem, que é a ordem do schema.
  */
+import { cleanStanding } from '../domain/placement';
 import type {
   CollectionCard,
   Deck,
@@ -74,6 +75,11 @@ function serializeMatch(match: Match) {
 }
 
 export function serializeEvent(event: Event): string {
+  // A posição e o campo passam pela mesma limpeza que o écran usa. O schema recusa uma posição sem
+  // número de jogadores (`dependencies`), e este é o último sítio antes do commit onde ainda dá
+  // para a apanhar — depois só o CI dá por ela, e aí o ficheiro já lá está.
+  const standing = cleanStanding(event);
+
   // A ordem das chaves é a ordem do schema, de propósito: um ficheiro escrito pelo telemóvel e um
   // ficheiro escrito à mão no computador ficam iguais, e o diff mostra só o que mudou mesmo.
   return serialize({
@@ -84,8 +90,8 @@ export function serializeEvent(event: Event): string {
     date: event.date,
     location: trimmed(event.location),
     status: event.status,
-    placement: event.placement,
-    playersCount: event.playersCount,
+    placement: standing.placement,
+    playersCount: standing.playersCount,
     rank: trimmed(event.rank),
     deckId: trimmed(event.deckId),
     deckName: trimmed(event.deckName),

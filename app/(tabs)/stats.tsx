@@ -256,7 +256,9 @@ function TrendChart({ events }: { events: Event[] }) {
 
   const barCx = (i: number) => PAD_LEFT + i * slotW + slotW / 2;
 
-  // Há barras estimadas quando algum evento só tem escalão e não o número de jogadores.
+  // Há barras estimadas quando algum evento só tem o escalão antigo. Desde a Q15 os eventos novos
+  // trazem sempre a posição e o campo, portanto isto é exclusivamente sinal de legado — e o dia em
+  // que não houver nenhum desses é o dia em que a legenda desaparece sozinha.
   const anyEstimated = points.some(entry => entry.point.estimated);
 
   // X-axis labels — only when month changes
@@ -340,7 +342,7 @@ function TrendChart({ events }: { events: Event[] }) {
 
       {anyEstimated && (
         <Text style={chart.legend}>
-          Faded bars are estimated from the bracket — those events have no player count.
+          Faded bars are estimated from an older bracket-only record, not measured.
         </Text>
       )}
     </View>

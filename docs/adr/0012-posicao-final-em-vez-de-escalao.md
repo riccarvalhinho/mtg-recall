@@ -85,7 +85,7 @@ um dia, se fizer sentido, sem tocar em ficheiro nenhum.
 **Fica difícil:** o `playersCount` deixou de ser decorativo e passou a fazer falta. Sem ele a
 posição ainda se regista e ainda se mostra, mas o escalão fica por confirmar e o evento só entra no
 gráfico por estimativa. Quem carregar torneios antigos de memória vai ter de se lembrar de quantos
-eram — ou aceitar a barra apagada.
+eram — ou aceitar a barra apagada. *(Revisto em 2026-09-15: já não se regista. Ver abaixo.)*
 
 **Fica difícil, também:** dois números em vez de um toque num botão. Fechar um torneio passou de um
 toque a escrever dois algarismos, entre rondas, numa loja. É o preço assumido, e a folha mostra ali
@@ -95,3 +95,35 @@ mesmo em que escalão a posição cai para o segundo número não parecer burocr
 deixa de ser a excepção e o gráfico passa a ser quase todo suposição. Se isso acontecer, ou o campo
 passa a obrigatório ao concluir, ou o gráfico volta aos escalões e a fracção do campo passa a ser
 uma segunda vista.
+
+---
+
+## Revisão — 2026-09-15: a posição e o campo andam juntos
+
+**Estado:** Aceite. A decisão acima mantém-se inteira; muda só a opcionalidade de um campo.
+
+Isto resolve a **Q15**, que era a "A vigiar" deste ADR. Não se esperou pelos meses de uso: a
+pergunta foi decidida à cabeça, e a favor de apertar.
+
+**A posição passa a exigir o número de jogadores.** Registam-se os dois ou nenhum. No schema é uma
+dependência (`dependencies: { placement: ["playersCount"] }`, a forma de draft-07 — a `dependentRequired`
+de 2019-09 passaria despercebida ao Ajv com `strict: false` e a restrição não valeria nada). Em
+código é o `cleanStanding`, que deixa cair a posição órfã, e o `standingWritable`, que trava o botão
+de concluir antes de lá chegar.
+
+O que **não** muda: continua a poder fechar-se um torneio sem resultado nenhum. Um torneio antigo
+carregado de memória pode não ter posição de que alguém se lembre, pela mesma razão que um match
+pode não ter adversário — e forçar um número inventado era o erro que o ADR 0002 evita em todo o
+lado. O `playersCount` também pode ficar sozinho: é um facto sobre o torneio, sabido sem se saber em
+que lugar se ficou.
+
+**Alternativa recusada: exigir o número de jogadores em todos os torneios concluídos**, mesmo nos
+que não registam posição. Seria a leitura literal de "obrigatório ao concluir", e recusa-se porque
+nenhuma estatística lê o `playersCount` sozinho: obrigava a escrever um número que não alimenta
+nada, e fechava a porta ao registo retroactivo de um torneio de que só se sabe que se jogou.
+
+**Consequência:** a estimativa deixa de existir para dados novos — só a alcançam os eventos que só
+têm o `rank` antigo. A barra apagada do gráfico passa a ser exclusivamente um sinal de legado, e no
+dia em que não houver eventos desses desaparece sozinha, com a legenda. O preço é o esperado: quem
+não se lembrar de quantos jogadores eram fica sem registar a posição, e não com meia posição
+registada.

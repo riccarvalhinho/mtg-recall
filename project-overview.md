@@ -57,7 +57,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
       nome do evento, local e adversário (`domain/search.ts`)
 - [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
-      (**posição final + nº de jogadores**, com o escalão mostrado ali mesmo), o resultado final no
+      (**posição final + nº de jogadores**, um par obrigatório, com o escalão mostrado ali mesmo e o
+      botão travado até os dois fazerem sentido), o resultado final no
       cabeçalho, apagar evento e apagar match com confirmação, e "Event details" para **corrigir a
       classificação de um torneio já fechado**, corrigir o set (só Limited) e escolher a arte do
       evento
@@ -129,7 +130,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       que corrige o erro do primeiro feitio: a tocar depressa ficava uma repetição sem dono
 - [x] `domain/placement.ts` (puro) — a posição final e os escalões que se deduzem dela, com a regra
       de o escalão só contar se o campo tiver sido maior do que ele (ADR 0012). Nenhum ficheiro
-      guarda um `Top 8`
+      guarda um `Top 8`, e nenhum guarda uma posição sem o número de jogadores (Q15): o
+      `cleanStanding` deixa-a cair e o serializador é o último portão antes do commit
 - [x] `services/lifeSession.ts` — a partida a meio, no AsyncStorage e com chave da ronda; nunca
       atira, como as preferências
 - [x] `store/useLifeStore.ts` — a gaveta que entrega os games contados ao registo de match
@@ -171,7 +173,7 @@ A dívida conhecida está listada em `docs/product/roadmap.md`.
 | Dados de cartas | Scryfall API | Gratuita, completa, bem documentada |
 | Preços das cartas | Scryfall, por workflow semanal | ADR 0007 — a Cardmarket API exigia app aprovada e OAuth |
 | Decks | Entidade própria com `deckId` | Fase 2 — texto livre não se somava entre torneios |
-| Classificação do evento | `placement` + `playersCount`; os escalões calculam-se | ADR 0012 — um `Top 8` deitava fora a diferença entre um 5.º e um 8.º lugar |
+| Classificação do evento | `placement` + `playersCount`, um par; os escalões calculam-se | ADR 0012 — um `Top 8` deitava fora a diferença entre um 5.º e um 8.º lugar; uma posição sem campo não se compara com nada (Q15) |
 | Lista de cartas do deck | Campos da Scryfall copiados para o ficheiro | Uma impressão não muda; copiar deixa a análise funcionar sem rede |
 | Mana symbols | SVG locais | Offline e sem dependência de CDN |
 | Design tokens | `theme/` (não `constants/`) | Separação clara design/código |

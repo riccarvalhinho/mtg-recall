@@ -88,8 +88,8 @@ A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collec
 | `date` | sim | `AAAA-MM-DD`. Pode ser retroactiva |
 | `location` | não | |
 | `status` | sim | `active` ou `completed`. Só um evento deve estar `active` de cada vez |
-| `placement` | não | Posição final, 1 = primeiro lugar. Introduzida ao concluir o torneio |
-| `playersCount` | não | Quantos jogadores tinha. Nunca menor do que `placement` |
+| `placement` | não | Posição final, 1 = primeiro lugar. Introduzida ao concluir o torneio. **Exige `playersCount`** |
+| `playersCount` | não | Quantos jogadores tinha. Nunca menor do que `placement`. Pode existir sozinho |
 | `rank` | não | **Legado**: o escalão escrito à mão que existia antes do `placement`. Lê-se, não se escreve — ADR 0012 |
 | `deckName`, `deckColors`, `deckThumbnailCardId` | não | O deck jogado neste evento |
 | `notes` | não | |
@@ -116,6 +116,13 @@ lugar. Os escalões (1st Place, Top 2, Top 4, Top 8, Top 16, Top 32) calculam-se
 destes dois números, em `domain/placement.ts`, como o win rate e os pontos. **Um escalão só conta se
 o campo tiver sido maior do que ele** — um Top 8 entre 6 jogadores era o torneio todo. Todo o porquê
 está no **ADR 0012**.
+
+**E os dois andam juntos.** Uma posição sem número de jogadores não se compara com nada, por isso o
+schema recusa-a (`dependencies`) e o serializador deixa-a cair antes de escrever. Registam-se os
+dois ou nenhum — um torneio antigo de que ninguém se lembra do resultado fecha-se na mesma sem
+resultado, como um match se regista sem adversário. O `playersCount` é que pode ficar sozinho: é um
+facto sobre o torneio, sabido sem se saber em que lugar se ficou. Ver a revisão de 2026-09-15 no
+ADR 0012.
 
 **Um match pode não ter adversário.** Carregar torneios antigos de memória é um caso real: sabe-se
 o resultado, não se sabe contra quem. Nesses, `opponentId` fica ausente.
