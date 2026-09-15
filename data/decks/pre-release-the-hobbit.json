@@ -1,0 +1,312 @@
+{
+  "id": "pre-release-the-hobbit",
+  "name": "Rakdos Aggro",
+  "colors": {
+    "main": [
+      "B",
+      "R"
+    ],
+    "splash": []
+  },
+  "format": "Sealed",
+  "thumbnailCardId": "117347af-0dd7-4350-901d-8c8a81387e22",
+  "cards": [
+    {
+      "name": "Bilbo's Deadly Slice",
+      "quantity": 2,
+      "scryfallId": "17892c93-b9b2-4720-933b-998ed0200492",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/7/17892c93-b9b2-4720-933b-998ed0200492.jpg?1785497075"
+    },
+    {
+      "name": "Bolg's Company",
+      "quantity": 1,
+      "scryfallId": "ea3f5644-f7e3-40de-ada5-cea2e9113cfb",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{B}{R}",
+      "cmc": 2,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "B",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/a/ea3f5644-f7e3-40de-ada5-cea2e9113cfb.jpg?1785497179"
+    },
+    {
+      "name": "Bombur, Gentle Dreamer",
+      "quantity": 1,
+      "scryfallId": "63c317e7-432c-4817-8db4-3670a1d84be3",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{2}{R}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Dwarf Bard",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/3/63c317e7-432c-4817-8db4-3670a1d84be3.jpg?1785496185"
+    },
+    {
+      "name": "Crude Bent Blade",
+      "quantity": 1,
+      "scryfallId": "fa8fd3c4-bd00-485d-80b1-2b67f5786fce",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Artifact — Equipment",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/a/fa8fd3c4-bd00-485d-80b1-2b67f5786fce.jpg?1785496297"
+    },
+    {
+      "name": "Desert Were-Worm",
+      "quantity": 1,
+      "scryfallId": "fc12c22a-11ff-4fb0-bc42-dd8490b8efb7",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{4}{R}{R}",
+      "cmc": 6,
+      "typeLine": "Creature — Dragon Wurm",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/c/fc12c22a-11ff-4fb0-bc42-dd8490b8efb7.jpg?1784733924"
+    },
+    {
+      "name": "Dori, Bearer of Friends",
+      "quantity": 1,
+      "scryfallId": "d2f60ad0-c887-4585-85f8-afcf72fb80d0",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{R}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Dwarf Warrior",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/d/2/d2f60ad0-c887-4585-85f8-afcf72fb80d0.jpg?1785323237"
+    },
+    {
+      "name": "Dreaded Bat-Cloud",
+      "quantity": 1,
+      "scryfallId": "67d52db5-597e-46d5-af39-c3a2de107d30",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{4}{B}",
+      "cmc": 5,
+      "typeLine": "Creature — Bat",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/7/67d52db5-597e-46d5-af39-c3a2de107d30.jpg?1785497085"
+    },
+    {
+      "name": "Dwalin, Weaponmaster",
+      "quantity": 1,
+      "scryfallId": "196d9287-a37d-4b27-a83b-a5489a54f081",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{1}{R/W}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Dwarf Warrior",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/9/196d9287-a37d-4b27-a83b-a5489a54f081.jpg?1785496508"
+    },
+    {
+      "name": "Gandalf, Spark Starter",
+      "quantity": 1,
+      "scryfallId": "7c5c6f1c-35cf-4172-b5a1-b73222b0723b",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{4}{R}{R}",
+      "cmc": 6,
+      "typeLine": "Legendary Creature — Avatar Wizard",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/c/7c5c6f1c-35cf-4172-b5a1-b73222b0723b.jpg?1784895032"
+    },
+    {
+      "name": "Goblin-town Flunkies",
+      "quantity": 1,
+      "scryfallId": "ccff7382-8609-494c-aeee-cd1436456dd0",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/c/c/ccff7382-8609-494c-aeee-cd1436456dd0.jpg?1785497117"
+    },
+    {
+      "name": "Hobbit Hole",
+      "quantity": 1,
+      "scryfallId": "0365c439-30bf-4d32-a791-166751bdb996",
+      "setCode": "hob",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/3/0365c439-30bf-4d32-a791-166751bdb996.jpg?1785323332"
+    },
+    {
+      "name": "Misty Mountains Raider",
+      "quantity": 2,
+      "scryfallId": "6dff14cd-b60b-48f4-9d9f-c9019b55df4c",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{4}{R}",
+      "cmc": 5,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/d/6dff14cd-b60b-48f4-9d9f-c9019b55df4c.jpg?1785152178"
+    },
+    {
+      "name": "Mountain",
+      "quantity": 8,
+      "typeLine": "Basic Land — Mountain"
+    },
+    {
+      "name": "Nori, Teller of Tales",
+      "quantity": 1,
+      "scryfallId": "b05adb48-980c-49a0-9ce6-7c7f3f20715d",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R/W}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Dwarf Bard",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/0/b05adb48-980c-49a0-9ce6-7c7f3f20715d.jpg?1785323303"
+    },
+    {
+      "name": "Pinecone Strike",
+      "quantity": 2,
+      "scryfallId": "ea174cea-40e5-424e-9734-e39aae6c6b17",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/a/ea174cea-40e5-424e-9734-e39aae6c6b17.jpg?1785496194"
+    },
+    {
+      "name": "Reverent Howl",
+      "quantity": 1,
+      "scryfallId": "16765eb2-d497-4cd6-b683-20eac2f10bbf",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/6/16765eb2-d497-4cd6-b683-20eac2f10bbf.jpg?1785497096"
+    },
+    {
+      "name": "Smaug's Fury",
+      "quantity": 1,
+      "scryfallId": "a16f203a-785e-4c78-9410-fb9f8a0ffa01",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/1/a16f203a-785e-4c78-9410-fb9f8a0ffa01.jpg?1785497138"
+    },
+    {
+      "name": "Stony-Voiced Goblins",
+      "quantity": 1,
+      "scryfallId": "6fcc3699-b475-4612-884d-81bd4f21e9c1",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Creature — Goblin Bard",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/f/6fcc3699-b475-4612-884d-81bd4f21e9c1.jpg?1785497106"
+    },
+    {
+      "name": "Swamp",
+      "quantity": 8,
+      "typeLine": "Basic Land — Swamp"
+    },
+    {
+      "name": "The Black Arrow",
+      "quantity": 1,
+      "scryfallId": "ab181190-d53d-4972-8cd5-8e54b45f2276",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{3}",
+      "cmc": 3,
+      "typeLine": "Legendary Artifact — Equipment",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/b/ab181190-d53d-4972-8cd5-8e54b45f2276.jpg?1785496386"
+    },
+    {
+      "name": "Thorin, Mountain-king",
+      "quantity": 1,
+      "scryfallId": "117347af-0dd7-4350-901d-8c8a81387e22",
+      "setCode": "hob",
+      "rarity": "mythic",
+      "manaCost": "{3}{R}",
+      "cmc": 4,
+      "typeLine": "Legendary Creature — Dwarf Noble",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/1/117347af-0dd7-4350-901d-8c8a81387e22.jpg?1783902784"
+    },
+    {
+      "name": "Tidings of War",
+      "quantity": 1,
+      "scryfallId": "38c16a0a-375e-48cb-9720-dbbc08c603ae",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{R}",
+      "cmc": 1,
+      "typeLine": "Sorcery",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/8/38c16a0a-375e-48cb-9720-dbbc08c603ae.jpg?1785497148"
+    },
+    {
+      "name": "Well-Worn Spatula",
+      "quantity": 1,
+      "scryfallId": "659b687f-4068-496f-81b2-7b606bf07ec1",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}",
+      "cmc": 1,
+      "typeLine": "Artifact — Equipment",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/5/659b687f-4068-496f-81b2-7b606bf07ec1.jpg?1785496409"
+    }
+  ]
+}
