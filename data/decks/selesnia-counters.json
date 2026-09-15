@@ -1,0 +1,13 @@
+{
+  "id": "selesnia-counters",
+  "name": "Selesnia Counters",
+  "colors": {
+    "main": [
+      "W",
+      "G"
+    ],
+    "splash": []
+  },
+  "format": "Sealed",
+  "archetype": "Selesnia counters"
+}
