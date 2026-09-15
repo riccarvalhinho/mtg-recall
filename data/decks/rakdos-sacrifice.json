@@ -9,5 +9,122 @@
     "splash": []
   },
   "format": "Draft",
-  "archetype": "Rakdos Sacrifice"
+  "archetype": "Rakdos Sacrifice",
+  "cards": [
+    {
+      "name": "Bombard",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Cut Propulsion",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Extinguisher Battleship",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Faller's Faithful",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Galvanizing Sawship",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Gravpack Monoist",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Hullcarver",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Hymn of the Faller",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Kavaron Skywarden",
+      "quantity": 2,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Lightless Evangel",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Melded Moxite",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Monoist Sentry",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Mountain",
+      "quantity": 8,
+      "typeLine": "Basic Land — Mountain"
+    },
+    {
+      "name": "Nutrient Block",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Orbital Plunge",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Red Tiger Mechan",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Rust Harvester",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Swamp",
+      "quantity": 9,
+      "typeLine": "Basic Land — Swamp"
+    },
+    {
+      "name": "Swarm Culler",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Systems Override",
+      "quantity": 2,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Territorial Bruntar",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Umbral Collar Zealot",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Virus Beetle",
+      "quantity": 1,
+      "setCode": "eoe"
+    }
+  ]
 }
