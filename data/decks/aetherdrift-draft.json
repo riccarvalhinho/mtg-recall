@@ -1,0 +1,314 @@
+{
+  "id": "aetherdrift-draft",
+  "name": "Aetherdrift draft",
+  "colors": {
+    "main": [
+      "U",
+      "G"
+    ],
+    "splash": [
+      "R"
+    ]
+  },
+  "format": "Draft",
+  "thumbnailCardId": "2ef555b1-666d-4386-8983-0e88f9b6cdec",
+  "cards": [
+    {
+      "name": "Autarch Mammoth",
+      "quantity": 1,
+      "scryfallId": "4d313ea7-2456-48f3-8b12-97d8e8c2a5b3",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{4}{G}{G}",
+      "cmc": 6,
+      "typeLine": "Creature — Elephant Mount",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/4/d/4d313ea7-2456-48f3-8b12-97d8e8c2a5b3.jpg?1783907873"
+    },
+    {
+      "name": "Caelorna, Coral Tyrant",
+      "quantity": 1,
+      "scryfallId": "e8654e38-4230-4094-b815-778bfb5d06f2",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{1}{U}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Octopus",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/8/e8654e38-4230-4094-b815-778bfb5d06f2.jpg?1783907911"
+    },
+    {
+      "name": "Elvish Refueler",
+      "quantity": 1,
+      "scryfallId": "25dfbcb6-9b67-4151-b10f-dde70c5fd16d",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{2}{G}",
+      "cmc": 3,
+      "typeLine": "Creature — Elf Druid",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/5/25dfbcb6-9b67-4151-b10f-dde70c5fd16d.jpg?1783907872"
+    },
+    {
+      "name": "Fang-Druid Summoner",
+      "quantity": 1,
+      "scryfallId": "496442f6-48c7-464e-bcf3-4c14f49fa065",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{3}{G}",
+      "cmc": 4,
+      "typeLine": "Creature — Ape Druid",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/4/9/496442f6-48c7-464e-bcf3-4c14f49fa065.jpg?1783907871"
+    },
+    {
+      "name": "Flood the Engine",
+      "quantity": 2,
+      "scryfallId": "57402f7c-5d4c-4f1e-8bce-a2328a297111",
+      "setCode": "dft",
+      "rarity": "common",
+      "manaCost": "{2}{U}",
+      "cmc": 3,
+      "typeLine": "Enchantment — Aura",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/5/7/57402f7c-5d4c-4f1e-8bce-a2328a297111.jpg?1783907909"
+    },
+    {
+      "name": "Forest",
+      "quantity": 6,
+      "typeLine": "Basic Land — Forest"
+    },
+    {
+      "name": "Hazard of the Dunes",
+      "quantity": 2,
+      "scryfallId": "c3fbee7a-7e73-43cf-bc39-ccb1c63bf837",
+      "setCode": "dft",
+      "rarity": "common",
+      "manaCost": "{3}{G}",
+      "cmc": 4,
+      "typeLine": "Creature — Wurm",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/c/3/c3fbee7a-7e73-43cf-bc39-ccb1c63bf837.jpg?1783907871"
+    },
+    {
+      "name": "Island",
+      "quantity": 7,
+      "typeLine": "Basic Land — Island"
+    },
+    {
+      "name": "Jibbirik Omnivore",
+      "quantity": 1,
+      "scryfallId": "68a0569b-65c8-49ce-91ac-e639b8faf939",
+      "setCode": "dft",
+      "rarity": "common",
+      "manaCost": "{1}{G}",
+      "cmc": 2,
+      "typeLine": "Creature — Beast",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/8/68a0569b-65c8-49ce-91ac-e639b8faf939.jpg?1783907870"
+    },
+    {
+      "name": "Loot, the Pathfinder",
+      "quantity": 1,
+      "scryfallId": "33c59c04-4c0b-4a60-826e-3a7757d0b2a2",
+      "setCode": "dft",
+      "rarity": "mythic",
+      "manaCost": "{2}{G}{U}{R}",
+      "cmc": 5,
+      "typeLine": "Legendary Creature — Beast Noble",
+      "colors": [
+        "U",
+        "R",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/3/33c59c04-4c0b-4a60-826e-3a7757d0b2a2.jpg?1783907856"
+    },
+    {
+      "name": "Migrating Ketradon",
+      "quantity": 2,
+      "scryfallId": "a9ba2219-8184-4141-8708-845cb0957299",
+      "setCode": "dft",
+      "rarity": "common",
+      "manaCost": "{4}{G}{G}",
+      "cmc": 6,
+      "typeLine": "Creature — Dinosaur",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/9/a9ba2219-8184-4141-8708-845cb0957299.jpg?1783907868"
+    },
+    {
+      "name": "Molt Tender",
+      "quantity": 1,
+      "scryfallId": "f800bf4e-4bfb-45b6-950b-c76952f52bb1",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{G}",
+      "cmc": 1,
+      "typeLine": "Creature — Insect Druid",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/8/f800bf4e-4bfb-45b6-950b-c76952f52bb1.jpg?1783907868"
+    },
+    {
+      "name": "Night Market",
+      "quantity": 1,
+      "scryfallId": "a8c1dce3-6136-4294-9d2b-5ef8527d733b",
+      "setCode": "dft",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/8/a8c1dce3-6136-4294-9d2b-5ef8527d733b.jpg?1783907841"
+    },
+    {
+      "name": "Possession Engine",
+      "quantity": 1,
+      "scryfallId": "f206b0a1-50d8-4d53-850d-fb15fd328267",
+      "setCode": "dft",
+      "rarity": "rare",
+      "manaCost": "{3}{U}{U}",
+      "cmc": 5,
+      "typeLine": "Artifact — Vehicle",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/2/f206b0a1-50d8-4d53-850d-fb15fd328267.jpg?1783907906"
+    },
+    {
+      "name": "Rangers' Aetherhive",
+      "quantity": 1,
+      "scryfallId": "1b238d2c-d10f-496d-aa34-5a1536e056b5",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{1}{G}{U}",
+      "cmc": 3,
+      "typeLine": "Artifact — Vehicle",
+      "colors": [
+        "U",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/b/1b238d2c-d10f-496d-aa34-5a1536e056b5.jpg?1783907854"
+    },
+    {
+      "name": "Riverchurn Monument",
+      "quantity": 1,
+      "scryfallId": "e66ff696-fd39-49ad-9ee5-c0868167df37",
+      "setCode": "dft",
+      "rarity": "rare",
+      "manaCost": "{1}{U}",
+      "cmc": 2,
+      "typeLine": "Artifact",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/6/e66ff696-fd39-49ad-9ee5-c0868167df37.jpg?1783907906"
+    },
+    {
+      "name": "Rugged Highlands",
+      "quantity": 2,
+      "scryfallId": "31261eca-28ad-407c-84ef-0c124d0d7451",
+      "setCode": "tdm",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/1/31261eca-28ad-407c-84ef-0c124d0d7451.jpg?1783907274"
+    },
+    {
+      "name": "Sab-Sunen, Luxa Embodied",
+      "quantity": 1,
+      "scryfallId": "2ef555b1-666d-4386-8983-0e88f9b6cdec",
+      "setCode": "dft",
+      "rarity": "mythic",
+      "manaCost": "{3}{G}{U}",
+      "cmc": 5,
+      "typeLine": "Legendary Creature — God",
+      "colors": [
+        "U",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/e/2ef555b1-666d-4386-8983-0e88f9b6cdec.jpg?1783907852"
+    },
+    {
+      "name": "Skyserpent Seeker",
+      "quantity": 2,
+      "scryfallId": "8dbd9fc0-c0df-4119-a0d3-2e1790998c21",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{G}{U}",
+      "cmc": 2,
+      "typeLine": "Creature — Snake",
+      "colors": [
+        "U",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/d/8dbd9fc0-c0df-4119-a0d3-2e1790998c21.jpg?1783907852"
+    },
+    {
+      "name": "Skystreak Engineer",
+      "quantity": 2,
+      "scryfallId": "5bc9c501-098d-4560-9826-329b05689e0f",
+      "setCode": "dft",
+      "rarity": "common",
+      "manaCost": "{1}{U}",
+      "cmc": 2,
+      "typeLine": "Creature — Human Pilot",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/5/b/5bc9c501-098d-4560-9826-329b05689e0f.jpg?1783907903"
+    },
+    {
+      "name": "Spikeshell Harrier",
+      "quantity": 1,
+      "scryfallId": "8f1ece22-ca32-45bb-b5f4-480f9b366cb5",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{4}{U}",
+      "cmc": 5,
+      "typeLine": "Artifact Creature — Robot Turtle",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/f/8f1ece22-ca32-45bb-b5f4-480f9b366cb5.jpg?1783907901"
+    },
+    {
+      "name": "Transit Mage",
+      "quantity": 1,
+      "scryfallId": "6727169f-c33a-4ca5-889d-a63bcfc5a3f0",
+      "setCode": "dft",
+      "rarity": "uncommon",
+      "manaCost": "{2}{U}",
+      "cmc": 3,
+      "typeLine": "Creature — Human Wizard",
+      "colors": [
+        "U"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/7/6727169f-c33a-4ca5-889d-a63bcfc5a3f0.jpg?1783907900"
+    },
+    {
+      "name": "Willowrush Verge",
+      "quantity": 1,
+      "scryfallId": "758d93d5-3f66-4395-a928-000485396c87",
+      "setCode": "dft",
+      "rarity": "rare",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/5/758d93d5-3f66-4395-a928-000485396c87.jpg?1783907837"
+    }
+  ]
+}
