@@ -7,5 +7,28 @@
   "location": "Arena Porto",
   "status": "active",
   "deckId": "pre-release-the-hobbit-2",
-  "matches": []
+  "matches": [
+    {
+      "round": 1,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "L"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    }
+  ]
 }
