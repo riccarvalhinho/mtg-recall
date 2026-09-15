@@ -26,9 +26,11 @@
  */
 import { create } from 'zustand';
 import { withPrinting } from '../domain/collection';
+import { hasColors } from '../domain/eventColors';
 import { pruneOpponents } from '../domain/opponents';
 import { repoPaths } from '../domain/outbox';
 import { cleanStanding, type EventStanding } from '../domain/placement';
+import { bareMatches } from '../domain/quickRecord';
 import { eventId as makeEventId, slugify, uniqueId } from '../domain/slug';
 import { isLimitedFormat } from '../domain/sets';
 import { thumbnailChoices, thumbnailUrls } from '../domain/thumbnails';
@@ -105,6 +107,7 @@ interface EventsStore {
   load: () => Promise<void>;
   createEvent: (data: NewEventData) => Promise<string | null>;
   addMatch: (eventId: string, data: NewMatchData) => Promise<void>;
+  addBareMatches: (eventId: string, results: MatchResult[]) => Promise<number>;
   updateMatch: (eventId: string, round: number, data: NewMatchData) => Promise<boolean>;
   createDeck: (data: NewDeckData) => Promise<string>;
   updateDeck: (deckId: string, data: NewDeckData) => Promise<boolean>;
@@ -120,6 +123,7 @@ interface EventsStore {
   ) => Promise<void>;
   completeEvent: (eventId: string, standing?: EventStanding) => Promise<boolean>;
   setEventStanding: (eventId: string, standing: EventStanding) => Promise<boolean>;
+  setEventColors: (eventId: string, colors: ManaSelection | undefined) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
   restoreFromGitHub: (options?: { discardPending?: boolean }) => Promise<RestoreResult>;
@@ -359,6 +363,36 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
     if (isNew) await persistOpponents(opponents, `Add opponent ${displayName}`);
     await persistEvent(updated, `Register round ${round} of ${event.name}`);
+  },
+
+  // ─── addBareMatches ────────────────────────────────────────────────────────
+
+  /**
+   * Regista várias rondas de uma vez, só com o resultado — o registo rápido de um torneio antigo.
+   *
+   * Ver `domain/quickRecord.ts` para o porquê de isto gerar rondas em vez de gravar um "6-2": o
+   * recorde de um evento sai sempre de `event.matches`, e uma segunda forma de o dizer obrigaria os
+   * seis sítios que somam matches a saber das duas.
+   *
+   * **Um `persistEvent` para as N rondas, e não N.** A chave da outbox é o caminho do ficheiro, por
+   * isso N gravações deixariam na mesma uma entrada (ADR 0004) — mas escreveriam o ficheiro em
+   * disco N vezes e gerariam N mensagens de commit, das quais só a última sobrevivia. Uma só é mais
+   * barata e diz a verdade: o que aconteceu foi um registo, não oito.
+   *
+   * Devolve quantas rondas foram acrescentadas, para quem chama poder dizê-lo.
+   */
+  addBareMatches: async (eventId, results) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event || results.length === 0) return 0;
+
+    const added = bareMatches(results, event.matches.length + 1);
+    const updated: Event = { ...event, matches: [...event.matches, ...added] };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+
+    const label = added.length === 1 ? '1 round' : `${added.length} rounds`;
+    await persistEvent(updated, `Record ${label} of ${event.name}`);
+    return added.length;
   },
 
   // ─── updateMatch ───────────────────────────────────────────────────────────
@@ -640,6 +674,26 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
     set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
     await persistEvent(updated, `Update standing for ${event.name}`);
+    return true;
+  },
+
+  // ─── setEventColors ────────────────────────────────────────────────────────
+
+  /**
+   * As cores com que se jogou este torneio, escritas à mão — ADR 0013.
+   *
+   * Não toca no deck ligado de propósito: as cores são do torneio e não do deck, e a diferença
+   * entre as duas é informação (o splash daquele dia). Uma selecção vazia grava-se como ausência,
+   * e aí as cores que se veem voltam a ser as do deck, se houver — é o que o `eventColors` faz.
+   */
+  setEventColors: async (eventId, colors) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    const updated: Event = { ...event, deckColors: hasColors(colors) ? colors : undefined };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    await persistEvent(updated, `Set colors for ${event.name}`);
     return true;
   },
 

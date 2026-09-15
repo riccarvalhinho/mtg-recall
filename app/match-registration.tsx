@@ -13,17 +13,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { Game, GameResult, ManaColor, MatchResult } from '../types';
+import { Game, GameResult, MatchResult } from '../types';
 import { useEventsStore } from '../store/useEventsStore';
 import { useLifeStore } from '../store/useLifeStore';
-import { ManaPip } from '../components/ManaPip';
+import { ManaSelector } from '../components/ManaSelector';
 import {
-  MANA_ORDER,
-  type ManaState,
   type ManaStates,
-  cycleManaState,
-  emptyManaStates,
-  hasAnyMana,
   manaSelectionFrom,
   manaStatesFrom,
 } from '../domain/manaSelection';
@@ -352,17 +347,6 @@ export default function MatchRegistrationScreen() {
   // O resultado é — sem ele não há match nenhum a registar.
   const canSave = effectiveResult !== null && !saving;
 
-  // Cicla estado de cor: 0 → 1 → 2 → 0
-  function cycleColor(color: ManaColor) {
-    setColorStates(prev => cycleManaState(prev, color));
-  }
-
-  function clearColors() {
-    setColorStates(emptyManaStates());
-  }
-
-  const hasAnyColor = hasAnyMana(colorStates);
-
   /**
    * Os games contados no contador de vida entram aqui ao voltar.
    *
@@ -500,51 +484,12 @@ export default function MatchRegistrationScreen() {
             </View>
           </View>
 
-          {/* Seletor de cores */}
-          <View style={styles.field}>
-            <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Opponent colors</Text>
-              {hasAnyColor && (
-                <Pressable onPress={clearColors}>
-                  <Text style={styles.clearBtn}>clear</Text>
-                </Pressable>
-              )}
-            </View>
-
-            <View style={styles.colorSelector}>
-              {MANA_ORDER.map(color => {
-                const state = colorStates[color];
-                return (
-                  <Pressable
-                    key={color}
-                    onPress={() => cycleColor(color)}
-                    style={styles.colorPip}
-                  >
-                    <View style={{ opacity: state === 0 ? 0.3 : 1 }}>
-                      <ManaPip
-                        color={color}
-                        size={state === 2 ? 34 : 48}
-                        isSplash={state === 2}
-                      />
-                    </View>
-                    <Text style={[
-                      styles.colorLabel,
-                      state === 0 && { opacity: 0 },
-                      state === 1 && { color: colors.gold },
-                      state === 2 && { color: '#8B9CBB' },
-                    ]}>
-                      {state === 1 ? 'main' : state === 2 ? 'splash' : 'main'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Hint */}
-            <Text style={styles.colorHint}>
-              1 tap = main · 2 taps = splash · 3 taps = clear
-            </Text>
-          </View>
+          {/* Seletor de cores — o mesmo do editor de deck e do evento */}
+          <ManaSelector
+            label="Opponent colors"
+            states={colorStates}
+            onChange={setColorStates}
+          />
 
           {/* Seletor de resultado */}
           <View style={styles.field}>
@@ -731,11 +676,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.gold,
   },
-  clearBtn: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 12,
-    color: colors.textDim,
-  },
 
   // Input adversário
   inputContainer: {
@@ -757,29 +697,6 @@ const styles = StyleSheet.create({
   },
 
   // Seletor de cores
-  colorSelector: {
-    backgroundColor: colors.bgCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-  },
-  colorPip: {
-    alignItems: 'center',
-    gap: 6,
-    width: 52,
-    minHeight: 64,
-    justifyContent: 'center',
-  },
-  colorLabel: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 9,
-    textAlign: 'center',
-  },
   colorHint: {
     fontFamily: fonts.body,
     fontSize: 10,

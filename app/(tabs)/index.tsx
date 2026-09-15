@@ -16,6 +16,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { ManaColor, Event, calcEventStats, isActive } from '../../types';
 import { formatDate } from '../../domain/dates';
 import { eventThumbnailUrl } from '../../domain/thumbnails';
+import { eventColors } from '../../domain/eventColors';
 import { useEventsStore } from '../../store/useEventsStore';
 
 // ─── Ornamento central (empty state) ─────────────────────────────────────────
@@ -98,7 +99,8 @@ function ActiveEventSection({ event }: { event: Event }) {
   const stats = calcEventStats(event);
   const played = stats.wins + stats.losses + stats.draws;
   const art = eventThumbnailUrl(event, decks);
-  const deckColors = event.deckColors;
+  // As do evento, e só depois as do deck ligado — ADR 0013.
+  const deckColors = eventColors(event, decks);
 
   const cardHeight = Math.round(Math.min(Math.max(height * 0.52, 340), 520));
 

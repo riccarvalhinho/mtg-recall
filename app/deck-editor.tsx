@@ -19,12 +19,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { EventType, ManaColor } from '../types';
+import { EventType } from '../types';
 import {
-  MANA_ORDER,
-  cycleManaState,
-  hasAnyMana,
-  emptyManaStates,
   manaSelectionFrom,
   manaStatesFrom,
 } from '../domain/manaSelection';
@@ -32,6 +28,7 @@ import { cardCount } from '../domain/deck';
 import { useEventsStore } from '../store/useEventsStore';
 import { useScanStore } from '../store/useScanStore';
 import { ManaPip } from '../components/ManaPip';
+import { ManaSelector } from '../components/ManaSelector';
 import { useFocusEffect } from 'expo-router';
 import {
   completeFromCatalogue,
@@ -173,10 +170,6 @@ export default function DeckEditorScreen() {
 
   const canSave = name.trim().length > 0 && !saving;
   const cards = cardCount(cardList);
-
-  function cycleColor(color: ManaColor) {
-    setColorStates(prev => cycleManaState(prev, color));
-  }
 
   /**
    * Recolhe o que o scan deixou, ao voltar da câmara.
@@ -332,50 +325,8 @@ export default function DeckEditorScreen() {
             </View>
           </View>
 
-          {/* Cores — o mesmo selector de três estados do registo de match */}
-          <View style={styles.field}>
-            <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Colors</Text>
-              {hasAnyMana(colorStates) && (
-                <Pressable onPress={() => setColorStates(emptyManaStates())} hitSlop={12}>
-                  <Text style={styles.clearBtn}>clear</Text>
-                </Pressable>
-              )}
-            </View>
-
-            <View style={styles.colorSelector}>
-              {MANA_ORDER.map(color => {
-                const state = colorStates[color];
-                return (
-                  <Pressable
-                    key={color}
-                    onPress={() => cycleColor(color)}
-                    style={styles.colorPip}
-                  >
-                    <View style={{ opacity: state === 0 ? 0.3 : 1 }}>
-                      <ManaPip
-                        color={color}
-                        size={state === 2 ? 34 : 48}
-                        isSplash={state === 2}
-                      />
-                    </View>
-                    <Text style={[
-                      styles.colorLabel,
-                      state === 0 && { opacity: 0 },
-                      state === 1 && { color: colors.gold },
-                      state === 2 && { color: '#8B9CBB' },
-                    ]}>
-                      {state === 2 ? 'splash' : 'main'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Text style={styles.hint}>
-              1 tap = main · 2 taps = splash · 3 taps = clear
-            </Text>
-          </View>
+          {/* Cores — o mesmo selector de três estados do registo de match e do evento */}
+          <ManaSelector label="Colors" states={colorStates} onChange={setColorStates} />
 
           {/* Formato — opcional: um deck de casa pode não ter formato nenhum */}
           <View style={styles.field}>
@@ -684,18 +635,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
-  clearBtn: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 12,
-    color: colors.textDim,
-  },
-  hint: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.textDim,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
 
   // Inputs
   inputContainer: {
@@ -730,29 +669,6 @@ const styles = StyleSheet.create({
   },
 
   // Selector de cores
-  colorSelector: {
-    backgroundColor: colors.bgCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-  },
-  colorPip: {
-    alignItems: 'center',
-    gap: 6,
-    width: 52,
-    minHeight: 64,
-    justifyContent: 'center',
-  },
-  colorLabel: {
-    fontFamily: fonts.bodyItal,
-    fontSize: 9,
-    textAlign: 'center',
-  },
 
   // Formato
   formatGrid: {

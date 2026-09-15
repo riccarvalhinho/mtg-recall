@@ -9,6 +9,7 @@ import path from 'node:path';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { describe, expect, it } from 'vitest';
+import { bareMatches } from '../domain/quickRecord';
 import {
   opponentNames,
   parseDeck,
@@ -137,6 +138,23 @@ describe('serializeEvent', () => {
   it('omite deckColors quando não há cor nenhuma escolhida', () => {
     const noColors: Event = { ...minimalEvent, deckColors: { main: [], splash: [] } };
     expect(parsed(noColors)).not.toHaveProperty('deckColors');
+  });
+
+  /**
+   * As rondas que o registo rápido escreve não têm adversário, games nem cores — e é a forma que
+   * mais vezes vai para o ficheiro ao carregar o arquivo de torneios antigos. Se o schema a
+   * recusasse, só o CI daria por isso, com o commit já feito.
+   */
+  it('escreve rondas nuas, sem adversário nem games, e o schema aceita-as', () => {
+    const quick: Event = { ...minimalEvent, matches: bareMatches(['W', 'W', 'L']) };
+    const file = parsed(quick) as Record<string, unknown>;
+
+    expect(validateEvent(file)).toBe(true);
+    expect(file.matches).toEqual([
+      { round: 1, opponentColors: { main: [], splash: [] }, result: 'W' },
+      { round: 2, opponentColors: { main: [], splash: [] }, result: 'W' },
+      { round: 3, opponentColors: { main: [], splash: [] }, result: 'L' },
+    ]);
   });
 
   it('escreve os matches por ordem de ronda, mesmo que cheguem desordenados', () => {

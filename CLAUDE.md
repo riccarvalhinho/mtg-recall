@@ -78,13 +78,14 @@ conhecimento prévio de padrões ou convenções.
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
   opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
-/components                 ManaPip, ManaCost, TypeBadge, RecordBadge, EventCard, MatchCard,
-                            CardThumbnailPlaceholder, CardArtThumb, CardArtPicker, SetSymbol,
-                            CardImageOverlay, ConfirmModal, SetSelector, CardSearchModal
+/components                 ManaPip, ManaCost, ManaSelector, TypeBadge, RecordBadge, EventCard,
+                            MatchCard, CardThumbnailPlaceholder, CardArtThumb, CardArtPicker,
+                            SetSymbol, CardImageOverlay, ConfirmModal, SetSelector,
+                            CardSearchModal, QuickRecordModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
-                            lifeCounter, holdRepeat, placement
+                            lifeCounter, holdRepeat, placement, eventColors, quickRecord
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
                             scryfall, imagePrefetch, ocr, preferences, lifeSession
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
@@ -133,6 +134,19 @@ escreve.
 schema recusa a posição órfã (`dependencies` — draft-07, não `dependentRequired`), o `cleanStanding`
 deixa-a cair e o `standingWritable` trava o botão antes disso. Fechar um torneio **sem resultado
 nenhum** continua a valer, que é o caso do torneio antigo carregado de memória.
+
+**As cores são do torneio, não do deck** (ADR 0013). O campo `deckColors` esteve marcado como
+legado e voltou a ser escrito: a decklist não sabe o que foi *splash* e o que foi cor principal —
+isso é uma leitura de quem jogou —, e um torneio retroactivo não tem deck nenhum de onde derivar
+cor alguma. Onde as cores se leem, leem-se por `domain/eventColors.ts`: as do evento primeiro, as do
+deck ligado a seguir, nada em último. Ler `event.deckColors` directamente é um bug — foi o que
+manteve a secção por cor das Stats vazia para todos os eventos criados pela app.
+
+**Um evento pode ser só o recorde.** Parte do arquivo antigo sabe que acabou 6-2 e mais nada. Esses
+registam-se por *Quick record* (`domain/quickRecord.ts`), que escreve **rondas nuas** — ronda,
+`opponentColors` vazias e resultado. O recorde continua a sair de `matches` e não de dois números
+guardados: uma segunda forma de dizer o mesmo obrigaria os seis sítios que somam matches a saber das
+duas.
 
 Um evento = um ficheiro `data/events/<AAAA-MM-DD-slug>.json`, com os matches lá dentro. Os
 adversários são referências para `data/taxonomies/opponents.json`, e **a referência é opcional**:
@@ -215,6 +229,13 @@ mal formado só daria erro **depois** do commit.
 - SVGs locais (`assets/mana/symbols.ts`), sem rede — funciona offline
 - Props: `color: ManaColor`, `size?: number` (default 16), `isSplash?: boolean`
 - `isSplash`: tamanho ×0.70, opacidade 0.65
+
+### ManaSelector (components/ManaSelector.tsx)
+- O selector de cores de três estados: um toque é principal, dois é splash, três limpa.
+- Desenha o bloco inteiro — etiqueta, `clear` e legenda —, e os três écrans que escrevem cores usam
+  este e mais nenhum: registo de match, editor de deck e as cores do evento. Estava copiado à letra
+  nos dois primeiros; o terceiro seria a terceira cópia.
+- A lógica dos estados é `domain/manaSelection.ts` e é testada lá. Isto é só o dedo em cima dela.
 
 ### ManaCost (components/ManaCost.tsx)
 - Desenha um custo inteiro (`{2}{G}{U}`), não um pip só. `domain/manaCost.ts` separa a string.
@@ -445,6 +466,25 @@ desaparece sozinha.
 E o resultado passou a **ver-se e a poder corrigir-se**: aparece no cabeçalho do evento, e os mesmos
 dois campos estão em *Event details* para emendar um engano. Antes só se escrevia uma vez, numa
 folha que nunca mais voltava a abrir.
+
+**Os registos retroactivos deixaram de precisar de detalhe que não existe (ADR 0013).** Metade do
+arquivo antigo é só isto: o torneio, as cores, o resultado e talvez o tema do deck. Duas coisas
+faltavam para esses registos caberem na app.
+
+As **cores voltaram a ser um campo que se escreve**, no Event Detail, com o mesmo selector de três
+estados do deck e do match. Não se derivam do deck de propósito: a decklist não sabe o que foi
+*splash*, e um torneio retroactivo não tem deck nenhum. `domain/eventColors.ts` é a precedência
+inteira — evento, depois deck ligado, depois nada — e toda a gente a usa. Isto arrumou de caminho um
+bug que ninguém tinha visto: os três écrans que desenham cores liam `event.deckColors` directamente,
+um campo que nada de novo escrevia, e por isso **a secção por cor das Stats estava vazia para todos
+os eventos criados pela app**.
+
+E o **Quick record** dá casa ao "6-2" de um torneio sem detalhe por ronda: toca-se W/L/D pela ordem
+que se quiser — a ordem é de quem escreve, inventada ou não —, vê-se o recorde a formar-se e
+gravam-se as N rondas de uma vez. `domain/quickRecord.ts` tem a lógica e os testes. Duas decisões lá
+dentro: gera **rondas nuas** em vez de guardar dois números, porque o recorde sai sempre de
+`matches` e uma segunda verdade obrigaria seis sítios a saber das duas; e grava **uma vez só** para
+as N rondas, que é um commit e não oito.
 
 **Pela Home, sem evento, não se grava nada.** A app é um registo de torneios; meia dúzia de jogos na
 mesa da cozinha estragariam o win rate de sempre e a lista de adversários.

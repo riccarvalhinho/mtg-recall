@@ -10,9 +10,11 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
 import { calcEventStats, isActive } from '../../types';
-import type { Deck, Event } from '../../types';
+import type { Deck, Event, MatchResult } from '../../types';
 import { formatDate } from '../../domain/dates';
 import { deckPerformance } from '../../domain/deck';
+import { eventColors, hasColors } from '../../domain/eventColors';
+import { manaSelectionFrom, manaStatesFrom } from '../../domain/manaSelection';
 import { isLimitedFormat } from '../../domain/sets';
 import { eventThumbnailUrl, thumbnailChoices } from '../../domain/thumbnails';
 import {
@@ -27,6 +29,8 @@ import { useEventsStore } from '../../store/useEventsStore';
 import { MatchCard } from '../../components/MatchCard';
 import { TypeBadge } from '../../components/TypeBadge';
 import { ManaPip } from '../../components/ManaPip';
+import { ManaSelector } from '../../components/ManaSelector';
+import { QuickRecordModal } from '../../components/QuickRecordModal';
 import { CardArtThumb } from '../../components/CardArtThumb';
 import { CardArtPicker } from '../../components/CardArtPicker';
 import { SetSelector } from '../../components/SetSelector';
@@ -289,6 +293,10 @@ function DeckSection({ event }: { event: Event }) {
   const linked = decks.find(d => d.id === event.deckId);
   const legacyName = event.deckName;
 
+  // As cores que se mostram são as do evento, e só depois as do deck — ADR 0013. O deck responde
+  // por omissão; quem escreveu as cores à mão sabia o que foi splash, e a decklist não sabe.
+  const shownColors = eventColors(event, decks);
+
   // A carta que ilustra o evento, se houver uma escolhida — e, sem escolha própria, a do deck. Sai
   // da lista de cartas do deck ligado, portanto não custa rede nenhuma. O `CardArtThumb` volta ao
   // placeholder sozinho quando não há arte ou quando ela falha a carregar.
@@ -316,8 +324,8 @@ function DeckSection({ event }: { event: Event }) {
             <>
               <Text style={deck.name}>{linked.name}</Text>
               <View style={deck.pips}>
-                {linked.colors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
-                {linked.colors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+                {(shownColors?.main ?? []).map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+                {(shownColors?.splash ?? []).map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
                 {performance && performance.events > 1 && (
                   <Text style={deck.meta}>
                     {performance.winRate}% over {performance.events} events
@@ -329,11 +337,19 @@ function DeckSection({ event }: { event: Event }) {
             <>
               <Text style={deck.name}>{legacyName}</Text>
               <View style={deck.pips}>
-                {(event.deckColors?.main ?? []).map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
-                {(event.deckColors?.splash ?? []).map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+                {(shownColors?.main ?? []).map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+                {(shownColors?.splash ?? []).map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
                 <Text style={deck.meta}>not linked to a deck</Text>
               </View>
             </>
+          ) : shownColors ? (
+            /* Sem deck e sem nome, mas com cores: é a forma de um torneio retroactivo, e as cores
+               são tudo o que dele se sabe. Valem por si — ver ADR 0013. */
+            <View style={deck.pips}>
+              {shownColors.main.map(c => <ManaPip key={`m-${c}`} color={c} size={14} />)}
+              {shownColors.splash.map(c => <ManaPip key={`s-${c}`} color={c} size={14} isSplash />)}
+              <Text style={deck.meta}>no deck recorded</Text>
+            </View>
           ) : (
             <Text style={deck.empty}>Tap to choose a deck</Text>
           )}
@@ -403,9 +419,15 @@ function EventSettings({ event }: { event: Event }) {
   const setEventSetCode = useEventsStore(s => s.setEventSetCode);
   const setEventDeckThumbnail = useEventsStore(s => s.setEventDeckThumbnail);
   const setEventStanding = useEventsStore(s => s.setEventStanding);
+  const setEventColors = useEventsStore(s => s.setEventColors);
 
   const [open, setOpen] = useState(false);
   const [standing, setStanding] = useState<StandingDraft>(() => draftFrom(event));
+
+  // Os pips abrem com o que está gravado no evento — e **não** com as cores do deck ligado. Herdar
+  // aqui faria a primeira gravação copiar as cores do deck para dentro do evento sem ninguém as ter
+  // escolhido, e a partir daí trocar de deck deixava de mudar coisa nenhuma (ADR 0013).
+  const [colorStates, setColorStates] = useState(() => manaStatesFrom(event.deckColors));
 
   // Os campos seguem o que está gravado. Sem isto, concluir o torneio com este écran montado
   // deixava-os vazios por cima de uma posição que já existe — e a gravação ao sair apagava-a.
@@ -414,6 +436,10 @@ function EventSettings({ event }: { event: Event }) {
     setStanding(draftFrom(event));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event.placement, event.playersCount]);
+
+  useEffect(() => {
+    setColorStates(manaStatesFrom(event.deckColors));
+  }, [event.deckColors]);
 
   const linked = decks.find(d => d.id === event.deckId);
   const showSet = isLimitedFormat(event.type);
@@ -433,7 +459,21 @@ function EventSettings({ event }: { event: Event }) {
     void setEventStanding(event.id, { placement, playersCount });
   }
 
-  if (!showSet && !showArt && !showStanding) return null;
+  /**
+   * As cores gravam a cada toque, ao contrário da classificação.
+   *
+   * Um pip não tem estado intermédio: `W` é `W` no instante em que se toca, e não há um "3" a
+   * caminho de "32" que se possa gravar por engano. Esperar por um `onBlur` que num selector de
+   * pips nunca chega deixaria a escolha por gravar.
+   */
+  function chooseColors(next: typeof colorStates) {
+    setColorStates(next);
+    void setEventColors(event.id, manaSelectionFrom(next));
+  }
+
+  // Não há mais `return null`: as cores registam-se sempre, e num torneio antigo são muitas vezes a
+  // única coisa que dele se sabe. Antes disto a secção inteira desaparecia num evento sem set, sem
+  // arte e a decorrer — que é exactamente a forma de um evento acabado de criar.
 
   return (
     <View style={settings.wrap}>
@@ -455,6 +495,22 @@ function EventSettings({ event }: { event: Event }) {
               <StandingFields draft={standing} onChange={setStanding} onCommit={commitStanding} />
             </View>
           )}
+
+          {/* As cores com que se jogou este torneio — ADR 0013. */}
+          <View style={settings.colors}>
+            <ManaSelector
+              label="Colors played"
+              states={colorStates}
+              onChange={chooseColors}
+            />
+            <Text style={settings.colorsNote}>
+              {hasColors(event.deckColors)
+                ? 'Recorded for this tournament — this is what the stats count.'
+                : linked
+                  ? `Following ${linked.name}. Tap to record what you actually played.`
+                  : 'Not recorded. Tap the colors you played.'}
+            </Text>
+          </View>
 
           {showSet && (
             <SetSelector
@@ -490,6 +546,13 @@ const settings = StyleSheet.create({
   },
   body: { paddingBottom: 4 },
   standing: { gap: 8, paddingBottom: 14 },
+  colors: { gap: 8, paddingBottom: 14 },
+  colorsNote: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 12,
+    color: colors.textDim,
+    textAlign: 'center',
+  },
   sectionLabel: {
     fontFamily: fonts.bodyItal,
     fontSize: 11,
@@ -813,12 +876,15 @@ export default function EventDetailScreen() {
   const deleteEvent   = useEventsStore(s => s.deleteEvent);
   const completeEvent = useEventsStore(s => s.completeEvent);
   const deleteMatch   = useEventsStore(s => s.deleteMatch);
+  const addBareMatches = useEventsStore(s => s.addBareMatches);
 
   // All useState calls must be above any early return
   const [deleteEventModal,   setDeleteEventModal]   = useState(false);
   const [completeEventModal, setCompleteEventModal] = useState(false);
   const [standing,           setStanding]           = useState<StandingDraft>({ placement: '', playersCount: '' });
   const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ round: number; opponent: string } | null>(null);
+  const [quickOpen,          setQuickOpen]          = useState(false);
+  const [quickSequence,      setQuickSequence]      = useState<MatchResult[]>([]);
 
   if (!event) {
     return (
@@ -842,6 +908,19 @@ export default function EventDetailScreen() {
   const legacySetLabel = setCode
     ? undefined
     : event.name.split('—')[1]?.trim().toLowerCase() || undefined;
+
+  /**
+   * Fecha o registo rápido gravando a sequência, e limpa-a.
+   *
+   * A sequência vive no écran e não no store porque não é um registo — é um formulário a meio. Só
+   * passa a existir em `data/` quando alguém carrega em "Add N rounds".
+   */
+  function commitQuickRecord() {
+    const sequence = quickSequence;
+    setQuickOpen(false);
+    setQuickSequence([]);
+    void addBareMatches(event!.id, sequence);
+  }
 
   function goToMatchRegistration() {
     router.push({
@@ -974,6 +1053,21 @@ export default function EventDetailScreen() {
           <AddMatchButton onPress={goToMatchRegistration} onCount={goToLifeCounter} />
         )}
 
+        {/* Registo rápido — o torneio antigo de que só se sabe o recorde. Ver ADR 0013 e
+            domain/quickRecord.ts. Fica a seguir ao Add Match de propósito: entre rondas o que se
+            quer é registar a ronda, e este caminho é para quando se está a carregar o arquivo. */}
+        {isActive(event) && (
+          <Pressable
+            style={({ pressed }) => [styles.quickBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => setQuickOpen(true)}
+          >
+            <Feather name="fast-forward" size={14} color={colors.textSec} />
+            <Text style={styles.quickBtnText}>
+              {event.matches.length === 0 ? 'Quick record' : 'Quick record more rounds'}
+            </Text>
+          </Pressable>
+        )}
+
         {/* Botão concluir torneio */}
         {isActive(event) && (
           <Pressable
@@ -1037,6 +1131,17 @@ export default function EventDetailScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Folha: registo rápido de várias rondas */}
+      <QuickRecordModal
+        visible={quickOpen}
+        eventName={event.name}
+        existingRounds={event.matches.length}
+        sequence={quickSequence}
+        onChange={setQuickSequence}
+        onConfirm={commitQuickRecord}
+        onCancel={() => setQuickOpen(false)}
+      />
 
       {/* Modal: apagar evento */}
       <ConfirmModal
@@ -1197,6 +1302,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
+  },
+  quickBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginHorizontal: 16,
+    marginTop: -12,
+    marginBottom: 20,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+  },
+  quickBtnText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textSec,
   },
   completeBtn: {
     flexDirection: 'row',

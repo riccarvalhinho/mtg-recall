@@ -89,7 +89,7 @@
       "minLength": 1
     },
     "deckColors": {
-      "description": "Cores do deck escritas à mão. Legado, como o deckName.",
+      "description": "As cores com que se jogou ESTE torneio, escritas à mão. Não é legado (já foi): é o registo das cores, e manda sobre as do deck ligado — ver docs/adr/0013-as-cores-do-evento-sao-registo-proprio.md. A decklist não sabe dizer o que foi splash e o que foi cor principal, e um torneio retroactivo não tem deck nenhum de onde derivar. Ausente quer dizer \"não registado\", e aí as cores lidas são as do deck ligado, se houver.",
       "$ref": "#/definitions/manaSelection"
     },
     "deckThumbnailCardId": {

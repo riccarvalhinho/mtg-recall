@@ -9,7 +9,7 @@ import Svg, { Rect, Line, Circle, G, Text as SvgText } from 'react-native-svg';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/typography';
-import { ManaColor, Event, Opponent, isActive } from '../../types';
+import { ManaColor, Deck, Event, Opponent, isActive } from '../../types';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { RecordBadge } from '../../components/RecordBadge';
@@ -21,6 +21,7 @@ import {
   rankOpponents,
 } from '../../domain/opponents';
 import { compareDates, monthLabel } from '../../domain/dates';
+import { eventPlaysColor } from '../../domain/eventColors';
 import {
   TIERS,
   Tier,
@@ -57,8 +58,15 @@ const OUTSIDE_STYLE = { color: '#606060', pct: 1.00 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getColorStats(events: Event[], color: ManaColor) {
-  const relevant = events.filter(e => e.deckColors?.main?.includes(color));
+/**
+ * Como corre com cada cor.
+ *
+ * Os eventos entram por `eventPlaysColor`, que sabe onde as cores de um evento vivem: as escritas à
+ * mão, e só depois as do deck ligado (ADR 0013). Antes disto lia-se `e.deckColors` directamente, um
+ * campo que nada de novo escrevia — e por isso **nenhum evento criado pela app contava aqui**.
+ */
+function getColorStats(events: Event[], decks: Deck[], color: ManaColor) {
+  const relevant = events.filter(e => eventPlaysColor(e, decks, color));
   if (!relevant.length) return null;
   const wins  = relevant.reduce((s, e) => s + e.matches.filter(m => m.result === 'W').length, 0);
   const total = relevant.reduce((s, e) => s + e.matches.length, 0);
@@ -390,8 +398,8 @@ const chart = StyleSheet.create({
 
 const PIP_SIZE = 44;
 
-function ColorSection({ events }: { events: Event[] }) {
-  const allStats = MANA_ORDER.map(c => ({ color: c, stats: getColorStats(events, c) }));
+function ColorSection({ events, decks }: { events: Event[]; decks: Deck[] }) {
+  const allStats = MANA_ORDER.map(c => ({ color: c, stats: getColorStats(events, decks, c) }));
   const withData = allStats.filter(cs => cs.stats !== null);
   const bestColor = withData.length > 0
     ? withData.reduce((best, cs) =>
@@ -851,6 +859,7 @@ const pyramid = StyleSheet.create({
 export default function StatsScreen() {
   const events = useEventsStore(s => s.events);
   const opponents = useEventsStore(s => s.opponents);
+  const decks = useEventsStore(s => s.decks);
 
   const trendEvents = events.filter(e => !isActive(e) && hasStanding(e));
   const best        = bestFinish(events);
@@ -870,7 +879,7 @@ export default function StatsScreen() {
         <TrendChart events={events} />
 
         <SectionHeader title="By Color" />
-        <ColorSection events={events} />
+        <ColorSection events={events} decks={decks} />
 
         <SectionHeader title="Opponents" />
         <OpponentsSection events={events} opponents={opponents} />
