@@ -53,6 +53,14 @@
         "splash": []
       },
       "result": "L"
+    },
+    {
+      "round": 5,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
     }
   ]
 }
