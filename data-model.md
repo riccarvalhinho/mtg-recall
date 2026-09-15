@@ -57,7 +57,7 @@ A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collec
   "date": "2026-04-12",
   "location": "Nave Espacial, Lisboa",
   "status": "completed",
-  "rank": "3rd",
+  "placement": 3,
   "playersCount": 16,
   "deckName": "Selesnya Midrange",
   "deckColors": { "main": ["G", "W"], "splash": ["U"] },
@@ -88,8 +88,9 @@ A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collec
 | `date` | sim | `AAAA-MM-DD`. Pode ser retroactiva |
 | `location` | não | |
 | `status` | sim | `active` ou `completed`. Só um evento deve estar `active` de cada vez |
-| `rank` | não | Introduzido à mão no fim (`1st`, `Top 8`, …) |
-| `playersCount` | não | |
+| `placement` | não | Posição final, 1 = primeiro lugar. Introduzida ao concluir o torneio |
+| `playersCount` | não | Quantos jogadores tinha. Nunca menor do que `placement` |
+| `rank` | não | **Legado**: o escalão escrito à mão que existia antes do `placement`. Lê-se, não se escreve — ADR 0012 |
 | `deckName`, `deckColors`, `deckThumbnailCardId` | não | O deck jogado neste evento |
 | `notes` | não | |
 | `matches` | sim | Pode ser lista vazia — um evento acabado de criar ainda não tem rondas |
@@ -108,6 +109,13 @@ Dentro do array `matches` do evento.
 | `games` | não | Registo game a game — permite saber que um 2-1 foi 2-1. Sem `D` num game |
 | `games[].life` | não | `{ "me": n, "opponent": n }` — a vida com que o game acabou. Só existe quando veio do contador |
 | `notes` | não | |
+
+**O escalão não está no ficheiro.** Um 5.º lugar entre 32 guarda-se como `placement: 5`,
+`playersCount: 32` — nunca como `"Top 8"`, que deitaria fora a única coisa que o distingue de um 8.º
+lugar. Os escalões (1st Place, Top 2, Top 4, Top 8, Top 16, Top 32) calculam-se em runtime a partir
+destes dois números, em `domain/placement.ts`, como o win rate e os pontos. **Um escalão só conta se
+o campo tiver sido maior do que ele** — um Top 8 entre 6 jogadores era o torneio todo. Todo o porquê
+está no **ADR 0012**.
 
 **Um match pode não ter adversário.** Carregar torneios antigos de memória é um caso real: sabe-se
 o resultado, não se sabe contra quem. Nesses, `opponentId` fica ausente.

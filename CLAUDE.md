@@ -84,7 +84,7 @@ conhecimento prévio de padrões ou convenções.
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
-                            lifeCounter, holdRepeat
+                            lifeCounter, holdRepeat, placement
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
                             scryfall, imagePrefetch, ocr, preferences, lifeSession
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
@@ -120,6 +120,14 @@ project-overview.md         estado actual detalhado
 ---
 
 ## Os dados
+
+**A classificação de um evento é a posição, não o escalão** (ADR 0012): o ficheiro guarda
+`placement` (1 = primeiro lugar) e `playersCount`, e os escalões — 1st Place, Top 2, Top 4, Top 8,
+Top 16, Top 32 — calculam-se a partir deles em `domain/placement.ts`, como o win rate. Registar um
+5.º entre 32 como "Top 8" deitava fora a única coisa que o distingue de um 8.º. **Um escalão só
+conta se o campo tiver sido maior do que ele** — um Top 8 entre 6 jogadores era o torneio todo —, e
+ganhar conta sempre. O campo `rank`, a string que se escrevia antes, é legado: lê-se, não se
+escreve.
 
 Um evento = um ficheiro `data/events/<AAAA-MM-DD-slug>.json`, com os matches lá dentro. Os
 adversários são referências para `data/taxonomies/opponents.json`, e **a referência é opcional**:
@@ -409,6 +417,23 @@ fechar um game guarda a vida do momento em que se fecha, não a de quando algué
 a correcção de um engano valer; e a sessão guardada tem chave da ronda, senão fechar a app a meio da
 ronda 2 trazia esses totais para dentro da ronda 3. O jogo a meio vive no AsyncStorage
 (`services/lifeSession.ts`), como as preferências e pela mesma razão.
+
+**A classificação passou a ser um número (ADR 0012).** Fechar um torneio pede dois: a posição e
+quantos jogadores eram — *Finished [5] out of [32]* —, e a folha mostra ali mesmo em que escalão
+isso cai, ou porque não cai em nenhum. `domain/placement.ts` é a lógica toda e tem testes. Três
+coisas lá dentro que não são óbvias: **um escalão só conta se o campo tiver sido maior do que ele**
+(o 5.º entre 6 é, à letra, um Top 8 — mas o escalão era o torneio todo), ganhar é a excepção e conta
+sempre, e quem fica fora de todos os escalões vai para o degrau `Outside` da pirâmide em vez de
+desaparecer, para as percentagens serem sobre os torneios todos.
+
+O **gráfico de tendência** deixou de desenhar escalões e passou a desenhar a **fracção do campo que
+ficou atrás**: um 5.º entre 32 (0.87) foi mais difícil do que um 5.º entre 8 (0.43), e a posição
+sozinha diria que são iguais. Um evento que só tem o `rank` antigo entra por estimativa, com a barra
+apagada — estimar e medir não se desenham igual.
+
+E o resultado passou a **ver-se e a poder corrigir-se**: aparece no cabeçalho do evento, e os mesmos
+dois campos estão em *Event details* para emendar um engano. Antes só se escrevia uma vez, numa
+folha que nunca mais voltava a abrir.
 
 **Pela Home, sem evento, não se grava nada.** A app é um registo de torneios; meia dúzia de jogos na
 mesa da cozinha estragariam o win rate de sempre e a lista de adversários.

@@ -9,7 +9,8 @@
  *   load()                          — lê a cópia local (chamar no arranque)
  *   createEvent(data)               — cria um evento e devolve o id
  *   addMatch(eventId, data)         — regista uma ronda
- *   completeEvent(id, rank, count)  — fecha o torneio
+ *   completeEvent(id, standing)     — fecha o torneio, com a posição final
+ *   setEventStanding(id, standing)  — corrige a posição de um torneio já fechado
  *   deleteEvent(id)                 — apaga o evento e o seu ficheiro
  *   deleteMatch(eventId, round)     — apaga uma ronda e renumera as seguintes
  *   createDeck(data)                — cria um deck e devolve o id
@@ -27,6 +28,7 @@ import { create } from 'zustand';
 import { withPrinting } from '../domain/collection';
 import { pruneOpponents } from '../domain/opponents';
 import { repoPaths } from '../domain/outbox';
+import { cleanStanding, type EventStanding } from '../domain/placement';
 import { eventId as makeEventId, slugify, uniqueId } from '../domain/slug';
 import { isLimitedFormat } from '../domain/sets';
 import { thumbnailChoices, thumbnailUrls } from '../domain/thumbnails';
@@ -116,7 +118,8 @@ interface EventsStore {
     card: CollectionCard,
     printing: { scryfallId: string; name: string; setCode?: string; collectorNumber?: string },
   ) => Promise<void>;
-  completeEvent: (eventId: string, rank?: string, playersCount?: number) => Promise<boolean>;
+  completeEvent: (eventId: string, standing?: EventStanding) => Promise<boolean>;
+  setEventStanding: (eventId: string, standing: EventStanding) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<boolean>;
   deleteMatch: (eventId: string, round: number) => Promise<boolean>;
   restoreFromGitHub: (options?: { discardPending?: boolean }) => Promise<RestoreResult>;
@@ -614,19 +617,29 @@ export const useEventsStore = create<EventsStore>((set, get) => ({
 
   // ─── completeEvent ─────────────────────────────────────────────────────────
 
-  completeEvent: async (eventId, rank, playersCount) => {
+  completeEvent: async (eventId, standing) => {
     const event = get().events.find(e => e.id === eventId);
     if (!event) return false;
 
-    const updated: Event = {
-      ...event,
-      status: 'completed',
-      rank: rank?.trim() || undefined,
-      playersCount: playersCount || undefined,
-    };
+    const updated: Event = { ...event, status: 'completed', ...cleanStanding(standing) };
 
     set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
     await persistEvent(updated, `Complete event ${event.name}`);
+    return true;
+  },
+
+  // ─── setEventStanding ──────────────────────────────────────────────────────
+
+  // Enganar-se a escrever a posição é fácil e, antes disto, não havia como a corrigir: o resultado
+  // só se escrevia na folha de concluir o torneio, que nunca mais volta a abrir.
+  setEventStanding: async (eventId, standing) => {
+    const event = get().events.find(e => e.id === eventId);
+    if (!event) return false;
+
+    const updated: Event = { ...event, ...cleanStanding(standing) };
+
+    set(state => ({ events: state.events.map(e => (e.id === eventId ? updated : e)) }));
+    await persistEvent(updated, `Update standing for ${event.name}`);
     return true;
   },
 

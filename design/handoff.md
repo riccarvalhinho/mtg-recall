@@ -604,7 +604,8 @@ export interface Event {
   deckThumbnailCardId?: string;   // Fase 3+ (Scryfall card ID)
   matches: Match[];
   // campos calculados (não guardar na DB):
-  // wins, losses, draws, winRate, points, rank
+  // wins, losses, draws, winRate, points
+  // e o escalão (Top 8, Top 16, …), deduzido de placement + playersCount — ADR 0012
 }
 ```
 
