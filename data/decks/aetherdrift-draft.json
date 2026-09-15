@@ -1,6 +1,6 @@
 {
   "id": "aetherdrift-draft",
-  "name": "Aetherdrift draft",
+  "name": "Simic midrange",
   "colors": {
     "main": [
       "U",
@@ -11,6 +11,7 @@
     ]
   },
   "format": "Draft",
+  "archetype": "Midrange",
   "thumbnailCardId": "2ef555b1-666d-4386-8983-0e88f9b6cdec",
   "cards": [
     {
