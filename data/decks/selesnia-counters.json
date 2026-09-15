@@ -18,7 +18,8 @@
     },
     {
       "name": "Banishing Light",
-      "quantity": 1
+      "quantity": 1,
+      "setCode": "eoe"
     },
     {
       "name": "Bioengineered Future",
