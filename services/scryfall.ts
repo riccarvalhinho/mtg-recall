@@ -134,7 +134,7 @@ async function scryfallFetch(url: string, what: string): Promise<unknown> {
     if (response.status === 404) return { data: [] };
 
     if (!response.ok) {
-      throw new Error(`A Scryfall respondeu ${response.status} ao pedir ${what}.`);
+      throw new Error(`Scryfall answered ${response.status} when asking for ${what}.`);
     }
 
     return response.json();
@@ -172,7 +172,7 @@ async function scryfallPost(url: string, body: unknown, what: string): Promise<u
     });
 
     if (!response.ok) {
-      throw new Error(`A Scryfall respondeu ${response.status} ao pedir ${what}.`);
+      throw new Error(`Scryfall answered ${response.status} when asking for ${what}.`);
     }
 
     return response.json();
@@ -189,7 +189,7 @@ async function scryfallPost(url: string, body: unknown, what: string): Promise<u
 async function fetchSetsFromNetwork(): Promise<MtgSet[]> {
   if (inFlight) return inFlight;
 
-  inFlight = (async () => normalizeSets(await scryfallFetch(SETS_URL, 'os sets')))();
+  inFlight = (async () => normalizeSets(await scryfallFetch(SETS_URL, 'the set list')))();
 
   try {
     return await inFlight;
@@ -223,7 +223,7 @@ export async function loadSets(options: { force?: boolean } = {}): Promise<SetsR
         sets: cache.sets,
         source: 'cache',
         fetchedAt: cache.fetchedAt,
-        error: 'A Scryfall não devolveu nenhum set utilizável.',
+        error: 'Scryfall returned no usable sets.',
       };
     }
 
@@ -303,7 +303,7 @@ export async function searchCards(query: string): Promise<CardSearchResult> {
 
   try {
     const url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(normalized)}&unique=cards`;
-    const cards = normalizeCardSearch(await scryfallFetch(url, 'a procura de cartas'));
+    const cards = normalizeCardSearch(await scryfallFetch(url, 'the card search'));
 
     await writeCardCache(rememberQuery(cache, normalized, cards));
     return { cards, source: 'network' };
@@ -375,7 +375,7 @@ export async function resolveCardPrintings(ids: string[]): Promise<Map<string, S
       const payload = (await scryfallPost(
         'https://api.scryfall.com/cards/collection',
         { identifiers: batch.map(id => ({ id })) },
-        'os dados das impressões',
+        'the printing data',
       )) as { data?: unknown[] };
 
       for (const raw of payload.data ?? []) {
@@ -404,7 +404,7 @@ export async function resolveCardNames(names: string[]): Promise<ResolveResult> 
       const payload = (await scryfallPost(
         'https://api.scryfall.com/cards/collection',
         { identifiers: batch.map(name => ({ name })) },
-        'os dados das cartas',
+        'the card data',
       )) as { data?: unknown[]; not_found?: { name?: string }[] };
 
       for (const raw of payload.data ?? []) {
@@ -521,7 +521,7 @@ export async function loadBasicLandPrintings(setCode: string): Promise<ScryfallC
     const query = encodeURIComponent(`set:${code} type:basic`);
     const payload = await scryfallFetch(
       `https://api.scryfall.com/cards/search?q=${query}&unique=prints&order=set`,
-      'os terrenos básicos da colecção',
+      'the basic lands for that set',
     );
     cards = normalizeCardSearch(payload);
   } catch {
