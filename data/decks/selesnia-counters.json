@@ -9,5 +9,126 @@
     "splash": []
   },
   "format": "Sealed",
-  "archetype": "Selesnia counters"
+  "archetype": "Selesnia counters",
+  "cards": [
+    {
+      "name": "Atmospheric Greenhouse",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Banishing Light",
+      "quantity": 1
+    },
+    {
+      "name": "Bioengineered Future",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Biosynthic Burst",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Broodguard Elite",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Diplomatic Relations",
+      "quantity": 2,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Dockworker Drone",
+      "quantity": 2,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Drix Fatemaker",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Dual-Sun Technique",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Dyadrine, Synthesis Amalgam",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Edge Rover",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Eumidian Terrabotanist",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Forest",
+      "quantity": 7,
+      "typeLine": "Basic Land — Forest"
+    },
+    {
+      "name": "Fungal Colossus",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Knight Luminary",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Lashwhip Predator",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Lumen-Class Frigate",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Plains",
+      "quantity": 9,
+      "typeLine": "Basic Land — Plains"
+    },
+    {
+      "name": "Seam Rip",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Sunstar Expansionist",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Terrasymbiosis",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Thawbringer",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Thrumming Hivepool",
+      "quantity": 1,
+      "setCode": "eoe"
+    },
+    {
+      "name": "Zero Point Ballad",
+      "quantity": 1,
+      "setCode": "eoe"
+    }
+  ]
 }
