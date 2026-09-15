@@ -112,6 +112,12 @@ Tirar o Supabase do caminho e pôr a app a escrever no repositório.
 - [x] Tab Decks, editor e écran de detalhe
 - [x] Win rate por deck — a pergunta que justificava a fase
 - [x] Deck Analyser: curva de mana, distribuição de cores, contagem por tipo
+- [x] Os decks de **Limited** numa secção própria em baixo (`isEventDeck`), para um Sealed por mês
+      não soterrar os decks que se afinam durante meses
+- [x] **Como correu o torneio de cada deck de Limited**, numa etiqueta ao lado do formato:
+      `1st Place`, `Top 8`, ou a posição nua quando escalão não houve. O win rate diz com que deck
+      se ganharam mais matches, não diz com qual se chegou mais longe — `deckStanding`, em
+      `domain/deck.ts`
 
 ## Fase 3 — Cartas e colecção ✅
 

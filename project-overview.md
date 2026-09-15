@@ -49,7 +49,10 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 
 ### Componentes
 - [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
-- [x] `TypeBadge`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`, `MatchCard`, `ConfirmModal`
+- [x] `TypeBadge`, `RecordScore`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`,
+      `MatchCard`, `ConfirmModal`. O `RecordScore` desenha o recorde com cor — vitórias a verde,
+      derrotas a vermelho, **empates em cinzento** — nas três escalas que o pediam: lista de
+      eventos e grelha de decks (20), Event Detail (30) e Deck Detail (24)
 - [x] `CardArtThumb` — recorte da arte com `expo-image` (cache em disco) e recuo para o placeholder
 - [x] `CardArtPicker` — grelha para escolher a carta que ilustra o deck ou o evento; controlada e
       sem store, para servir os dois écrans
@@ -66,7 +69,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       ronda lá dentro, seguido do StatsBlock e do histórico
 - [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
       nome do evento, local e adversário (`domain/search.ts`)
-- [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
+- [x] **Event Detail** — StatsBar (o recorde em números grandes e coloridos, que é o facto
+      principal da folha), DeckSection colapsável, lista de matches, concluir evento
       (**posição final + nº de jogadores**, um par obrigatório, com o escalão mostrado ali mesmo e o
       botão travado até os dois fazerem sentido), o resultado final no
       cabeçalho, apagar evento e apagar match com confirmação, e "Event details" para **corrigir a
@@ -75,6 +79,10 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
+- [x] **Decks** — grelha de dois com a arte a encher o quadrado, ordenada por desempenho, em duas
+      secções: os decks que se guardam e, em baixo, os de **Limited**. Nos de Limited a etiqueta ao
+      lado do formato diz **como correu o torneio deles** — `1st Place`, `Top 8`, ou a posição
+      quando escalão não houve (`deckStanding`, em `domain/deck.ts`)
 - [x] **Deck Detail** — desempenho do deck, curva de mana, cores, tipos e **subtipos** com selector
       de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta. Os
       terrenos básicos mostram a arte da colecção de onde vem a maioria das cartas do deck —

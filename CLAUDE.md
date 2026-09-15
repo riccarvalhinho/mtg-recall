@@ -78,10 +78,10 @@ conhecimento prévio de padrões ou convenções.
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
   opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
-/components                 ManaPip, ManaCost, ManaSelector, TypeBadge, RecordBadge, EventCard,
-                            MatchCard, CardThumbnailPlaceholder, CardArtThumb, CardArtPicker,
-                            SetSymbol, CardImageOverlay, ConfirmModal, SetSelector,
-                            CardSearchModal, QuickRecordModal
+/components                 ManaPip, ManaCost, ManaSelector, TypeBadge, RecordScore, RecordBadge,
+                            EventCard, MatchCard, CardThumbnailPlaceholder, CardArtThumb,
+                            CardArtPicker, SetSymbol, CardImageOverlay, ConfirmModal,
+                            SetSelector, CardSearchModal, QuickRecordModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
@@ -245,6 +245,19 @@ mal formado só daria erro **depois** do commit.
 - `costSymbols.ts` é **gerado** por `tools/fetch-mana-symbols.mts`, pelo workflow **Actualizar
   símbolos de mana**. Começa vazio; correr o workflow enche-o e commita.
 
+### RecordScore (components/RecordScore.tsx)
+- Os números de um recorde, coloridos: vitórias a verde, derrotas a vermelho, **empates em
+  cinzento** (`colors.draw`). A cor é metade da leitura — é ela que faz um 2–2 dizer "duas ganhas,
+  duas perdidas" antes de alguém ler os números.
+- `size` manda na escala e o separador sai dele (×0.7): é pontuação, não é informação. Três sítios
+  desenham isto em escalas diferentes — o `RecordBadge` a 20 (lista de eventos, grelha de decks), a
+  StatsBar do Event Detail a 30 e a do Deck Detail a 24 —, e estava copiado à letra, cinzento em
+  dois deles. **A escala sai do espaço que há**: no Event Detail o bloco é metade da barra, no Deck
+  Detail é um terço do ecrã e a 30 um recorde de dois dígitos por casa não cabia.
+- `showDraws`: `auto` só desenha o empate se houver algum (numa lista, `2 – 2 – 0` é um zero a
+  dizer que não aconteceu nada); `always` desenha-o sempre, onde a etiqueta por baixo promete três
+  números. Escrever `W – L – D` e mostrar dois era mentira.
+
 ---
 
 ## Navegação (Expo Router)
@@ -289,6 +302,18 @@ o nome, o registo e as cores por cima. Tem duas secções: os decks que se guard
 Draft existiram para um torneio só (`isEventDeck`, em `domain/deck.ts`). Continuam a valer pelo
 registo, mas um Limited por mês soterrava os decks a sério ao fim de um ano. A regra é o formato e
 mais nada: não há campo novo no ficheiro.
+
+**E cada deck de Limited diz como correu o torneio dele**, numa etiqueta ao lado do formato:
+`1st Place`, `Top 8`, ou a posição nua (`12th of 40`) quando escalão não houve. O win rate diz com
+que deck se ganharam mais matches e não diz com qual se chegou mais longe — um 4-2 que deu Top 8
+entre 32 e um 4-2 que não deu nada são o mesmo número. `deckStanding`, em `domain/deck.ts`, é a
+regra toda e tem testes. Três coisas lá dentro: **o escalão ganha à posição** ao contrário do que o
+Event Detail faz, porque aqui a pergunta é "com qual é que corri melhor" e `Top 4` compara-se de
+relance com `Top 8` enquanto `3rd of 9` e `5th of 32` obrigam a fazer a conta de cabeça (o facto
+todo está a um toque, no evento); exige **exactamente um** torneio terminado e classificado, que
+dois não cabem numa etiqueta só sem escolher um às escondidas; e **só vale nos decks de um evento
+só** — num deck que se guarda o resultado de um torneio é uma fotografia que desapareceria sozinha
+no dia em que ele jogasse o segundo.
 
 **A Home é o evento activo.** Quando há um torneio a decorrer, ele é um cartão-herói com a arte a
 encher **52% da altura do ecrã**, com o resultado em grande e o botão de registar a ronda lá dentro

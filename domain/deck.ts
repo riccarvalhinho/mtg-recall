@@ -11,6 +11,8 @@
  * Nada disto é guardado: calcula-se em runtime, como o win rate dos eventos (CLAUDE.md § Os dados).
  */
 import type { Deck, DeckBoard, DeckCard, Event, ManaColor } from '../types';
+import { isActive } from '../types';
+import { eventTier, formatPlacement, hasStanding, tierLabel, type Tier } from './placement';
 
 // ─── Desempenho ──────────────────────────────────────────────────────────────
 
@@ -353,4 +355,53 @@ export function splitByPurpose<T extends { deck: Deck }>(entries: T[]): { kept: 
     kept: entries.filter(entry => !isEventDeck(entry.deck)),
     oneOff: entries.filter(entry => isEventDeck(entry.deck)),
   };
+}
+
+// ─── O resultado de um deck de um torneio só ─────────────────────────────────
+
+export interface DeckStanding {
+  /** O evento de onde saiu — quem desenha pode querer lá ir ter. */
+  eventId: string;
+  /**
+   * Como o resultado se lê: `1st Place`, `Top 8`, ou `12th of 40` quando escalão não houve.
+   * É sempre uma linha curta, que o sítio onde isto aparece é um canto de um quadrado.
+   */
+  label: string;
+  /** O escalão, quando lhe coube um. `null` é ter ficado fora de todos. */
+  tier: Tier | null;
+}
+
+/**
+ * O resultado do único torneio de um deck de Limited, já formatado.
+ *
+ * **Só para os decks de um evento só** (`isEventDeck`). Num deck que se guarda, o resultado de um
+ * torneio é uma fotografia que desapareceria sozinha no dia em que ele jogasse o segundo — e aí o
+ * que resume o deck é o win rate, que é o que o tile já mostra. Num Sealed não: aquele torneio é a
+ * vida inteira do deck, e sem isto a lista de Limited só dizia com que decks se ganharam mais
+ * matches, nunca com quais se chegou mais longe.
+ *
+ * Exige **exactamente um** evento terminado e com classificação. Nenhum não dá etiqueta nenhuma
+ * (um Sealed de um torneio a decorrer ainda não tem resultado), e dois não dá para resumir numa
+ * etiqueta só sem escolher um deles às escondidas.
+ *
+ * **O escalão ganha à posição** na etiqueta, ao contrário do que o Event Detail faz. É de
+ * propósito: a pergunta aqui é "com qual é que corri melhor", e `Top 4` compara-se de relance com
+ * `Top 8`, enquanto `3rd of 9` e `5th of 32` obrigam a fazer a conta de cabeça. O facto todo — a
+ * posição e o campo — está a um toque de distância, no evento. Sem escalão a posição entra tal e
+ * qual, que é a única coisa que há para dizer.
+ */
+export function deckStanding(deck: Deck, events: Event[]): DeckStanding | null {
+  if (!isEventDeck(deck)) return null;
+
+  const withResult = events.filter(
+    event => event.deckId === deck.id && !isActive(event) && hasStanding(event),
+  );
+  if (withResult.length !== 1) return null;
+
+  const event = withResult[0];
+  const tier = eventTier(event);
+  const label = tier !== null ? tierLabel(tier) : formatPlacement(event);
+  if (!label) return null;
+
+  return { eventId: event.id, label, tier };
 }
