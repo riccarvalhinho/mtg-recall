@@ -2,7 +2,10 @@
   "id": "pre-release-the-hobbit-2",
   "name": "Pré-release - The Hobbit",
   "colors": {
-    "main": [],
+    "main": [
+      "B",
+      "R"
+    ],
     "splash": []
   },
   "format": "Sealed",
@@ -194,7 +197,12 @@
     {
       "name": "Mountain",
       "quantity": 8,
-      "typeLine": "Basic Land — Mountain"
+      "scryfallId": "2a844b96-6616-4c39-8f4f-5d14a3b2bd55",
+      "setCode": "trk",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Basic Land — Mountain",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/a/2a844b96-6616-4c39-8f4f-5d14a3b2bd55.jpg?1785981666"
     },
     {
       "name": "Nori, Teller of Tales",
@@ -284,7 +292,12 @@
     {
       "name": "Swamp",
       "quantity": 9,
-      "typeLine": "Basic Land — Swamp"
+      "scryfallId": "b7387103-1df1-4fd0-9e91-1544509792c7",
+      "setCode": "trk",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Basic Land — Swamp",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/7/b7387103-1df1-4fd0-9e91-1544509792c7.jpg?1785981659"
     },
     {
       "name": "The Great Goblin",
