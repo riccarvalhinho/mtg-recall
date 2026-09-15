@@ -115,16 +115,15 @@ devolveu.
 
 ## Depois: actualizações
 
-**Alterações só de JavaScript** — écrans, lógica, estilos — chegam sem APK novo:
+**Qualquer alteração exige um APK novo** — uma correcção num écran tanto como uma dependência
+nativa. Não há entrega de JavaScript pelo ar: é o que o ADR 0008 decidiu ao dispensar o EAS, e está
+explicado no passo 3.3. O caminho é sempre o mesmo do passo 3.2: **Actions → Gerar APK (Gradle) →
+Run workflow**, e depois instalar por cima a partir das Releases.
 
-```bash
-eas update --branch preview --message "o que mudou"
-```
-
-O telemóvel apanha a actualização no arranque seguinte.
-
-**APK novo só é preciso** quando muda uma dependência nativa (uma biblioteca com código Android),
-o `app.json`, ou a versão do Expo SDK.
+É suportável porque instalar por cima não perde nada — eventos, decks, colecção e token ficam todos.
+Se um dia a espera de ~15 minutos por cada correcção incomodar, os workflows do EAS continuam no
+repositório (`build-apk.yml` e `publish-update.yml`) e bastam um `EXPO_TOKEN` para voltarem a
+servir; até lá, `eas update` não faz nada neste projecto.
 
 ---
 
