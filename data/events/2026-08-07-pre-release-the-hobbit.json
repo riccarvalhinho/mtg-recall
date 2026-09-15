@@ -5,7 +5,9 @@
   "setCode": "hob",
   "date": "2026-08-07",
   "location": "Arena Porto",
-  "status": "active",
+  "status": "completed",
+  "placement": 11,
+  "playersCount": 32,
   "deckId": "pre-release-the-hobbit-2",
   "matches": [
     {
