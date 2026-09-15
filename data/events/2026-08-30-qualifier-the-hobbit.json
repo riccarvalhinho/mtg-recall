@@ -1,0 +1,134 @@
+{
+  "id": "2026-08-30-qualifier-the-hobbit",
+  "name": "Qualifier - The Hobbit",
+  "type": "Sealed",
+  "setCode": "hob",
+  "date": "2026-08-30",
+  "location": "Arena Porto",
+  "status": "completed",
+  "rank": "Top 16",
+  "playersCount": 32,
+  "deckId": "pre-release-the-hobbit",
+  "matches": [
+    {
+      "round": 1,
+      "opponentColors": {
+        "main": [
+          "B",
+          "R"
+        ],
+        "splash": []
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "opponentColors": {
+        "main": [
+          "B",
+          "G"
+        ],
+        "splash": []
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "opponentColors": {
+        "main": [
+          "B",
+          "R"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "L"
+        },
+        {
+          "number": 3,
+          "result": "W"
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "opponentColors": {
+        "main": [
+          "B",
+          "R"
+        ],
+        "splash": [
+          "G"
+        ]
+      },
+      "result": "D",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        }
+      ]
+    },
+    {
+      "round": 5,
+      "opponentId": "rui-grandao",
+      "opponentColors": {
+        "main": [
+          "B",
+          "G"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        }
+      ]
+    }
+  ]
+}
