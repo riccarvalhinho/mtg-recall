@@ -9,6 +9,7 @@ import {
   hasStanding,
   legacyTier,
   ordinal,
+  standingWritable,
   tierCounts,
   tierFor,
   tierLabel,
@@ -337,19 +338,76 @@ describe('cleanStanding', () => {
       placement: undefined,
       playersCount: undefined,
     });
-    expect(cleanStanding({ placement: 2.5 }).placement).toBeUndefined();
+    expect(cleanStanding({ placement: 2.5, playersCount: 32 }).placement).toBeUndefined();
   });
 
-  it('num campo mais pequeno do que a posição, é o campo que cai', () => {
-    // A posição é aquilo de que se tem a certeza; o número de jogadores é a estimativa.
-    expect(cleanStanding({ placement: 10, playersCount: 8 })).toEqual({
-      placement: 10,
+  it('não escreve uma posição órfã — é a Q15', () => {
+    // Uma posição sem campo não se compara com nada, e o schema recusa-a (`dependencies`).
+    expect(cleanStanding({ placement: 5 })).toEqual({
+      placement: undefined,
       playersCount: undefined,
     });
+  });
+
+  it('num campo mais pequeno do que a posição, é a posição que cai', () => {
+    // O que sobra continua a ser verdade; ficar com a posição deixaria um ficheiro inválido.
+    expect(cleanStanding({ placement: 10, playersCount: 8 })).toEqual({
+      placement: undefined,
+      playersCount: 8,
+    });
+  });
+
+  it('o número de jogadores pode ficar sozinho', () => {
+    // É um facto sobre o torneio que se sabe sem se saber em que lugar se ficou.
+    expect(cleanStanding({ playersCount: 32 })).toEqual({ placement: undefined, playersCount: 32 });
   });
 
   it('devolve sempre as duas chaves, para apagar o que lá estava', () => {
     expect(cleanStanding()).toEqual({ placement: undefined, playersCount: undefined });
     expect(Object.keys(cleanStanding()).sort()).toEqual(['placement', 'playersCount']);
+  });
+});
+
+// ─── standingWritable ────────────────────────────────────────────────────────
+
+describe('standingWritable', () => {
+  it('um par coerente grava-se', () => {
+    expect(standingWritable({ placement: 5, playersCount: 32 })).toBe(true);
+    expect(standingWritable({ placement: 32, playersCount: 32 })).toBe(true);
+  });
+
+  it('não ter resultado nenhum também se grava', () => {
+    expect(standingWritable()).toBe(true);
+    expect(standingWritable({})).toBe(true);
+    expect(standingWritable({ playersCount: 32 })).toBe(true);
+  });
+
+  it('uma posição sem campo não se grava', () => {
+    expect(standingWritable({ placement: 5 })).toBe(false);
+  });
+
+  it('uma posição maior do que o campo não se grava', () => {
+    expect(standingWritable({ placement: 10, playersCount: 8 })).toBe(false);
+  });
+
+  it('o que não é posição não passa por posição', () => {
+    expect(standingWritable({ placement: 0, playersCount: 8 })).toBe(false);
+    expect(standingWritable({ placement: 2.5, playersCount: 8 })).toBe(false);
+  });
+
+  it('concorda com o cleanStanding: o que é gravável sobrevive inteiro', () => {
+    const cases = [
+      { placement: 5, playersCount: 32 },
+      { playersCount: 32 },
+      { placement: 5 },
+      { placement: 10, playersCount: 8 },
+      {},
+    ];
+
+    for (const input of cases) {
+      const cleaned = cleanStanding(input);
+      const survived = cleaned.placement === input.placement;
+      expect(standingWritable(input)).toBe(survived);
+    }
   });
 });

@@ -109,6 +109,22 @@ describe('serializeEvent', () => {
     expect(file.playersCount).toBe(16);
   });
 
+  it('nunca escreve uma posição sem o número de jogadores', () => {
+    // O schema recusa o par incompleto (`dependencies`), e este é o último portão antes do commit.
+    const orphan: Event = { ...minimalEvent, placement: 5 };
+    const file = parsed(orphan) as Record<string, unknown>;
+    expect(file).not.toHaveProperty('placement');
+    expect(validateEvent(file)).toBe(true);
+  });
+
+  it('num campo mais pequeno do que a posição, escreve o campo e deixa cair a posição', () => {
+    const impossible: Event = { ...minimalEvent, placement: 10, playersCount: 8 };
+    const file = parsed(impossible) as Record<string, unknown>;
+    expect(file).not.toHaveProperty('placement');
+    expect(file.playersCount).toBe(8);
+    expect(validateEvent(file)).toBe(true);
+  });
+
   it('continua a escrever o rank antigo dos eventos que só têm isso', () => {
     // Nada novo escreve `rank` (ADR 0012), mas um evento antigo restaurado do repositório volta a
     // ser gravado à primeira alteração — e perder o resultado nessa gravação seria apagá-lo.

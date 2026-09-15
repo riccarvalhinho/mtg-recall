@@ -53,19 +53,37 @@ function toPosition(text: string): number | undefined {
 }
 
 /**
- * Lê o rascunho. `contradictory` é o único erro possível aqui: um campo mais pequeno do que a
- * posição. Repare-se que se detecta **antes** do `cleanStanding`, que resolve a contradição
- * deitando o campo fora — e quem escreve tem de ver o aviso, não o número a desaparecer.
+ * Lê o rascunho e diz o que está mal, se estiver.
+ *
+ * Dois erros, e são os dois que o `cleanStanding` resolve deitando a posição fora — mas quem está a
+ * escrever tem de ver o aviso, não o número a desaparecer por baixo dos dedos. Por isso detectam-se
+ * aqui, **antes** de limpar:
+ *
+ *  - `orphan` — há posição e não há campo. Uma posição sozinha não se compara com nada, e o schema
+ *    recusa-a (Q15, revisão do ADR 0012).
+ *  - `contradictory` — o campo é mais pequeno do que a posição, e os dois não podem ser verdade.
+ *
+ * `writable` é a soma: se este rascunho pode ir para o ficheiro.
  */
 function readStanding(draft: StandingDraft) {
   const placement = toPosition(draft.placement);
   const playersCount = toPosition(draft.playersCount);
 
+  // Um campo por acabar ("3" a caminho de "32") já não é nada, mas também não é ausência: quem
+  // escreveu alguma coisa ali quer aquele número, e dizer-lhe "isto está vazio" seria mentira.
+  const playersTyped = draft.playersCount.trim().length > 0;
+
+  const orphan = placement !== undefined && playersCount === undefined;
+  const contradictory =
+    placement !== undefined && playersCount !== undefined && playersCount < placement;
+
   return {
     placement,
     playersCount,
-    contradictory:
-      placement !== undefined && playersCount !== undefined && playersCount < placement,
+    playersTyped,
+    orphan,
+    contradictory,
+    writable: !orphan && !contradictory,
   };
 }
 
@@ -84,10 +102,16 @@ function draftFrom(event: Event): StandingDraft {
  * mesmo que um 5.º entre 6 não é Top 8 nenhum, em vez de o deixar descobrir nas estatísticas.
  */
 function standingPreview(reading: ReturnType<typeof readStanding>): string {
-  const { placement, playersCount, contradictory } = reading;
+  const { placement, playersCount, playersTyped, orphan, contradictory } = reading;
 
   if (contradictory) {
     return `Only ${playersCount} players — ${ordinal(placement!)} doesn't fit.`;
+  }
+
+  if (orphan) {
+    return playersTyped
+      ? 'How many players? That number needs to be at least 1.'
+      : `${ordinal(placement!)} of how many? A position on its own can't be compared.`;
   }
 
   if (placement === undefined) {
@@ -96,15 +120,12 @@ function standingPreview(reading: ReturnType<typeof readStanding>): string {
       : 'Add the finishing position to place this tournament.';
   }
 
-  const label = playersCount === undefined
-    ? ordinal(placement)
-    : `${ordinal(placement)} of ${playersCount}`;
-
+  const label = `${ordinal(placement)} of ${playersCount}`;
   const tier = tierFor(placement, playersCount);
-  if (tier !== null) return `${label} · counts as ${tierLabel(tier)}`;
-  if (playersCount === undefined) return `${label} · add the field size to confirm a bracket`;
 
-  return `${label} · outside the brackets`;
+  return tier !== null
+    ? `${label} · counts as ${tierLabel(tier)}`
+    : `${label} · outside the brackets`;
 }
 
 /** Os dois campos e a pré-visualização. Serve para fechar o torneio e para corrigir depois. */
@@ -136,7 +157,8 @@ function StandingFields({ draft, onChange, onCommit }: {
         <View style={complete.half}>
           <Text style={complete.label}>Out of</Text>
           <TextInput
-            style={[complete.input, reading.contradictory && complete.inputBad]}
+            // A posição órfã é falta deste campo, portanto é aqui que o aviso se vê.
+            style={[complete.input, (reading.contradictory || reading.orphan) && complete.inputBad]}
             value={draft.playersCount}
             onChangeText={playersCount => onChange({ ...draft, playersCount })}
             onBlur={onCommit}
@@ -148,7 +170,7 @@ function StandingFields({ draft, onChange, onCommit }: {
         </View>
       </View>
 
-      <Text style={[complete.preview, reading.contradictory && complete.previewBad]}>
+      <Text style={[complete.preview, !reading.writable && complete.previewBad]}>
         {standingPreview(reading)}
       </Text>
     </View>
@@ -401,12 +423,13 @@ function EventSettings({ event }: { event: Event }) {
 
   /**
    * Grava ao sair do campo, e não a cada tecla: a meio de escrever "32" passa-se por "3", que é uma
-   * posição válida e ficaria gravada. A contradição não se grava de todo — o aviso fica no écran
-   * até os dois números fazerem sentido.
+   * posição válida e ficaria gravada. Um par que não possa ir para o ficheiro — uma posição sem
+   * campo, ou um campo mais pequeno do que ela — não se grava de todo: o aviso fica no écran até os
+   * dois números fazerem sentido, em vez de a posição desaparecer em silêncio.
    */
   function commitStanding() {
-    const { placement, playersCount, contradictory } = readStanding(standing);
-    if (contradictory) return;
+    const { placement, playersCount, writable } = readStanding(standing);
+    if (!writable) return;
     void setEventStanding(event.id, { placement, playersCount });
   }
 
@@ -991,13 +1014,15 @@ export default function EventDetailScreen() {
                 <Text style={complete.cancelLabel}>Cancel</Text>
               </Pressable>
               <Pressable
-                // Dois números que não podem ser verdade ao mesmo tempo não se gravam: o aviso já
-                // está no écran e corrigir é mudar um algarismo.
-                disabled={reading.contradictory}
+                // A posição e o campo andam juntos (Q15): sem os dois, ou com dois que não podem
+                // ser verdade ao mesmo tempo, não se conclui. O aviso já está no écran e corrigir é
+                // escrever um número. Deixar os dois em branco continua a valer — um torneio antigo
+                // pode não ter resultado nenhum de que alguém se lembre.
+                disabled={!reading.writable}
                 style={({ pressed }) => [
                   complete.btn,
                   complete.confirmBtn,
-                  reading.contradictory && complete.btnDisabled,
+                  !reading.writable && complete.btnDisabled,
                   pressed && { opacity: 0.7 },
                 ]}
                 onPress={async () => {

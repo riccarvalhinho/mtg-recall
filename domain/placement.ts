@@ -111,18 +111,33 @@ export function eventTier(event: Event): Tier | null {
 
 // ─── Escrita ─────────────────────────────────────────────────────────────────
 
-/** O que o écran recolhe ao fechar um torneio. Ambos opcionais: um torneio antigo pode não saber. */
+/**
+ * O que o écran recolhe ao fechar um torneio.
+ *
+ * Os dois continuam opcionais — um torneio antigo carregado de memória pode não ter resultado
+ * nenhum de que alguém se lembre, como o adversário de um match. **Mas andam juntos:** havendo
+ * posição, tem de haver campo. Ver `cleanStanding` e a revisão do ADR 0012.
+ */
 export interface EventStanding {
   placement?: number;
   playersCount?: number;
 }
 
 /**
- * Limpa uma classificação antes de ir para o ficheiro: o que não for posição não se escreve.
+ * Limpa uma classificação antes de ir para o ficheiro. Duas regras, e a segunda é a da Q15.
  *
- * Um campo mais pequeno do que a posição não pode ser verdade, e nesse caso é o número de jogadores
- * que cai — a posição é aquilo de que se tem a certeza, o campo é a estimativa. O écran já não
- * deixa gravar a contradição; isto é a rede por baixo, para dados antigos ou restaurados.
+ * 1. O que não for posição — ausente, zero, decimal — não se escreve.
+ * 2. **Uma posição só se escreve acompanhada do campo**, e coerente com ele. Uma posição órfã não
+ *    se compara com nada: não dá escalão confirmado nem entra no gráfico senão por estimativa, e o
+ *    schema recusa-a (`dependencies`). Sem campo válido, ou com um campo mais pequeno do que a
+ *    posição, é a **posição** que cai — o que sobra continua a ser verdade, e o contrário deixava
+ *    um ficheiro inválido.
+ *
+ * O número de jogadores pode ficar sozinho: é um facto sobre o torneio (era grande, era pequeno)
+ * que se sabe sem se saber em que lugar se ficou.
+ *
+ * Os écrans já não deixam gravar nem a órfã nem a contradição; isto é a rede por baixo, para dados
+ * antigos ou restaurados.
  *
  * Devolve sempre as duas chaves, com `undefined` onde não há valor, para que espalhar o resultado
  * por cima de um evento **apague** o que lá estava em vez de o deixar meio corrigido.
@@ -131,14 +146,29 @@ export function cleanStanding(
   standing?: EventStanding,
 ): { placement: number | undefined; playersCount: number | undefined } {
   const raw = standing ?? {};
-  const placement = isPosition(raw.placement) ? raw.placement : undefined;
-  let playersCount = isPosition(raw.playersCount) ? raw.playersCount : undefined;
+  const playersCount = isPosition(raw.playersCount) ? raw.playersCount : undefined;
 
-  if (placement !== undefined && playersCount !== undefined && playersCount < placement) {
-    playersCount = undefined;
-  }
+  const placement =
+    isPosition(raw.placement) && playersCount !== undefined && playersCount >= raw.placement
+      ? raw.placement
+      : undefined;
 
   return { placement, playersCount };
+}
+
+/**
+ * Se um par de números está pronto para ser gravado — os dois presentes e coerentes, ou os dois
+ * ausentes. É isto que os écrans usam para travar o botão, e a mesma regra que o `cleanStanding`.
+ *
+ * Um campo sozinho conta como pronto: grava-se e não se perde nada.
+ */
+export function standingWritable(standing?: EventStanding): boolean {
+  const raw = standing ?? {};
+  if (raw.placement === undefined) return true;
+
+  return isPosition(raw.placement)
+    && isPosition(raw.playersCount)
+    && raw.playersCount >= raw.placement;
 }
 
 // ─── Leitura ─────────────────────────────────────────────────────────────────

@@ -129,6 +129,11 @@ conta se o campo tiver sido maior do que ele** — um Top 8 entre 6 jogadores er
 ganhar conta sempre. O campo `rank`, a string que se escrevia antes, é legado: lê-se, não se
 escreve.
 
+**A posição e o campo andam juntos** (Q15, revisão do ADR 0012): registam-se os dois ou nenhum. O
+schema recusa a posição órfã (`dependencies` — draft-07, não `dependentRequired`), o `cleanStanding`
+deixa-a cair e o `standingWritable` trava o botão antes disso. Fechar um torneio **sem resultado
+nenhum** continua a valer, que é o caso do torneio antigo carregado de memória.
+
 Um evento = um ficheiro `data/events/<AAAA-MM-DD-slug>.json`, com os matches lá dentro. Os
 adversários são referências para `data/taxonomies/opponents.json`, e **a referência é opcional**:
 um torneio antigo carregado de memória pode não ter adversário nenhum de que alguém se lembre.
@@ -426,10 +431,16 @@ coisas lá dentro que não são óbvias: **um escalão só conta se o campo tive
 sempre, e quem fica fora de todos os escalões vai para o degrau `Outside` da pirâmide em vez de
 desaparecer, para as percentagens serem sobre os torneios todos.
 
+**Os dois números são um par** e não dois campos independentes: sem o número de jogadores a posição
+não se grava, e o botão de concluir fica travado até os dois fazerem sentido. Deixar os dois em
+branco continua a valer. Isto foi a Q15, decidida a favor de apertar.
+
 O **gráfico de tendência** deixou de desenhar escalões e passou a desenhar a **fracção do campo que
 ficou atrás**: um 5.º entre 32 (0.87) foi mais difícil do que um 5.º entre 8 (0.43), e a posição
 sozinha diria que são iguais. Um evento que só tem o `rank` antigo entra por estimativa, com a barra
-apagada — estimar e medir não se desenham igual.
+apagada — estimar e medir não se desenham igual. Desde a Q15 a barra apagada é **só** sinal de
+legado: dados novos têm sempre os dois números, e no dia em que não houver eventos antigos ela
+desaparece sozinha.
 
 E o resultado passou a **ver-se e a poder corrigir-se**: aparece no cabeçalho do evento, e os mesmos
 dois campos estão em *Event details* para emendar um engano. Antes só se escrevia uma vez, numa

@@ -38,9 +38,11 @@ com o evento completo.
 ### Classificação por posição — escrita, por usar num torneio
 
 O `rank` (`"Top 8"`) deu lugar a `placement` + `playersCount`, e os escalões passaram a
-calcular-se — ADR 0012. Falta o mesmo que falta a tudo o resto: um torneio a sério.
+calcular-se — ADR 0012. Os dois números são um par obrigatório desde a Q15, decidida na revisão de
+2026-09-15. Falta o mesmo que falta a tudo o resto: um torneio a sério.
 
 - [ ] Fechar um torneio pelos dois campos novos e confirmar o escalão que a folha propõe
+- [ ] Confirmar que o botão de concluir trava com só um dos números preenchido
 - [ ] Confirmar que `placement` e `playersCount` aparecem no ficheiro do evento
 - [ ] Corrigir a posição em *Event details* depois do torneio fechado e ver o commit
 - [ ] Ver a pirâmide e o gráfico com mais do que um evento lá dentro
