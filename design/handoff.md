@@ -171,14 +171,31 @@ Badge de formato de torneio (Sealed / Draft).
 // Font: EB Garamond italic, 10px, lowercase, padding 1px 6px, borderRadius 4
 ```
 
-### 2.3 RecordBadge
+### 2.3 RecordScore
 
-Score W–L com win rate por baixo.
+Os números do recorde, coloridos. Não faz contas — quem chama já as tem feitas. Usam-no o
+`RecordBadge` (lista de eventos, grelha de decks) e a StatsBar do Event Detail, em escalas
+diferentes.
 
 ```tsx
-// wins: Playfair 700, 20px, cor colors.win
-// separador "—": textDim, 14px
+// wins:   Playfair 700, `size` px, colors.win
 // losses: colors.loss
+// draws:  colors.draw (#7A7060) — aconteceu, conta para o win rate, não é boa nem má notícia
+// separador " – ": EB Garamond, size × 0.7, textDim — é pontuação, não é informação
+// alinhamento pela linha de base: os números e o travessão têm alturas diferentes
+```
+
+`showDraws` decide quando o empate aparece:
+- `auto` (omisso) — só se houver algum. Numa lista, um `– 0` por linha é um zero a dizer que não
+  aconteceu nada.
+- `always` — sempre, e é o que se usa onde há uma etiqueta por baixo a prometer três números:
+  escrever `W – L – D` e mostrar dois era mentira.
+
+### 2.3b RecordBadge
+
+`RecordScore` a 20 px com o win rate por baixo.
+
+```tsx
 // WR%: EB Garamond uppercase, 10px, textSec, letterSpacing 0.08em
 ```
 
@@ -386,13 +403,17 @@ SafeAreaView (bg: #130F0A)
 ```
 Row (bgCard, border, borderRadius 12, overflow hidden, margin 12×16)
 
-Bloco Rank (flex:2 = 50% largura):
+Bloco Record (flex:2 = 50% largura):
   bg: gold gradient sutil (gold+1A → gold+06)
   borderRight: border
   Conteúdo centrado:
-    "1st Place" (Playfair 700, 18px, gold)
-    "4 – 0 – 1" (Playfair 600, 16px, textSec)
-    "W – L – D" (EB Garamond 9px uppercase, textDim)
+    "2 – 2 – 1" (RecordScore, size 30, showDraws="always")
+    "W – L – D" (EB Garamond 9px uppercase, textDim, marginTop 4)
+
+  Os números são os maiores do écran — maiores do que os Pts e o Win Rate ao lado — porque o
+  recorde é o facto principal da folha e o bloco já tem metade da barra. Estiveram a 16 px e
+  cinzentos, a desperdiçar o espaço que já tinham. **O bloco não cresce: só o que está lá dentro.**
+  A classificação saiu daqui e vive no cabeçalho do evento (ADR 0012).
 
 Bloco Pts (flex:1 = 25%):
   "13" (Playfair 700, 22px, textPrim)

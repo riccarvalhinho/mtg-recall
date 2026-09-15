@@ -78,10 +78,10 @@ conhecimento prévio de padrões ou convenções.
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
   opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
-/components                 ManaPip, ManaCost, ManaSelector, TypeBadge, RecordBadge, EventCard,
-                            MatchCard, CardThumbnailPlaceholder, CardArtThumb, CardArtPicker,
-                            SetSymbol, CardImageOverlay, ConfirmModal, SetSelector,
-                            CardSearchModal, QuickRecordModal
+/components                 ManaPip, ManaCost, ManaSelector, TypeBadge, RecordScore, RecordBadge,
+                            EventCard, MatchCard, CardThumbnailPlaceholder, CardArtThumb,
+                            CardArtPicker, SetSymbol, CardImageOverlay, ConfirmModal,
+                            SetSelector, CardSearchModal, QuickRecordModal
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
@@ -244,6 +244,17 @@ mal formado só daria erro **depois** do commit.
   workflow que descarrega os símbolos, e para o dia em que a Scryfall invente um símbolo novo.
 - `costSymbols.ts` é **gerado** por `tools/fetch-mana-symbols.mts`, pelo workflow **Actualizar
   símbolos de mana**. Começa vazio; correr o workflow enche-o e commita.
+
+### RecordScore (components/RecordScore.tsx)
+- Os números de um recorde, coloridos: vitórias a verde, derrotas a vermelho, **empates em
+  cinzento** (`colors.draw`). A cor é metade da leitura — é ela que faz um 2–2 dizer "duas ganhas,
+  duas perdidas" antes de alguém ler os números.
+- `size` manda na escala e o separador sai dele (×0.7): é pontuação, não é informação. Três sítios
+  desenham isto em escalas diferentes — o `RecordBadge` a 20 (lista de eventos, grelha de decks) e
+  a StatsBar do Event Detail a 30 —, e estava copiado à letra, cinzento em dois deles.
+- `showDraws`: `auto` só desenha o empate se houver algum (numa lista, `2 – 2 – 0` é um zero a
+  dizer que não aconteceu nada); `always` desenha-o sempre, onde a etiqueta por baixo promete três
+  números. Escrever `W – L – D` e mostrar dois era mentira.
 
 ---
 

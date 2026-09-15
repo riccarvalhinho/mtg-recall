@@ -35,6 +35,7 @@ import { CardArtThumb } from '../../components/CardArtThumb';
 import { CardArtPicker } from '../../components/CardArtPicker';
 import { SetSelector } from '../../components/SetSelector';
 import { ConfirmModal } from '../../components/ConfirmModal';
+import { RecordScore } from '../../components/RecordScore';
 
 // ─── Classificação final ──────────────────────────────────────────────────────
 
@@ -188,9 +189,11 @@ function StatsBar({ wins, losses, draws, points, winRate }: {
 }) {
   return (
     <View style={statsBar.container}>
-      {/* Record */}
+      {/* Record. É o facto principal da folha e ocupa metade da barra — por isso os números são
+          os maiores do écran e têm cor, como na lista de eventos. Neutros e a 16 px estavam a
+          desperdiçar o espaço que já tinham. O bloco não cresce: só o que está lá dentro. */}
       <View style={statsBar.recordBlock}>
-        <Text style={statsBar.record}>{wins} – {losses} – {draws}</Text>
+        <RecordScore wins={wins} losses={losses} draws={draws} showDraws="always" size={30} />
         <Text style={statsBar.recordLabel}>W – L – D</Text>
       </View>
 
@@ -233,18 +236,13 @@ const statsBar = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: colors.border,
   },
-  record: {
-    fontFamily: fonts.displaySemi,
-    fontSize: 16,
-    color: colors.textSec,
-  },
   recordLabel: {
     fontFamily: fonts.body,
     fontSize: 9,
     color: colors.textDim,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginTop: 2,
+    marginTop: 4,
   },
   vDivider: {
     width: 1,

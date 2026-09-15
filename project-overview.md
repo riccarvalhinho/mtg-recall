@@ -49,7 +49,9 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 
 ### Componentes
 - [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
-- [x] `TypeBadge`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`, `MatchCard`, `ConfirmModal`
+- [x] `TypeBadge`, `RecordScore`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`,
+      `MatchCard`, `ConfirmModal`. O `RecordScore` desenha o recorde com cor — vitórias a verde,
+      derrotas a vermelho, **empates em cinzento** — e serve as três escalas que o pediam
 - [x] `CardArtThumb` — recorte da arte com `expo-image` (cache em disco) e recuo para o placeholder
 - [x] `CardArtPicker` — grelha para escolher a carta que ilustra o deck ou o evento; controlada e
       sem store, para servir os dois écrans
@@ -66,7 +68,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       ronda lá dentro, seguido do StatsBlock e do histórico
 - [x] **Events List** — StatsStrip, secções activo/histórico, OrnamentDivider, procura local por
       nome do evento, local e adversário (`domain/search.ts`)
-- [x] **Event Detail** — StatsBar, DeckSection colapsável, lista de matches, concluir evento
+- [x] **Event Detail** — StatsBar (o recorde em números grandes e coloridos, que é o facto
+      principal da folha), DeckSection colapsável, lista de matches, concluir evento
       (**posição final + nº de jogadores**, um par obrigatório, com o escalão mostrado ali mesmo e o
       botão travado até os dois fazerem sentido), o resultado final no
       cabeçalho, apagar evento e apagar match com confirmação, e "Event details" para **corrigir a
