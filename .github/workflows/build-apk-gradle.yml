@@ -33,7 +33,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      # `packages: ''` porque o valor por omissão da acção é `tools platform-tools`, e o `tools` —
+      # o antigo Android SDK Tools — foi removido do repositório da Google. O `sdkmanager` deixou de
+      # o encontrar e a acção passou a rebentar em 22 segundos, sem chegar ao Gradle (build 12).
+      # Nenhum dos dois faz falta: o Gradle descarrega as build-tools e a platform de que precisa, e
+      # a imagem do runner já traz um SDK — é de lá que sai o apksigner do passo da assinatura.
+      #
+      # A versão é exacta e não `@v3` de propósito: era a etiqueta flutuante que deixava o build
+      # partir-se sozinho, sem ninguém ter tocado neste ficheiro. Actualizar passa a ser uma
+      # decisão. Há um v4, e a passagem fica para um commit só dela.
+      - uses: android-actions/setup-android@v3.2.2
+        with:
+          packages: ''
 
       - run: npm ci --legacy-peer-deps
 
