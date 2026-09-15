@@ -18,7 +18,7 @@ project documentation (`docs/`, ADRs) are written in Portuguese.
 **Fases 0 a 4 implementadas, e a Fase 5 com tudo feito menos a decklist por fotografia.** A app
 deixou de depender do Supabase e guarda tudo — eventos, decks, colecção — como ficheiros JSON no
 próprio repositório, escritos pela Contents API do GitHub. Utilizador único, sem contas. As decisões
-estão em `docs/adr/` (0001 a 0009).
+estão em `docs/adr/` (0001 a 0013).
 
 `npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
@@ -28,6 +28,12 @@ estão em `docs/ops/telemovel-setup.md`.
 
 **`data/events/` está vazio.** Enquanto não houver lá um torneio a sério, a cadeia telemóvel →
 commit → bundle → restauro não está provada ponta a ponta, e é a única coisa que interessa a seguir.
+
+**O arquivo antigo já cabe na app (ADR 0013).** Metade desses registos é só o torneio, as cores, o
+resultado e talvez o tema do deck — sem decklist e sem detalhe por ronda. As cores voltaram a ser um
+campo que se escreve à mão no Event Detail (não se derivam do deck: a decklist não sabe o que foi
+*splash*), e o **Quick record** transforma um "6-2" em rondas nuas de uma vez só. Nada disto precisa
+de um deck, de um adversário ou de uma lista de cartas para funcionar.
 A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.md`.
 
 ---
@@ -48,6 +54,10 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `CardArtPicker` — grelha para escolher a carta que ilustra o deck ou o evento; controlada e
       sem store, para servir os dois écrans
 - [x] `ManaCost` — o custo inteiro desenhado, com três níveis de recurso até ao texto numa bolha
+- [x] `ManaSelector` — o selector de cores de três estados, partilhado pelos três écrans que
+      escrevem cores (match, deck, evento). Estava copiado à letra nos dois primeiros
+- [x] `QuickRecordModal` — o torneio inteiro numa folha, uma ronda por toque, para os registos
+      retroactivos sem detalhe
 - [x] `SetSelector`, `CardSearchModal` — lista de sets e procura de cartas da Scryfall, com cache
 
 ### Écrans

@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
-import { Event, calcEventStats, isActive } from '../types';
+import { Event, ManaSelection, calcEventStats, isActive } from '../types';
 import { ManaPip } from './ManaPip';
 import { TypeBadge } from './TypeBadge';
 import { RecordBadge } from './RecordBadge';
@@ -25,11 +25,18 @@ interface EventCardProps {
    * à mão. Sem URL fica o placeholder, que é o que acontece num evento sem deck ligado.
    */
   artUrl?: string;
+  /**
+   * As cores a desenhar, já resolvidas por `eventColors` — as do evento, e só depois as do deck
+   * (ADR 0013). Vem de fora, como o `artUrl`, porque resolvê-las precisa da lista de decks e um
+   * cartão de lista não tem que ir buscá-la ao store uma vez por linha.
+   *
+   * Sem cores não se desenha pip nenhum: cinco pips apagados sugeririam uma escolha que ninguém fez.
+   */
+  colors?: ManaSelection;
 }
 
-export function EventCard({ event, onPress, showThumbnail = true, artUrl }: EventCardProps) {
+export function EventCard({ event, onPress, showThumbnail = true, artUrl, colors: deckColors }: EventCardProps) {
   const stats = calcEventStats(event);
-  const deckColors = event.deckColors;
 
   return (
     <Pressable

@@ -96,11 +96,15 @@ export interface Event {
   playersCount?: number;
   /** Legado: o escalão escrito à mão que existia antes do `placement`. Lê-se, não se escreve. */
   rank?: string;
-  /** Referência a `data/decks/<id>.json`. Quando existe, manda sobre deckName/deckColors. */
+  /** Referência a `data/decks/<id>.json`. Quando existe, manda sobre o deckName. */
   deckId?: string;
   /** Legado: eventos anteriores à Fase 2 só têm isto. Continuam a ler-se. */
   deckName?: string;
-  /** Legado, como o deckName. */
+  /**
+   * As cores com que se jogou este torneio, à mão — e não as do deck: a decklist não sabe o que foi
+   * splash. Manda sobre as cores do deck ligado; ausente, leem-se as dele. Ler por `eventColors`,
+   * nunca este campo directamente — ADR 0013.
+   */
   deckColors?: ManaSelection;
   /** Scryfall id da carta que ilustra o deck — Fase 3. */
   deckThumbnailCardId?: string;

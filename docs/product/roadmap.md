@@ -35,6 +35,22 @@ O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em ne
 **Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
 com o evento completo.
 
+### Registos retroactivos — escritos, por usar no arquivo a sério
+
+Feito (ADR 0013): as cores do evento escrevem-se à mão no Event Detail e mandam sobre as do deck
+ligado, e o **Quick record** transforma um "6-2" em rondas nuas numa folha só. Um torneio antigo
+passa a caber na app com o que dele existe — o nome, a data, as cores, o recorde e a posição —, sem
+decklist, sem adversários e sem detalhe por ronda.
+
+Por provar: carregar o arquivo a sério. É aí que se vê se o Quick record tem os toques certos e se
+a precedência das cores (evento → deck → nada) dá sempre a resposta esperada. Ver também a **Q16**:
+se um splash deve contar para a estatística daquela cor, decidido por omissão a favor de não.
+
+De caminho, isto corrigiu um bug que ninguém tinha visto: os três écrans que desenham cores liam
+`event.deckColors` directamente — um campo que nada de novo escrevia — e por isso a secção por cor
+das Stats estava **vazia para todos os eventos criados pela app**. Agora passam por
+`domain/eventColors.ts`.
+
 ### Classificação por posição — escrita, por usar num torneio
 
 O `rank` (`"Top 8"`) deu lugar a `placement` + `playersCount`, e os escalões passaram a

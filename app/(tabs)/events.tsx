@@ -17,6 +17,7 @@ import { fonts } from '../../theme/typography';
 import { Event, isActive } from '../../types';
 import { searchEvents } from '../../domain/search';
 import { eventThumbnailUrl } from '../../domain/thumbnails';
+import { eventColors } from '../../domain/eventColors';
 import { useEventsStore } from '../../store/useEventsStore';
 import { EventCard } from '../../components/EventCard';
 
@@ -325,6 +326,7 @@ export default function EventsScreen() {
                 <EventCard
                   event={item.event}
                   artUrl={eventThumbnailUrl(item.event, decks)}
+                  colors={eventColors(item.event, decks)}
                   onPress={() => router.push(`/event/${item.event.id}`)}
                 />
               );

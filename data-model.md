@@ -91,7 +91,10 @@ A partir da Fase 2 juntam-se `data/decks/<slug>.json` e, na Fase 3, `data/collec
 | `placement` | não | Posição final, 1 = primeiro lugar. Introduzida ao concluir o torneio. **Exige `playersCount`** |
 | `playersCount` | não | Quantos jogadores tinha. Nunca menor do que `placement`. Pode existir sozinho |
 | `rank` | não | **Legado**: o escalão escrito à mão que existia antes do `placement`. Lê-se, não se escreve — ADR 0012 |
-| `deckName`, `deckColors`, `deckThumbnailCardId` | não | O deck jogado neste evento |
+| `deckId` | não | Referência a `data/decks/<id>.json`. O deck jogado neste evento |
+| `deckName` | não | **Legado**: eventos anteriores à Fase 2 só têm o nome do deck escrito à mão |
+| `deckColors` | não | As cores com que se jogou **este torneio**, à mão. Manda sobre as do deck ligado — ADR 0013 |
+| `deckThumbnailCardId` | não | Scryfall id da carta que ilustra o evento |
 | `notes` | não | |
 | `matches` | sim | Pode ser lista vazia — um evento acabado de criar ainda não tem rondas |
 
@@ -132,6 +135,24 @@ na taxonomia entraria nas estatísticas por adversário e, ao fim de meia dúzia
 seria o mais enfrentado de todos e provavelmente a nemesis — uma conclusão inventada a partir de um
 campo vazio. Sem id, o match conta na mesma para o registo do evento, para o win rate e para o
 desempenho do deck; só não conta para as contas sobre pessoas.
+
+**As cores são do torneio, não do deck.** `deckColors` esteve marcado como legado e foi
+ressuscitado no **ADR 0013**, por duas razões. A primeira é que **a decklist não sabe o que foi
+splash**: uma carta vermelha no meio de quarenta azuis e brancas tanto pode ter sido um splash como
+um Jeskai a sério, e isso é uma leitura de quem jogou. A segunda é que um torneio retroactivo não
+tem deck nenhum de onde derivar cor alguma, e as cores são muitas vezes a única coisa que dele se
+sabe.
+
+Onde as cores se leem, leem-se por `domain/eventColors.ts`, nunca do campo directamente: as
+escritas à mão primeiro, as do deck ligado a seguir, e nada em último. Uma selecção vazia grava-se
+como ausência — limpar os pips devolve a resposta ao deck em vez de apagar as cores dele.
+
+**Um evento pode ser só o recorde.** Uma parte do arquivo antigo sabe que acabou 6-2 e mais nada:
+sem decklist, sem adversários, sem games. Esses registam-se como rondas nuas — `round`,
+`opponentColors` vazias e `result`, e nada mais —, que é o que o *Quick record* do Event Detail
+escreve (`domain/quickRecord.ts`). **O recorde não se guarda como dois números:** ele sai sempre de
+`matches`, como em qualquer outro evento, e por isso o 6-2 aparece no cartão, na Home e no
+desempenho do deck sem que nada na app precise de saber que aquele torneio foi carregado de memória.
 
 Quando há `games`, o `result` do match tem de ser coerente com eles: dois `W` dão `W`, dois `L` dão
 `L`, um a um com um game não jogado dá `D`. A validação verifica isso — um match a dizer `W` com dois
