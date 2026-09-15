@@ -401,6 +401,13 @@ trinta colecções não passa nenhuma, que é o que se quer. A arte é emprestad
 campo calculado e um deck que troca de cartas trocaria de colecção. Um básico com impressão
 escolhida à mão fica sempre como está.
 
+**E por isso o *Get card data* não toca nos básicos** (Q18). O `namesToResolve` deixa-os de fora de
+propósito: eles já trazem a `typeLine`, que é o único campo de que a análise precisa deles, e o que
+voltasse da Scryfall era um `scryfallId` de uma colecção à sorte. O mal não seria o campo a mais —
+seria o que ele desliga, porque o `basicLandsToIllustrate` ignora qualquer básico que já tenha
+impressão, por respeito a uma escolha que ali ninguém fez. Carimbá-los fazia a arte emprestada
+deixar de se aplicar exactamente aos decks para que foi feita.
+
 **Para os decks que não dizem de onde são** há a preferência em *Settings → Basic lands*
 (`app/basic-lands.tsx`): escolhe-se a colecção e, dentro dela, a arte de cada básico — muitas
 colecções trazem a normal e a *full art*, e escolher só a colecção não dizia qual. Escolhe-se uma
@@ -443,6 +450,12 @@ nome tem, como um pedaço de custo de mana.
 `cmc` e `artCropUrl` o Deck Detail não tem o que analisar. Sem rede as cartas entram só com o nome
 e completam-se depois pelo botão *Get card data* do editor, que só aparece quando há o que
 completar.
+
+**A pergunta leva a colecção quando ela é conhecida** (Q18): `{ name, set }` e não só `{ name }`,
+senão vem a impressão que a Scryfall escolher — e num deck de Limited, onde as cartas são todas da
+mesma caixa, isso punha o símbolo de outra colecção ao lado do nome. Um `setCode` que não bata
+certo não deixa a carta por completar: o que falhar com colecção volta a perguntar-se só pelo nome,
+porque completar com a impressão errada é melhor do que não completar (regra 3).
 
 **O contador de vida (ADR 0011).** Com dois jogadores o telemóvel fica entre os dois e o ecrã
 parte-se ao meio, a metade do adversário virada para ele — e isso **é** a disposição, não uma de
