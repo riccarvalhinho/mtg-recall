@@ -5,7 +5,9 @@
   "setCode": "eoe",
   "date": "2025-07-27",
   "location": "Dubai",
-  "status": "active",
+  "status": "completed",
+  "placement": 2,
+  "playersCount": 9,
   "deckId": "selesnia-counters",
   "matches": [
     {
