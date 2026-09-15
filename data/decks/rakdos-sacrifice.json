@@ -180,12 +180,7 @@
     {
       "name": "Mountain",
       "quantity": 8,
-      "scryfallId": "2a844b96-6616-4c39-8f4f-5d14a3b2bd55",
-      "setCode": "trk",
-      "rarity": "common",
-      "cmc": 0,
-      "typeLine": "Basic Land — Mountain",
-      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/a/2a844b96-6616-4c39-8f4f-5d14a3b2bd55.jpg?1785981666"
+      "typeLine": "Basic Land — Mountain"
     },
     {
       "name": "Nutrient Block",
@@ -243,12 +238,7 @@
     {
       "name": "Swamp",
       "quantity": 9,
-      "scryfallId": "b7387103-1df1-4fd0-9e91-1544509792c7",
-      "setCode": "trk",
-      "rarity": "common",
-      "cmc": 0,
-      "typeLine": "Basic Land — Swamp",
-      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/7/b7387103-1df1-4fd0-9e91-1544509792c7.jpg?1785981659"
+      "typeLine": "Basic Land — Swamp"
     },
     {
       "name": "Swarm Culler",
@@ -295,16 +285,7 @@
     {
       "name": "Umbral Collar Zealot",
       "quantity": 1,
-      "scryfallId": "98648b8a-2cf0-4c10-ab13-c88b2e03fc15",
-      "setCode": "soc",
-      "rarity": "uncommon",
-      "manaCost": "{1}{B}",
-      "cmc": 2,
-      "typeLine": "Creature — Human Cleric",
-      "colors": [
-        "B"
-      ],
-      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/8/98648b8a-2cf0-4c10-ab13-c88b2e03fc15.jpg?1783903781"
+      "setCode": "eoe"
     },
     {
       "name": "Virus Beetle",
