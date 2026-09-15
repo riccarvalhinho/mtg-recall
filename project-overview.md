@@ -51,7 +51,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `ManaPip` — símbolos oficiais MTG em SVG **local** (`assets/mana/symbols.ts`), funciona offline
 - [x] `TypeBadge`, `RecordScore`, `RecordBadge`, `CardThumbnailPlaceholder`, `EventCard`,
       `MatchCard`, `ConfirmModal`. O `RecordScore` desenha o recorde com cor — vitórias a verde,
-      derrotas a vermelho, **empates em cinzento** — e serve as três escalas que o pediam
+      derrotas a vermelho, **empates em cinzento** — nas três escalas que o pediam: lista de
+      eventos e grelha de decks (20), Event Detail (30) e Deck Detail (24)
 - [x] `CardArtThumb` — recorte da arte com `expo-image` (cache em disco) e recuo para o placeholder
 - [x] `CardArtPicker` — grelha para escolher a carta que ilustra o deck ou o evento; controlada e
       sem store, para servir os dois écrans

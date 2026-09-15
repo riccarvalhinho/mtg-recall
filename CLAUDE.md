@@ -250,8 +250,10 @@ mal formado só daria erro **depois** do commit.
   cinzento** (`colors.draw`). A cor é metade da leitura — é ela que faz um 2–2 dizer "duas ganhas,
   duas perdidas" antes de alguém ler os números.
 - `size` manda na escala e o separador sai dele (×0.7): é pontuação, não é informação. Três sítios
-  desenham isto em escalas diferentes — o `RecordBadge` a 20 (lista de eventos, grelha de decks) e
-  a StatsBar do Event Detail a 30 —, e estava copiado à letra, cinzento em dois deles.
+  desenham isto em escalas diferentes — o `RecordBadge` a 20 (lista de eventos, grelha de decks), a
+  StatsBar do Event Detail a 30 e a do Deck Detail a 24 —, e estava copiado à letra, cinzento em
+  dois deles. **A escala sai do espaço que há**: no Event Detail o bloco é metade da barra, no Deck
+  Detail é um terço do ecrã e a 30 um recorde de dois dígitos por casa não cabia.
 - `showDraws`: `auto` só desenha o empate se houver algum (numa lista, `2 – 2 – 0` é um zero a
   dizer que não aconteceu nada); `always` desenha-o sempre, onde a etiqueta por baixo promete três
   números. Escrever `W – L – D` e mostrar dois era mentira.

@@ -40,6 +40,7 @@ import {
 } from '../../domain/basicLands';
 import { formatDate } from '../../domain/dates';
 import { formatPlacement } from '../../domain/placement';
+import { RecordScore } from '../../components/RecordScore';
 import { resolveBasicLands } from '../../services/scryfall';
 import { readBasicLandPreference } from '../../services/preferences';
 import { manaColors } from '../../theme/mana';
@@ -612,9 +613,16 @@ export default function DeckDetailScreen() {
         {/* Desempenho */}
         <View style={stats.bar}>
           <View style={stats.cell}>
-            <Text style={stats.record}>
-              {performance.wins} – {performance.losses} – {performance.draws}
-            </Text>
+            {/* Coloridos, como na lista de eventos e na StatsBar do evento. Aqui a célula é um
+                terço do ecrã e não metade, por isso os números são 24 e não 30 — um recorde de
+                dois dígitos por casa ainda tem de caber. */}
+            <RecordScore
+              wins={performance.wins}
+              losses={performance.losses}
+              draws={performance.draws}
+              showDraws="always"
+              size={24}
+            />
             <Text style={stats.label}>W – L – D</Text>
           </View>
           <View style={stats.divider} />
@@ -745,7 +753,6 @@ const stats = StyleSheet.create({
   },
   cell: { flex: 1, alignItems: 'center', gap: 3 },
   divider: { width: 1, height: 32, backgroundColor: colors.border },
-  record: { fontFamily: fonts.displaySemi, fontSize: 19, color: colors.textPrim },
   big: { fontFamily: fonts.display, fontSize: 22, color: colors.gold },
   label: {
     fontFamily: fonts.body,

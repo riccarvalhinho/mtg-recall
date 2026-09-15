@@ -174,8 +174,9 @@ Badge de formato de torneio (Sealed / Draft).
 ### 2.3 RecordScore
 
 Os números do recorde, coloridos. Não faz contas — quem chama já as tem feitas. Usam-no o
-`RecordBadge` (lista de eventos, grelha de decks) e a StatsBar do Event Detail, em escalas
-diferentes.
+`RecordBadge` a 20 (lista de eventos, grelha de decks), a StatsBar do Event Detail a 30 e a barra
+de desempenho do Deck Detail a 24. **A escala sai do espaço que há**: metade da barra no Event
+Detail, um terço do ecrã no Deck Detail — e aí a 30 um `10 – 12 – 3` não cabia.
 
 ```tsx
 // wins:   Playfair 700, `size` px, colors.win
