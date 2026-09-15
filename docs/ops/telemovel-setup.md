@@ -27,9 +27,17 @@ O token é o que deixa a app escrever no repositório. É pessoal, dá para escr
 2. **Repository access:** _Only select repositories_ → `riccarvalhinho/mtg-recall`
 3. **Permissions → Repository permissions → Contents: Read and write**
    (só esta; nenhuma outra é precisa)
-4. **Expiration:** 90 dias é um bom compromisso. Quando expirar, a app diz "O token não é válido ou
-   expirou" no écran de Settings e basta gerar outro.
+4. **Expiration:** **No expiration.** O GitHub desaconselha, e com razão no caso geral — mas aqui o
+   que o token dá é escrita num repositório que já é público (ADR 0005), e mais nada: não lê nada
+   privado, não apaga o repositório, não toca na conta. Contra isso, uma validade curta traz uma
+   tarefa de manutenção a cada 90 dias para uma app de uso pessoal que é suposto estar só a
+   funcionar. **A defesa é a revogação, não o calendário:** se o telemóvel se perder, revoga-se o
+   token aqui e fica feito. Quem preferir um meio-termo, um ano é uma escolha defensável.
 5. Copiar o token. **Só aparece uma vez.**
+
+> **Expirar não perde dados.** Quando um token expira, a outbox não se esvazia — fica à espera. O
+> écran de Settings mostra quantos ficheiros estão em fila e porquê, cola-se um token novo e a fila
+> vai sozinha. É por isso que a validade é uma questão de conveniência e não de segurança dos dados.
 
 Não commitar o token em lado nenhum — o repositório é público (ADR 0005). Se acontecer por engano,
 revogar (não basta apagar o ficheiro: fica no histórico).
@@ -124,8 +132,8 @@ o `app.json`, ou a versão do Expo SDK.
 
 | Sintoma | O que é | O que fazer |
 |---|---|---|
-| "O token não é válido ou expirou" | O token chegou ao fim da validade | Gerar outro (passo 2) e colar de novo |
-| "O token não tem permissão de escrita" | Faltou o `Contents: read and write`, ou o repositório não está seleccionado | Rever as permissões do token |
+| _"The token is not valid, or it has expired."_ | O token foi revogado ou chegou ao fim da validade | Gerar outro (passo 2) e colar de novo |
+| _"The token cannot write to this repository."_ | Faltou o `Contents: read and write`, ou o repositório não está seleccionado | Rever as permissões do token |
 | Fica sempre em "waiting" com rede | O ficheiro pode estar a ser recusado pelo GitHub | Ver a mensagem no écran de Settings; o erro vem de lá |
 | Telemóvel novo, app vazia | Falta trazer os dados | **Settings → Restore from GitHub** |
 | O CI falhou depois de um commit da app | Um ficheiro escrito pela app não passou no `npm run validate` | Ver o erro na Action; é um bug do serializador, não dos dados |

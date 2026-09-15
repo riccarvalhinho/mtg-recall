@@ -32,8 +32,8 @@ export async function fetchBundle(): Promise<RemoteData> {
   if (!response.ok) {
     throw new Error(
       response.status === 404
-        ? 'Ainda não há nada publicado. O bundle aparece depois do primeiro push para main.'
-        : `O servidor respondeu ${response.status} ao pedir os dados.`,
+        ? 'Nothing has been published yet. The bundle shows up after the first push to main.'
+        : `The server answered ${response.status} when asking for the data.`,
     );
   }
 
@@ -43,7 +43,7 @@ export async function fetchBundle(): Promise<RemoteData> {
   // por cima dos bons.
   if (bundle.formatVersion !== SUPPORTED_FORMAT) {
     throw new Error(
-      `O bundle está no formato ${bundle.formatVersion} e esta versão da app lê o formato ${SUPPORTED_FORMAT}.`,
+      `The bundle is in format ${bundle.formatVersion} and this version of the app reads format ${SUPPORTED_FORMAT}.`,
     );
   }
 
