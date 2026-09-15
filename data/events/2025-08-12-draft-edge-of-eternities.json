@@ -6,5 +6,31 @@
   "date": "2025-08-12",
   "location": "Arena Porto",
   "status": "active",
-  "matches": []
+  "deckId": "rakdos-sacrifice",
+  "matches": [
+    {
+      "round": 1,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 2,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 3,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    }
+  ]
 }
