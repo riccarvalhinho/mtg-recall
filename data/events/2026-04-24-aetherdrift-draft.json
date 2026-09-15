@@ -6,5 +6,31 @@
   "date": "2026-04-24",
   "location": "Dubai",
   "status": "active",
-  "matches": []
+  "deckId": "aetherdrift-draft",
+  "matches": [
+    {
+      "round": 1,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 2,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 3,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    }
+  ]
 }
