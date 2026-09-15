@@ -5,7 +5,9 @@
   "setCode": "dft",
   "date": "2026-04-24",
   "location": "Dubai",
-  "status": "active",
+  "status": "completed",
+  "placement": 1,
+  "playersCount": 9,
   "deckId": "aetherdrift-draft",
   "matches": [
     {
