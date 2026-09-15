@@ -5,7 +5,9 @@
   "setCode": "eoe",
   "date": "2025-08-12",
   "location": "Arena Porto",
-  "status": "active",
+  "status": "completed",
+  "placement": 1,
+  "playersCount": 9,
   "deckId": "rakdos-sacrifice",
   "matches": [
     {
