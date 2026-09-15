@@ -11,8 +11,9 @@
  * nunca sai daqui para lado nenhum além de api.github.com.**
  *
  * Quem tiver o telemóvel desbloqueado na mão consegue, com esforço, extraí-lo. É o risco assumido na
- * ADR: telemóvel pessoal, repositório pessoal, token limitado a um repositório e a uma permissão.
- * Mitiga-se com validade curta e revogação.
+ * ADR: telemóvel pessoal, repositório pessoal, token limitado a um repositório e a uma permissão —
+ * escrever num repositório que já é público. **A mitigação é a revogação, que é imediata**, e não a
+ * validade curta: ver a discussão em `docs/ops/telemovel-setup.md` §2.
  */
 import * as SecureStore from 'expo-secure-store';
 import { toBase64 } from '../domain/base64';
@@ -62,13 +63,13 @@ function headers(token: string): Record<string, string> {
   };
 }
 
-/** Mensagens em português para os erros que se podem mesmo resolver. */
+/** Mensagens para os erros que se podem mesmo resolver. Em inglês, como toda a app. */
 function describe(status: number, fallback: string): string {
-  if (status === 401) return 'O token não é válido ou expirou.';
-  if (status === 403) return 'O token não tem permissão de escrita neste repositório.';
-  if (status === 404) return 'Repositório ou ramo não encontrado. Confirma o token e o repositório.';
-  if (status === 409 || status === 422) return 'O ficheiro mudou no GitHub entretanto.';
-  if (status >= 500) return 'O GitHub está com problemas. Tenta mais tarde.';
+  if (status === 401) return 'The token is not valid, or it has expired.';
+  if (status === 403) return 'The token cannot write to this repository.';
+  if (status === 404) return 'Repository or branch not found. Check the token and the repository.';
+  if (status === 409 || status === 422) return 'The file changed on GitHub in the meantime.';
+  if (status >= 500) return 'GitHub is having trouble. Try again later.';
   return fallback;
 }
 
@@ -82,7 +83,7 @@ async function currentSha(path: string, token: string): Promise<string | undefin
   // Um ficheiro que ainda não existe não é erro: é o primeiro torneio a ser registado.
   if (response.status === 404) return undefined;
   if (!response.ok) {
-    throw new GitHubError(describe(response.status, 'Não foi possível ler o ficheiro.'), response.status);
+    throw new GitHubError(describe(response.status, 'Could not read the file.'), response.status);
   }
 
   const body = (await response.json()) as { sha?: string };
@@ -106,7 +107,7 @@ async function put(
   });
 
   if (!response.ok) {
-    throw new GitHubError(describe(response.status, `O GitHub respondeu ${response.status}.`), response.status);
+    throw new GitHubError(describe(response.status, `GitHub answered ${response.status}.`), response.status);
   }
 }
 
@@ -122,7 +123,7 @@ async function remove(
   });
 
   if (!response.ok) {
-    throw new GitHubError(describe(response.status, `O GitHub respondeu ${response.status}.`), response.status);
+    throw new GitHubError(describe(response.status, `GitHub answered ${response.status}.`), response.status);
   }
 }
 
@@ -175,8 +176,8 @@ export async function checkToken(token: string): Promise<{ ok: true } | { ok: fa
     const body = (await response.json()) as { permissions?: { push?: boolean } };
     return body.permissions?.push
       ? { ok: true }
-      : { ok: false, reason: 'O token lê o repositório mas não tem permissão de escrita.' };
+      : { ok: false, reason: 'The token can read the repository but cannot write to it.' };
   } catch {
-    return { ok: false, reason: 'Não foi possível falar com o GitHub. Há rede?' };
+    return { ok: false, reason: 'Could not reach GitHub. Is there a connection?' };
   }
 }
