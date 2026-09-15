@@ -99,7 +99,8 @@ export default function DeckScanScreen() {
     }));
 
     setMatching(true);
-    const { found, message } = await resolveCardNames(read.map(card => card.name));
+    // Uma carta lida de uma fotografia não traz colecção nenhuma: só há o nome para perguntar.
+    const { found, message } = await resolveCardNames(read.map(card => ({ name: card.name })));
     setMatching(false);
 
     if (message) setNotice(message);

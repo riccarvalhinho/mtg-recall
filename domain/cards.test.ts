@@ -269,11 +269,40 @@ describe('completar cartas que só têm nome', () => {
 
   it('namesToResolve traz só as que ainda não têm impressão, sem repetir', () => {
     const lista: DeckCard[] = [
-      { name: 'Mountain', quantity: 8 },
-      { name: 'Mountain', quantity: 2, board: 'side' },
+      { name: 'Virus Beetle', quantity: 8 },
+      { name: 'Virus Beetle', quantity: 2, board: 'side' },
       { name: 'The Black Arrow', quantity: 1, scryfallId: 'ja-tem' },
     ];
-    expect(namesToResolve(lista)).toEqual(['Mountain']);
+    expect(namesToResolve(lista)).toEqual([{ name: 'Virus Beetle', setCode: undefined }]);
+  });
+
+  it('namesToResolve deixa os terrenos básicos de fora', () => {
+    // Um básico que voltasse da Scryfall trazia um `scryfallId` de uma colecção à sorte, e era
+    // isso que desligava a arte emprestada pela colecção do deck — ver `basicLandsToIllustrate`.
+    const lista: DeckCard[] = [
+      { name: 'Mountain', quantity: 8 },
+      { name: 'Swamp', quantity: 9 },
+      { name: 'Wastes', quantity: 1 },
+      { name: 'Virus Beetle', quantity: 1 },
+    ];
+    expect(namesToResolve(lista)).toEqual([{ name: 'Virus Beetle', setCode: undefined }]);
+  });
+
+  it('namesToResolve leva o setCode já escrito, para vir a impressão que se jogou', () => {
+    const lista: DeckCard[] = [{ name: 'Umbral Collar Zealot', quantity: 1, setCode: 'EOE' }];
+    expect(namesToResolve(lista)).toEqual([{ name: 'Umbral Collar Zealot', setCode: 'eoe' }]);
+  });
+
+  it('namesToResolve trata a mesma carta em duas colecções como duas perguntas', () => {
+    // Juntá-las numa só fazia uma das duas ficar com a impressão da outra.
+    const lista: DeckCard[] = [
+      { name: 'Bombard', quantity: 1, setCode: 'eoe' },
+      { name: 'Bombard', quantity: 1, setCode: 'rix' },
+    ];
+    expect(namesToResolve(lista)).toEqual([
+      { name: 'Bombard', setCode: 'eoe' },
+      { name: 'Bombard', setCode: 'rix' },
+    ]);
   });
 });
 
