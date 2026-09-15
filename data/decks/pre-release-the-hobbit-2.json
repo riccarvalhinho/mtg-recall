@@ -1,0 +1,347 @@
+{
+  "id": "pre-release-the-hobbit-2",
+  "name": "Pré-release - The Hobbit",
+  "colors": {
+    "main": [],
+    "splash": []
+  },
+  "format": "Sealed",
+  "archetype": "Rakdos Aggro",
+  "thumbnailCardId": "3d5f35ff-4146-4844-9da5-031461cc8c05",
+  "cards": [
+    {
+      "name": "Bifur, Melodic Rider",
+      "quantity": 1,
+      "scryfallId": "ee88cc80-8fbf-451c-b2b8-09158426c26a",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{4}{R/W}{R/W}",
+      "cmc": 6,
+      "typeLine": "Legendary Creature — Dwarf Bard",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/e/ee88cc80-8fbf-451c-b2b8-09158426c26a.jpg?1784377019"
+    },
+    {
+      "name": "Bilbo's Deadly Slice",
+      "quantity": 1,
+      "scryfallId": "17892c93-b9b2-4720-933b-998ed0200492",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/7/17892c93-b9b2-4720-933b-998ed0200492.jpg?1785497075"
+    },
+    {
+      "name": "Bolg of the North",
+      "quantity": 1,
+      "scryfallId": "7b2d2a7f-88e0-45a9-8579-a6736bcd66eb",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{3}{B}{R}",
+      "cmc": 5,
+      "typeLine": "Legendary Creature — Goblin Soldier",
+      "colors": [
+        "B",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/b/7b2d2a7f-88e0-45a9-8579-a6736bcd66eb.jpg?1784377021"
+    },
+    {
+      "name": "Bombur, Gentle Dreamer",
+      "quantity": 1,
+      "scryfallId": "63c317e7-432c-4817-8db4-3670a1d84be3",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{2}{R}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Dwarf Bard",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/3/63c317e7-432c-4817-8db4-3670a1d84be3.jpg?1785496185"
+    },
+    {
+      "name": "Crude Bent Blade",
+      "quantity": 1,
+      "scryfallId": "fa8fd3c4-bd00-485d-80b1-2b67f5786fce",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Artifact — Equipment",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/a/fa8fd3c4-bd00-485d-80b1-2b67f5786fce.jpg?1785496297"
+    },
+    {
+      "name": "Dori, Bearer of Friends",
+      "quantity": 1,
+      "scryfallId": "d2f60ad0-c887-4585-85f8-afcf72fb80d0",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{R}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Dwarf Warrior",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/d/2/d2f60ad0-c887-4585-85f8-afcf72fb80d0.jpg?1785323237"
+    },
+    {
+      "name": "Front Porch Sentries",
+      "quantity": 1,
+      "scryfallId": "07bfc803-e11b-47ab-9f25-0ace7e174200",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/7/07bfc803-e11b-47ab-9f25-0ace7e174200.jpg?1785496282"
+    },
+    {
+      "name": "Goblin Plate Mail",
+      "quantity": 1,
+      "scryfallId": "cb982607-da37-4894-91a5-cf6307d4d703",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B/R}",
+      "cmc": 2,
+      "typeLine": "Artifact — Equipment",
+      "colors": [
+        "B",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/c/b/cb982607-da37-4894-91a5-cf6307d4d703.jpg?1785323293"
+    },
+    {
+      "name": "Goblin-town Flunkies",
+      "quantity": 1,
+      "scryfallId": "ccff7382-8609-494c-aeee-cd1436456dd0",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/c/c/ccff7382-8609-494c-aeee-cd1436456dd0.jpg?1785497117"
+    },
+    {
+      "name": "Gollum the Abandoned",
+      "quantity": 1,
+      "scryfallId": "50d91ef3-6f5d-4255-8d47-be731b5dad30",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Halfling Horror",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/5/0/50d91ef3-6f5d-4255-8d47-be731b5dad30.jpg?1784733916"
+    },
+    {
+      "name": "Hobbit Hole",
+      "quantity": 1,
+      "scryfallId": "0365c439-30bf-4d32-a791-166751bdb996",
+      "setCode": "hob",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/3/0365c439-30bf-4d32-a791-166751bdb996.jpg?1785323332"
+    },
+    {
+      "name": "Large Bear",
+      "quantity": 1,
+      "scryfallId": "50202288-f433-4b56-8f60-349bda7b4f6b",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{3}{B/G}{B/G}",
+      "cmc": 5,
+      "typeLine": "Creature — Bear",
+      "colors": [
+        "B",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/5/0/50202288-f433-4b56-8f60-349bda7b4f6b.jpg?1785323294"
+    },
+    {
+      "name": "Misty Mountains Raider",
+      "quantity": 1,
+      "scryfallId": "6dff14cd-b60b-48f4-9d9f-c9019b55df4c",
+      "setCode": "hob",
+      "rarity": "uncommon",
+      "manaCost": "{4}{R}",
+      "cmc": 5,
+      "typeLine": "Creature — Goblin Soldier",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/d/6dff14cd-b60b-48f4-9d9f-c9019b55df4c.jpg?1785152178"
+    },
+    {
+      "name": "Mountain",
+      "quantity": 8,
+      "typeLine": "Basic Land — Mountain"
+    },
+    {
+      "name": "Nori, Teller of Tales",
+      "quantity": 1,
+      "scryfallId": "b05adb48-980c-49a0-9ce6-7c7f3f20715d",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R/W}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Dwarf Bard",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/0/b05adb48-980c-49a0-9ce6-7c7f3f20715d.jpg?1785323303"
+    },
+    {
+      "name": "Pinecone Strike",
+      "quantity": 1,
+      "scryfallId": "ea174cea-40e5-424e-9734-e39aae6c6b17",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/a/ea174cea-40e5-424e-9734-e39aae6c6b17.jpg?1785496194"
+    },
+    {
+      "name": "Ravening Warg",
+      "quantity": 1,
+      "scryfallId": "ea7b5052-b343-466d-879e-2a211657ef0a",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Creature — Wolf",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/a/ea7b5052-b343-466d-879e-2a211657ef0a.jpg?1785497096"
+    },
+    {
+      "name": "Reverent Howl",
+      "quantity": 1,
+      "scryfallId": "16765eb2-d497-4cd6-b683-20eac2f10bbf",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/6/16765eb2-d497-4cd6-b683-20eac2f10bbf.jpg?1785497096"
+    },
+    {
+      "name": "Smaug's Fury",
+      "quantity": 1,
+      "scryfallId": "a16f203a-785e-4c78-9410-fb9f8a0ffa01",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{1}{R}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/1/a16f203a-785e-4c78-9410-fb9f8a0ffa01.jpg?1785497138"
+    },
+    {
+      "name": "Stir Up Trouble",
+      "quantity": 1,
+      "scryfallId": "fd145e3a-c889-4390-accb-863dbcc845ce",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{B}",
+      "cmc": 1,
+      "typeLine": "Sorcery",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/d/fd145e3a-c889-4390-accb-863dbcc845ce.jpg?1785497107"
+    },
+    {
+      "name": "Swamp",
+      "quantity": 9,
+      "typeLine": "Basic Land — Swamp"
+    },
+    {
+      "name": "The Great Goblin",
+      "quantity": 1,
+      "scryfallId": "78d8f53e-537d-4eaa-99e3-cac57fa53d22",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{1}{B/R}{B/R}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Goblin Noble",
+      "colors": [
+        "B",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/8/78d8f53e-537d-4eaa-99e3-cac57fa53d22.jpg?1784798171"
+    },
+    {
+      "name": "The Misty Mountains Cold",
+      "quantity": 1,
+      "scryfallId": "3d5f35ff-4146-4844-9da5-031461cc8c05",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{2}{R}",
+      "cmc": 3,
+      "typeLine": "Enchantment — Saga",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/d/3d5f35ff-4146-4844-9da5-031461cc8c05.jpg?1784673451"
+    },
+    {
+      "name": "The Sackville-Bagginses",
+      "quantity": 1,
+      "scryfallId": "ed87b471-79f9-45ec-9188-69e970f6121e",
+      "setCode": "hob",
+      "rarity": "rare",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Legendary Creature — Halfling Citizen",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/d/ed87b471-79f9-45ec-9188-69e970f6121e.jpg?1784894871"
+    },
+    {
+      "name": "Tidings of War",
+      "quantity": 1,
+      "scryfallId": "38c16a0a-375e-48cb-9720-dbbc08c603ae",
+      "setCode": "hob",
+      "rarity": "common",
+      "manaCost": "{R}",
+      "cmc": 1,
+      "typeLine": "Sorcery",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/8/38c16a0a-375e-48cb-9720-dbbc08c603ae.jpg?1785497148"
+    }
+  ]
+}
