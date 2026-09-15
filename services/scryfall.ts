@@ -32,6 +32,7 @@ import {
   normalizeCard,
   normalizeCardSearch,
   normalizeQuery,
+  type CardQuery,
   type ScryfallCard,
 } from '../domain/cards';
 import { normalizeSets, type MtgSet } from '../domain/sets';
@@ -390,37 +391,77 @@ export async function resolveCardPrintings(ids: string[]): Promise<Map<string, S
   return byId;
 }
 
-export async function resolveCardNames(names: string[]): Promise<ResolveResult> {
-  const found = new Map<string, ScryfallCard>();
-  const notFound: string[] = [];
+/**
+ * Uma volta ao `POST /cards/collection`, em porções de 75. Devolve o que a Scryfall não conheceu.
+ *
+ * Pergunta pela colecção quando ela é conhecida: `{ name, set }` traz a impressão que se jogou, e
+ * `{ name }` sozinho traz a que a Scryfall escolher — que é outra carta com o mesmo nome e o
+ * símbolo de set errado ao lado dele.
+ */
+async function askForCards(
+  queries: CardQuery[],
+  found: Map<string, ScryfallCard>,
+): Promise<CardQuery[]> {
+  const missing: CardQuery[] = [];
 
-  const wanted = names.map(name => name.trim()).filter(Boolean);
-  if (wanted.length === 0) return { found, notFound };
+  for (let start = 0; start < queries.length; start += COLLECTION_BATCH) {
+    const batch = queries.slice(start, start + COLLECTION_BATCH);
 
-  try {
-    for (let start = 0; start < wanted.length; start += COLLECTION_BATCH) {
-      const batch = wanted.slice(start, start + COLLECTION_BATCH);
+    const payload = (await scryfallPost(
+      'https://api.scryfall.com/cards/collection',
+      {
+        identifiers: batch.map(query =>
+          query.setCode ? { name: query.name, set: query.setCode } : { name: query.name },
+        ),
+      },
+      'the card data',
+    )) as { data?: unknown[]; not_found?: { name?: string; set?: string }[] };
 
-      const payload = (await scryfallPost(
-        'https://api.scryfall.com/cards/collection',
-        { identifiers: batch.map(name => ({ name })) },
-        'the card data',
-      )) as { data?: unknown[]; not_found?: { name?: string }[] };
-
-      for (const raw of payload.data ?? []) {
-        const card = normalizeCard(raw);
-        // A chave é a do **nome devolvido**: é por ele que `completeFromCatalogue` procura, depois
-        // de normalizar o que o OCR leu.
-        if (card) found.set(cardNameKey(card.name), card);
-      }
-
-      for (const missing of payload.not_found ?? []) {
-        const name = missing?.name?.trim();
-        if (name) notFound.push(name);
-      }
+    for (const raw of payload.data ?? []) {
+      const card = normalizeCard(raw);
+      // A chave é a do **nome devolvido**: é por ele que `completeFromCatalogue` procura, depois
+      // de normalizar o que o OCR leu.
+      if (card) found.set(cardNameKey(card.name), card);
     }
 
-    return { found, notFound };
+    for (const entry of payload.not_found ?? []) {
+      const name = entry?.name?.trim();
+      if (name) missing.push({ name, setCode: entry?.set?.trim() || undefined });
+    }
+  }
+
+  return missing;
+}
+
+export async function resolveCardNames(queries: CardQuery[]): Promise<ResolveResult> {
+  const found = new Map<string, ScryfallCard>();
+
+  const wanted = queries
+    .map(query => ({
+      name: query.name.trim(),
+      setCode: query.setCode?.trim().toLowerCase() || undefined,
+    }))
+    .filter(query => query.name.length > 0);
+
+  if (wanted.length === 0) return { found, notFound: [] };
+
+  try {
+    const missing = await askForCards(wanted, found);
+
+    // Segunda volta. O que falhou a trazer colecção pode ter falhado **por causa dela** — um
+    // `setCode` escrito à mão que está errado, ou uma carta que existe mas não nessa colecção.
+    // Volta a perguntar-se só pelo nome, que é o que a app fazia antes de a colecção viajar junto:
+    // é melhor completar uma carta com a impressão errada do que não a completar de todo.
+    const byNameOnly = missing.filter(query => query.setCode).map(query => ({ name: query.name }));
+    const stillMissing = byNameOnly.length > 0 ? await askForCards(byNameOnly, found) : [];
+
+    return {
+      found,
+      notFound: [
+        ...missing.filter(query => !query.setCode).map(query => query.name),
+        ...stillMissing.map(query => query.name),
+      ],
+    };
   } catch (error) {
     return {
       found,

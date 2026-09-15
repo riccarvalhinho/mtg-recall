@@ -13,6 +13,7 @@
  * deixa o Deck Analyser funcionar numa loja sem rede, que é a regra 3 do projecto.
  */
 import type { CardRarity, DeckBoard, DeckCard, ManaColor } from '../types';
+import { basicLandNamed } from './basicLands';
 
 /** As cinco cores, pela ordem WUBRG. A mesma ordem de `domain/deck.ts` e do schema. */
 const MANA_COLORS: readonly ManaColor[] = ['W', 'U', 'B', 'R', 'G'];
@@ -357,15 +358,45 @@ export function completeFromPrintings(
   });
 }
 
-/** As cartas da lista que ainda só têm nome — as que vale a pena ir perguntar à Scryfall. */
-export function namesToResolve(cards: DeckCard[]): string[] {
-  const names = new Set<string>();
+/**
+ * O que se vai perguntar à Scryfall por uma carta que ainda só tem nome.
+ *
+ * O `setCode` viaja com o nome porque a pergunta "que carta é esta" e a pergunta "qual destas
+ * impressões" são a mesma pergunta quando já se sabe a colecção — e perguntar só pelo nome traz a
+ * impressão que a Scryfall escolher, que não tem de ser a que se jogou.
+ */
+export interface CardQuery {
+  name: string;
+  /** Ausente quando a carta foi escrita à mão e não se sabe a colecção. */
+  setCode?: string;
+}
+
+/**
+ * As cartas da lista que ainda só têm nome — as que vale a pena ir perguntar à Scryfall.
+ *
+ * **Os terrenos básicos ficam de fora**, e isso não é um esquecimento. Entram de propósito sem
+ * impressão escolhida (ver `domain/basicLands.ts`), e já trazem a `typeLine`, que é o único campo
+ * de que a análise precisa deles — a curva deixa-os de fora e o `typeCounts` conta-os como Land.
+ * Deixá-los ir à Scryfall devolvia-lhes um `scryfallId` de uma colecção à sorte, e era isso que
+ * depois **desligava** a arte emprestada pela colecção do deck: o `basicLandsToIllustrate` ignora
+ * qualquer básico que já tenha impressão, por respeito a uma escolha que aqui ninguém fez.
+ *
+ * O `setCode` já escrito viaja junto, para a resposta ser a impressão que se jogou e não outra com
+ * o mesmo nome.
+ */
+export function namesToResolve(cards: DeckCard[]): CardQuery[] {
+  const queries = new Map<string, CardQuery>();
 
   for (const card of cards) {
     if (card.scryfallId) continue;
+
     const name = card.name?.trim();
-    if (name) names.add(name);
+    if (!name || basicLandNamed(name)) continue;
+
+    const setCode = card.setCode?.trim().toLowerCase() || undefined;
+    // A chave junta os dois: a mesma carta em duas colecções são duas perguntas diferentes.
+    queries.set(`${cardNameKey(name)}|${setCode ?? ''}`, { name, setCode });
   }
 
-  return [...names];
+  return [...queries.values()];
 }
