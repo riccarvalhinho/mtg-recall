@@ -1,0 +1,13 @@
+{
+  "id": "rakdos-sacrifice",
+  "name": "Rakdos sacrifice",
+  "colors": {
+    "main": [
+      "B",
+      "R"
+    ],
+    "splash": []
+  },
+  "format": "Draft",
+  "archetype": "Rakdos Sacrifice"
+}
