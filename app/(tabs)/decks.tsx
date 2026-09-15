@@ -8,6 +8,11 @@
 // nome, e numa linha de 50 px de altura a arte não chega para isso. O quadrado dá-lhe espaço; o
 // nome e o registo vão por cima, sobre um véu, porque texto claro sobre uma arte clara não se lê.
 //
+// **Os decks de Limited dizem como correu o torneio deles.** O win rate diz com que deck se
+// ganharam mais matches; não diz com qual se chegou mais longe — um 4-2 que deu Top 8 num torneio
+// de 32 e um 4-2 que não deu nada são o mesmo número. A etiqueta ao lado do formato é essa
+// diferença, e a regra de quando aparece está em `deckStanding`.
+//
 // As contas estão todas em `domain/deck.ts`. Aqui só se desenha.
 
 import { useEffect, useMemo } from 'react';
@@ -20,18 +25,71 @@ import { Image } from 'expo-image';
 import { colors } from '../../theme/colors';
 import { fonts, fontSize } from '../../theme/typography';
 import { Deck } from '../../types';
-import { DeckPerformance, cardCount, rankDecks, splitByPurpose } from '../../domain/deck';
+import { DeckPerformance, DeckStanding, cardCount, deckStanding, rankDecks, splitByPurpose } from '../../domain/deck';
 import { useEventsStore } from '../../store/useEventsStore';
 import { ManaPip } from '../../components/ManaPip';
 import { RecordBadge } from '../../components/RecordBadge';
 import { TypeBadge } from '../../components/TypeBadge';
 import { deckThumbnailUrl } from '../../domain/thumbnails';
 
+// ─── Etiqueta de resultado ────────────────────────────────────────────────────
+
+/**
+ * Como correu o único torneio de um deck de Limited: `1st Place`, `Top 8`, `12th of 40`.
+ *
+ * Três pesos, porque a lista lê-se de relance e nem todos os resultados são a mesma notícia: ganhar
+ * é dourado cheio, um escalão é dourado a contorno, e ficar fora de todos fica na mesma cor
+ * discreta do resto do texto do tile — continua a valer a pena vê-lo, só não se anuncia.
+ *
+ * O fundo é sempre escuro e opaco: por baixo está a arte da carta, que tanto pode ser preta como
+ * um céu claro.
+ */
+function StandingBadge({ standing }: { standing: DeckStanding }) {
+  const won    = standing.tier === 1;
+  const tiered = standing.tier !== null;
+
+  const box  = won ? badge.won : tiered ? badge.tiered : badge.plain;
+  const text = won ? badge.wonText : tiered ? badge.tieredText : badge.plainText;
+
+  return (
+    <View style={[badge.box, box]}>
+      <Feather name="award" size={9} color={won ? colors.bg : tiered ? colors.gold : '#BCAE97'} />
+      <Text style={[badge.text, text]} numberOfLines={1}>{standing.label}</Text>
+    </View>
+  );
+}
+
+const badge = StyleSheet.create({
+  // A geometria é a do TypeBadge, para os dois ficarem lado a lado sem um parecer maior do que o
+  // outro — só que este leva o ícone e por isso é uma linha.
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 4,
+    borderWidth: 1,
+    paddingVertical: 1,
+    paddingHorizontal: 5,
+    alignSelf: 'flex-start',
+  },
+  text: { fontFamily: fonts.bodyMed, fontSize: 10 },
+
+  won:     { backgroundColor: colors.gold, borderColor: colors.gold },
+  wonText: { color: colors.bg },
+
+  tiered:     { backgroundColor: 'rgba(10,8,5,0.72)', borderColor: colors.goldDim },
+  tieredText: { color: colors.gold },
+
+  plain:     { backgroundColor: 'rgba(10,8,5,0.72)', borderColor: colors.border },
+  plainText: { color: '#BCAE97' },
+});
+
 // ─── Card de deck ─────────────────────────────────────────────────────────────
 
-function DeckTile({ deck, performance, onPress }: {
+function DeckTile({ deck, performance, standing, onPress }: {
   deck: Deck;
   performance: DeckPerformance;
+  standing: DeckStanding | null;
   onPress: () => void;
 }) {
   const played = performance.wins + performance.losses + performance.draws;
@@ -69,7 +127,12 @@ function DeckTile({ deck, performance, onPress }: {
       />
 
       <View style={tile.top}>
-        {deck.format ? <TypeBadge type={deck.format} /> : <View />}
+        {/* Em coluna e não lado a lado: `12th of 40` numa linha só empurrava o recorde para fora
+            do quadrado. */}
+        <View style={tile.topLeft}>
+          {deck.format ? <TypeBadge type={deck.format} /> : null}
+          {standing && <StandingBadge standing={standing} />}
+        </View>
         {played > 0 ? (
           <RecordBadge
             wins={performance.wins}
@@ -117,6 +180,7 @@ const tile = StyleSheet.create({
     backgroundColor: colors.bgCard,
   },
   top: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 },
+  topLeft: { alignItems: 'flex-start', gap: 4, flexShrink: 1 },
   bottom: { gap: 6 },
   name: { fontFamily: fonts.displaySemi, fontSize: 15, lineHeight: 19, color: '#F3EADA' },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap' },
@@ -212,8 +276,8 @@ const empty = StyleSheet.create({
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-/** Um deck com o seu desempenho, que é o que o tile precisa. */
-type DeckEntry = { deck: Deck; performance: DeckPerformance };
+/** Um deck com o seu desempenho e, nos de Limited, o resultado do torneio — o que o tile precisa. */
+type DeckEntry = { deck: Deck; performance: DeckPerformance; standing: DeckStanding | null };
 
 /**
  * Uma linha da lista: um cabeçalho de secção, ou **um par** de decks.
@@ -252,7 +316,8 @@ export default function DecksScreen() {
       .map(performance => ({ performance, deck: byId.get(performance.deckId) }))
       .filter((entry): entry is { performance: DeckPerformance; deck: Deck } =>
         entry.deck !== undefined,
-      );
+      )
+      .map(entry => ({ ...entry, standing: deckStanding(entry.deck, events) }));
   }, [decks, events]);
 
   /**
@@ -314,12 +379,14 @@ export default function DecksScreen() {
                 <DeckTile
                   deck={row.left.deck}
                   performance={row.left.performance}
+                  standing={row.left.standing}
                   onPress={() => router.push({ pathname: '/deck/[id]', params: { id: row.left.deck.id } })}
                 />
                 {row.right ? (
                   <DeckTile
                     deck={row.right.deck}
                     performance={row.right.performance}
+                    standing={row.right.standing}
                     onPress={() => router.push({ pathname: '/deck/[id]', params: { id: row.right!.deck.id } })}
                   />
                 ) : (

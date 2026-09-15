@@ -13,6 +13,7 @@ import {
   typeCounts,
   isEventDeck,
   splitByPurpose,
+  deckStanding,
 } from './deck';
 import type { Deck, DeckCard, Event, Match } from '../types';
 
@@ -368,5 +369,76 @@ describe('isEventDeck / splitByPurpose', () => {
     const { kept, oneOff } = splitByPurpose(entries);
     expect(kept.map(e => e.deck.id)).toEqual(['modern', 'legacy']);
     expect(oneOff.map(e => e.deck.id)).toEqual(['sealed1', 'draft1']);
+  });
+});
+
+describe('deckStanding', () => {
+  function limited(id: string): Deck {
+    return { id, name: id, colors: { main: [], splash: [] }, format: 'Sealed' };
+  }
+
+  /** Um evento ligado a um deck, com a classificação que se quiser. */
+  function finished(id: string, deckId: string, standing: Partial<Event> = {}): Event {
+    return { ...event(id, deckId, 'W', 'W'), type: 'Sealed', ...standing };
+  }
+
+  it('dá o escalão do único torneio do deck', () => {
+    const decks = limited('sealed');
+    const events = [finished('e1', 'sealed', { placement: 3, playersCount: 24 })];
+
+    expect(deckStanding(decks, events)).toEqual({ eventId: 'e1', label: 'Top 4', tier: 4 });
+  });
+
+  it('ganhar lê-se como ganhar e não como Top 1', () => {
+    const events = [finished('e1', 'sealed', { placement: 1, playersCount: 9 })];
+    expect(deckStanding(limited('sealed'), events)?.label).toBe('1st Place');
+  });
+
+  it('sem escalão mostra a posição, que é o que há para dizer', () => {
+    // 5.º entre 6: à letra um Top 8, mas o escalão era o torneio todo — ver domain/placement.ts.
+    const events = [finished('e1', 'sealed', { placement: 5, playersCount: 6 })];
+    expect(deckStanding(limited('sealed'), events)).toEqual({
+      eventId: 'e1',
+      label: '5th of 6',
+      tier: null,
+    });
+  });
+
+  it('lê o escalão antigo dos eventos que só têm `rank`', () => {
+    const events = [finished('e1', 'sealed', { rank: 'Top 8' })];
+    expect(deckStanding(limited('sealed'), events)?.label).toBe('Top 8');
+  });
+
+  it('um deck que se guarda não tem etiqueta, mesmo com um torneio só', () => {
+    const modern: Deck = { id: 'modern', name: 'Modern', colors: { main: [], splash: [] }, format: 'Modern' };
+    const events = [finished('e1', 'modern', { placement: 1, playersCount: 32 })];
+
+    expect(deckStanding(modern, events)).toBeNull();
+  });
+
+  it('sem torneio com resultado não há etiqueta', () => {
+    expect(deckStanding(limited('sealed'), [])).toBeNull();
+    expect(deckStanding(limited('sealed'), [finished('e1', 'sealed')])).toBeNull();
+  });
+
+  it('um torneio a decorrer ainda não é resultado nenhum', () => {
+    const events = [finished('e1', 'sealed', { status: 'active', placement: 2, playersCount: 16 })];
+    expect(deckStanding(limited('sealed'), events)).toBeNull();
+  });
+
+  it('com dois torneios classificados não há etiqueta que os resuma', () => {
+    const events = [
+      finished('e1', 'sealed', { placement: 1, playersCount: 16 }),
+      finished('e2', 'sealed', { placement: 7, playersCount: 16 }),
+    ];
+    expect(deckStanding(limited('sealed'), events)).toBeNull();
+  });
+
+  it('ignora os torneios dos outros decks', () => {
+    const events = [
+      finished('e1', 'outro', { placement: 1, playersCount: 16 }),
+      finished('e2', 'sealed', { placement: 2, playersCount: 16 }),
+    ];
+    expect(deckStanding(limited('sealed'), events)?.label).toBe('Top 2');
   });
 });

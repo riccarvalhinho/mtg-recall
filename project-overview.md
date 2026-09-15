@@ -75,6 +75,10 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
+- [x] **Decks** — grelha de dois com a arte a encher o quadrado, ordenada por desempenho, em duas
+      secções: os decks que se guardam e, em baixo, os de **Limited**. Nos de Limited a etiqueta ao
+      lado do formato diz **como correu o torneio deles** — `1st Place`, `Top 8`, ou a posição
+      quando escalão não houve (`deckStanding`, em `domain/deck.ts`)
 - [x] **Deck Detail** — desempenho do deck, curva de mana, cores, tipos e **subtipos** com selector
       de tipo, e decklist agrupada por tipo em duas vistas: com o recorte da arte ou compacta. Os
       terrenos básicos mostram a arte da colecção de onde vem a maioria das cartas do deck —

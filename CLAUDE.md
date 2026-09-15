@@ -290,6 +290,18 @@ Draft existiram para um torneio só (`isEventDeck`, em `domain/deck.ts`). Contin
 registo, mas um Limited por mês soterrava os decks a sério ao fim de um ano. A regra é o formato e
 mais nada: não há campo novo no ficheiro.
 
+**E cada deck de Limited diz como correu o torneio dele**, numa etiqueta ao lado do formato:
+`1st Place`, `Top 8`, ou a posição nua (`12th of 40`) quando escalão não houve. O win rate diz com
+que deck se ganharam mais matches e não diz com qual se chegou mais longe — um 4-2 que deu Top 8
+entre 32 e um 4-2 que não deu nada são o mesmo número. `deckStanding`, em `domain/deck.ts`, é a
+regra toda e tem testes. Três coisas lá dentro: **o escalão ganha à posição** ao contrário do que o
+Event Detail faz, porque aqui a pergunta é "com qual é que corri melhor" e `Top 4` compara-se de
+relance com `Top 8` enquanto `3rd of 9` e `5th of 32` obrigam a fazer a conta de cabeça (o facto
+todo está a um toque, no evento); exige **exactamente um** torneio terminado e classificado, que
+dois não cabem numa etiqueta só sem escolher um às escondidas; e **só vale nos decks de um evento
+só** — num deck que se guarda o resultado de um torneio é uma fotografia que desapareceria sozinha
+no dia em que ele jogasse o segundo.
+
 **A Home é o evento activo.** Quando há um torneio a decorrer, ele é um cartão-herói com a arte a
 encher **52% da altura do ecrã**, com o resultado em grande e o botão de registar a ronda lá dentro
 — e vem **antes** do bloco de números. Na esmagadora maioria dos dias há zero ou um evento activo,
