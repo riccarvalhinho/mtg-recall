@@ -6,7 +6,9 @@
       "W",
       "G"
     ],
-    "splash": []
+    "splash": [
+      "B"
+    ]
   },
   "format": "Sealed",
   "archetype": "Selesnia counters",
@@ -73,7 +75,7 @@
     },
     {
       "name": "Forest",
-      "quantity": 7,
+      "quantity": 6,
       "typeLine": "Basic Land — Forest"
     },
     {
@@ -98,7 +100,7 @@
     },
     {
       "name": "Plains",
-      "quantity": 9,
+      "quantity": 8,
       "typeLine": "Basic Land — Plains"
     },
     {
@@ -110,6 +112,11 @@
       "name": "Sunstar Expansionist",
       "quantity": 1,
       "setCode": "eoe"
+    },
+    {
+      "name": "Swamp",
+      "quantity": 2,
+      "typeLine": "Basic Land — Swamp"
     },
     {
       "name": "Terrasymbiosis",
