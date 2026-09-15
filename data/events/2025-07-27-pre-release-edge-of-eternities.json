@@ -7,5 +7,30 @@
   "location": "Dubai",
   "status": "active",
   "deckId": "selesnia-counters",
-  "matches": []
+  "matches": [
+    {
+      "round": 1,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 2,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "W"
+    },
+    {
+      "round": 3,
+      "opponentColors": {
+        "main": [],
+        "splash": []
+      },
+      "result": "L"
+    }
+  ]
 }
