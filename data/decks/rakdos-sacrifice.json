@@ -10,7 +10,7 @@
   },
   "format": "Draft",
   "archetype": "Rakdos Sacrifice",
-  "thumbnailCardId": "5541cdd2-84a6-4667-83eb-fffbe5b3cd3d",
+  "thumbnailCardId": "bbcc1d84-9772-475d-924a-75bb54c9bc20",
   "cards": [
     {
       "name": "Bombard",
@@ -285,7 +285,16 @@
     {
       "name": "Umbral Collar Zealot",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "bbcc1d84-9772-475d-924a-75bb54c9bc20",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Creature — Human Cleric",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/b/bbcc1d84-9772-475d-924a-75bb54c9bc20.jpg?1783905959"
     },
     {
       "name": "Virus Beetle",
