@@ -12,66 +12,176 @@
   },
   "format": "Sealed",
   "archetype": "Selesnia counters",
+  "thumbnailCardId": "994ca692-7138-4dcb-bf46-5da530f86036",
   "cards": [
     {
       "name": "Atmospheric Greenhouse",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "bf05e378-7a0c-49e3-8c6e-c0fd56796434",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{4}{G}",
+      "cmc": 5,
+      "typeLine": "Artifact — Spacecraft",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/f/bf05e378-7a0c-49e3-8c6e-c0fd56796434.jpg?1783905942"
     },
     {
       "name": "Banishing Light",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "c45f11cd-a0aa-4d14-aa21-57f0969f3e2b",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{2}{W}",
+      "cmc": 3,
+      "typeLine": "Enchantment",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/c/4/c45f11cd-a0aa-4d14-aa21-57f0969f3e2b.jpg?1783905999"
     },
     {
       "name": "Bioengineered Future",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "800ee479-c1dc-4dd0-9b98-436c78997958",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{1}{G}{G}",
+      "cmc": 3,
+      "typeLine": "Enchantment",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/0/800ee479-c1dc-4dd0-9b98-436c78997958.jpg?1783905943"
     },
     {
       "name": "Biosynthic Burst",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "6d73a4a8-5d52-4c12-a96a-45cd202bcc62",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{1}{G}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/d/6d73a4a8-5d52-4c12-a96a-45cd202bcc62.jpg?1783905942"
     },
     {
       "name": "Broodguard Elite",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "08b1d019-65ab-4dea-9076-041fd6338a35",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{X}{G}{G}",
+      "cmc": 2,
+      "typeLine": "Creature — Insect Knight",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/8/08b1d019-65ab-4dea-9076-041fd6338a35.jpg?1783905941"
     },
     {
       "name": "Diplomatic Relations",
       "quantity": 2,
-      "setCode": "eoe"
+      "scryfallId": "143e5853-9a31-4c8d-b21d-5ef120eb6952",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{2}{G}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/4/143e5853-9a31-4c8d-b21d-5ef120eb6952.jpg?1783904003"
     },
     {
       "name": "Dockworker Drone",
       "quantity": 2,
-      "setCode": "eoe"
+      "scryfallId": "eeff069f-427b-42ad-afb1-36f0e547fb74",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Artifact Creature — Robot",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/e/eeff069f-427b-42ad-afb1-36f0e547fb74.jpg?1783905998"
     },
     {
       "name": "Drix Fatemaker",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "1beb7566-305e-4091-bdc4-cf4c789ac05a",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{3}{G}",
+      "cmc": 4,
+      "typeLine": "Creature — Drix Wizard",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/b/1beb7566-305e-4091-bdc4-cf4c789ac05a.jpg?1783905941"
     },
     {
       "name": "Dual-Sun Technique",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "f8931132-391f-4f16-b480-0a245ab2ec21",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/f/8/f8931132-391f-4f16-b480-0a245ab2ec21.jpg?1783905996"
     },
     {
       "name": "Dyadrine, Synthesis Amalgam",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "994ca692-7138-4dcb-bf46-5da530f86036",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{X}{G}{W}",
+      "cmc": 2,
+      "typeLine": "Legendary Artifact Creature — Construct",
+      "colors": [
+        "W",
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/9/994ca692-7138-4dcb-bf46-5da530f86036.jpg?1783905927"
     },
     {
       "name": "Edge Rover",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "90741ec9-6893-42d4-b510-8664666094e3",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{G}",
+      "cmc": 1,
+      "typeLine": "Artifact Creature — Robot Scout",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/0/90741ec9-6893-42d4-b510-8664666094e3.jpg?1783905940"
     },
     {
       "name": "Eumidian Terrabotanist",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "64fb2981-86ed-478a-89cd-c6bb078a5bc7",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{1}{G}",
+      "cmc": 2,
+      "typeLine": "Creature — Insect Druid",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/4/64fb2981-86ed-478a-89cd-c6bb078a5bc7.jpg?1783905940"
     },
     {
       "name": "Forest",
@@ -81,22 +191,58 @@
     {
       "name": "Fungal Colossus",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "9dc9559f-cece-4c85-807c-158291666007",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{6}{G}",
+      "cmc": 7,
+      "typeLine": "Creature — Fungus Beast",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/d/9dc9559f-cece-4c85-807c-158291666007.jpg?1783905938"
     },
     {
       "name": "Knight Luminary",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "34334971-c1b7-4506-a6dd-77f66b3ae4e7",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{3}{W}",
+      "cmc": 4,
+      "typeLine": "Creature — Human Knight",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/4/34334971-c1b7-4506-a6dd-77f66b3ae4e7.jpg?1783905993"
     },
     {
       "name": "Lashwhip Predator",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "24553e98-29a9-47e3-91c7-9add708d9ad1",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{4}{G}{G}",
+      "cmc": 6,
+      "typeLine": "Creature — Plant Beast",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/4/24553e98-29a9-47e3-91c7-9add708d9ad1.jpg?1783905935"
     },
     {
       "name": "Lumen-Class Frigate",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "0cc59b5a-65fa-47cc-8ac7-b7c3f533a782",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Artifact — Spacecraft",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/c/0cc59b5a-65fa-47cc-8ac7-b7c3f533a782.jpg?1783905992"
     },
     {
       "name": "Plains",
@@ -106,12 +252,30 @@
     {
       "name": "Seam Rip",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "9d298847-2d02-4593-b4d3-c5b722edac1e",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{W}",
+      "cmc": 1,
+      "typeLine": "Enchantment",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/d/9d298847-2d02-4593-b4d3-c5b722edac1e.jpg?1783905989"
     },
     {
       "name": "Sunstar Expansionist",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "93b0e6e5-9fb6-4342-9322-1a4cc09a7a76",
+      "setCode": "eoe",
+      "rarity": "uncommon",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Creature — Human Knight",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/3/93b0e6e5-9fb6-4342-9322-1a4cc09a7a76.jpg?1783905987"
     },
     {
       "name": "Swamp",
@@ -121,22 +285,55 @@
     {
       "name": "Terrasymbiosis",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "26008c7d-5dbe-4da2-b475-4dd307e7bc68",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{2}{G}",
+      "cmc": 3,
+      "typeLine": "Enchantment",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/6/26008c7d-5dbe-4da2-b475-4dd307e7bc68.jpg?1783905928"
     },
     {
       "name": "Thawbringer",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "0b7f934f-8eb4-408b-a55f-245ec5cc4a8a",
+      "setCode": "eoe",
+      "rarity": "common",
+      "manaCost": "{2}{G}",
+      "cmc": 3,
+      "typeLine": "Creature — Insect Scout",
+      "colors": [
+        "G"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/0/b/0b7f934f-8eb4-408b-a55f-245ec5cc4a8a.jpg?1783905929"
     },
     {
       "name": "Thrumming Hivepool",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "85caf659-7b43-462e-a342-34703d46eb57",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{6}",
+      "cmc": 6,
+      "typeLine": "Artifact",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/5/85caf659-7b43-462e-a342-34703d46eb57.jpg?1783905916"
     },
     {
       "name": "Zero Point Ballad",
       "quantity": 1,
-      "setCode": "eoe"
+      "scryfallId": "59cf9f4d-54cd-4cda-9726-65e16100ab46",
+      "setCode": "eoe",
+      "rarity": "rare",
+      "manaCost": "{X}{B}",
+      "cmc": 1,
+      "typeLine": "Sorcery",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/5/9/59cf9f4d-54cd-4cda-9726-65e16100ab46.jpg?1783905958"
     }
   ]
 }
