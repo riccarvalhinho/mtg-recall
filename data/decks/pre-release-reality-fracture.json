@@ -13,6 +13,20 @@
   "thumbnailCardId": "a803dbe7-153a-4e92-ad4d-c2babebe003d",
   "cards": [
     {
+      "name": "Academic Ascent",
+      "quantity": 1,
+      "scryfallId": "730d8c28-1e58-4b8e-89e9-445d154d2e83",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/3/730d8c28-1e58-4b8e-89e9-445d154d2e83.jpg?1788878081"
+    },
+    {
       "name": "Break Under Pressure",
       "quantity": 1,
       "scryfallId": "46974d94-e900-43e4-92b5-4fb9b9f7cf46",
@@ -39,20 +53,6 @@
         "W"
       ],
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/0/6047b14c-91d5-4f8e-af3f-057a541e2546.jpg?1788878120"
-    },
-    {
-      "name": "Cast Away Doubt",
-      "quantity": 1,
-      "scryfallId": "3b5b28a4-0abd-4dc2-9856-c9a8d27f6a2d",
-      "setCode": "fra",
-      "rarity": "common",
-      "manaCost": "{2}{B}",
-      "cmc": 3,
-      "typeLine": "Sorcery",
-      "colors": [
-        "B"
-      ],
-      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/b/3b5b28a4-0abd-4dc2-9856-c9a8d27f6a2d.jpg?1788353191"
     },
     {
       "name": "Danitha, Spear of Agony",
@@ -147,6 +147,21 @@
       "cmc": 0,
       "typeLine": "Land",
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/3/93ac525e-1919-43dd-aba4-073b7e4c1768.jpg?1789557002"
+    },
+    {
+      "name": "Paradox Shaper // Omit Variables",
+      "quantity": 1,
+      "scryfallId": "e61b9d48-0ace-4453-afe0-a1024444bac0",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{1}{U/B} // {U/B}",
+      "cmc": 2,
+      "typeLine": "Creature — Octopus Wizard // Sorcery",
+      "colors": [
+        "U",
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/6/e61b9d48-0ace-4453-afe0-a1024444bac0.jpg?1788329390"
     },
     {
       "name": "Plains",
@@ -284,10 +299,6 @@
         "B"
       ],
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/8/a803dbe7-153a-4e92-ad4d-c2babebe003d.jpg?1789127665"
-    },
-    {
-      "name": "Void Extrapolator",
-      "quantity": 1
     },
     {
       "name": "Way of the Mentor",
