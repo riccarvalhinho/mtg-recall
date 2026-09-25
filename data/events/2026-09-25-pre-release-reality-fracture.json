@@ -34,6 +34,34 @@
           "result": "L"
         }
       ]
+    },
+    {
+      "round": 2,
+      "opponentId": "marcelo-marino",
+      "opponentColors": {
+        "main": [
+          "W",
+          "G"
+        ],
+        "splash": [
+          "R"
+        ]
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
     }
   ]
 }
