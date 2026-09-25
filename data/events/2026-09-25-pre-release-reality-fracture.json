@@ -6,5 +6,34 @@
   "date": "2026-09-25",
   "location": "Arena Porto",
   "status": "active",
-  "matches": []
+  "matches": [
+    {
+      "round": 1,
+      "opponentId": "marcelo-marino",
+      "opponentColors": {
+        "main": [
+          "W",
+          "G"
+        ],
+        "splash": [
+          "R"
+        ]
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    }
+  ]
 }
