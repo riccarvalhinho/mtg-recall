@@ -38,17 +38,17 @@
     },
     {
       "round": 2,
-      "opponentId": "marcelo-marino",
+      "opponentId": "adiel-y",
       "opponentColors": {
         "main": [
           "W",
           "G"
         ],
         "splash": [
-          "R"
+          "U"
         ]
       },
-      "result": "L",
+      "result": "W",
       "games": [
         {
           "number": 1,
@@ -60,7 +60,7 @@
         },
         {
           "number": 3,
-          "result": "L"
+          "result": "W"
         }
       ]
     }
