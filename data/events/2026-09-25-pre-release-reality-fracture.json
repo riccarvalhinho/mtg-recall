@@ -85,6 +85,32 @@
           "result": "L"
         }
       ]
+    },
+    {
+      "round": 4,
+      "opponentId": "jose-lirio",
+      "opponentColors": {
+        "main": [
+          "B",
+          "G"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
     }
   ]
 }
