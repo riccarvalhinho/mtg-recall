@@ -63,6 +63,28 @@
           "result": "W"
         }
       ]
+    },
+    {
+      "round": 3,
+      "opponentId": "joao-rocha",
+      "opponentColors": {
+        "main": [
+          "B",
+          "R"
+        ],
+        "splash": []
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "L"
+        }
+      ]
     }
   ]
 }
