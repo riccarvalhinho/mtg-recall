@@ -55,6 +55,21 @@
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/0/6047b14c-91d5-4f8e-af3f-057a541e2546.jpg?1788878120"
     },
     {
+      "name": "Charge the Sanctum",
+      "quantity": 1,
+      "scryfallId": "87b40df5-5c0a-41f5-a09c-a04f17066a91",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{R/W}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/7/87b40df5-5c0a-41f5-a09c-a04f17066a91.jpg?1788521570"
+    },
+    {
       "name": "Danitha, Spear of Agony",
       "quantity": 1,
       "scryfallId": "6489814b-3d10-423e-988c-324740d36748",
@@ -313,10 +328,6 @@
         "W"
       ],
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/a/1a59d5b1-12d6-486b-bd29-ca371359addd.jpg?1789729554"
-    },
-    {
-      "name": "Whiplash Wordsmith",
-      "quantity": 1
     }
   ]
 }
