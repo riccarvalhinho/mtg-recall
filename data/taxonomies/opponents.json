@@ -2,6 +2,10 @@
   "kind": "opponents",
   "items": [
     {
+      "id": "marcelo-marino",
+      "name": "Marcelo Marino"
+    },
+    {
       "id": "rui-grandao",
       "name": "Rui Grandão"
     }
