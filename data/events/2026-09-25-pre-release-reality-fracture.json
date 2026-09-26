@@ -5,7 +5,9 @@
   "setCode": "fra",
   "date": "2026-09-25",
   "location": "Arena Porto",
-  "status": "active",
+  "status": "completed",
+  "placement": 12,
+  "playersCount": 26,
   "deckId": "pre-release-reality-fracture",
   "matches": [
     {
