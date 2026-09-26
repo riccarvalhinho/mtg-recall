@@ -1,0 +1,33 @@
+{
+  "kind": "opponents",
+  "items": [
+    {
+      "id": "adiel-y",
+      "name": "Adiel Y"
+    },
+    {
+      "id": "joao-rocha",
+      "name": "João Rocha"
+    },
+    {
+      "id": "jose-lirio",
+      "name": "José Lirio"
+    },
+    {
+      "id": "luis-rocha",
+      "name": "Luís Rocha"
+    },
+    {
+      "id": "marcelo-marino",
+      "name": "Marcelo Marino"
+    },
+    {
+      "id": "rui-grandao",
+      "name": "Rui Grandão"
+    },
+    {
+      "id": "vasco-alves",
+      "name": "Vasco Alves"
+    }
+  ]
+}

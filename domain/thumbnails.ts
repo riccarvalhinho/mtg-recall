@@ -115,3 +115,17 @@ export function thumbnailUrls(decks: Deck[], events: Event[]): string[] {
 
   return [...urls];
 }
+
+/**
+ * A carta inteira, em tamanho de leitura. `null` quando não há impressão concreta.
+ *
+ * O URL é **construído** a partir do `scryfallId`, pelo caminho documentado da Scryfall:
+ * `cards.scryfall.io/<tamanho>/front/<1.ª letra>/<2.ª letra>/<id>.jpg`. Não se guarda no ficheiro
+ * do deck porque se deduz. Vive aqui e não no `CardImageOverlay` para o relatório de evento, que é
+ * lógica pura, o poder usar.
+ */
+export function cardImageUrl(scryfallId?: string): string | null {
+  const id = scryfallId?.trim().toLowerCase();
+  if (!id || id.length < 2) return null;
+  return `https://cards.scryfall.io/normal/front/${id[0]}/${id[1]}/${id}.jpg`;
+}

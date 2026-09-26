@@ -1,5 +1,6 @@
 /**
- * Base64 de texto UTF-8, que é o que a Contents API do GitHub quer.
+ * Base64 de texto UTF-8, que é o que a Contents API do GitHub quer — e de bytes, para as imagens
+ * embutidas no relatório de evento.
  *
  * Escrito à mão de propósito. O `btoa` global existe em alguns runtimes de React Native e não em
  * outros, e só aceita bytes — um "ç" ou um travessão partem-no. Uma dependência a mais para quinze
@@ -37,7 +38,15 @@ function utf8Bytes(text: string): number[] {
 }
 
 export function toBase64(text: string): string {
-  const bytes = utf8Bytes(text);
+  return bytesToBase64(utf8Bytes(text));
+}
+
+/**
+ * Base64 de bytes quaisquer — um SVG descarregado, para ir embutido num `data:` URI.
+ *
+ * O `toBase64` é isto aplicado ao UTF-8 do texto.
+ */
+export function bytesToBase64(bytes: ArrayLike<number>): string {
   let out = '';
 
   for (let i = 0; i < bytes.length; i += 3) {

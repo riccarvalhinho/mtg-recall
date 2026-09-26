@@ -18,7 +18,7 @@ project documentation (`docs/`, ADRs) are written in Portuguese.
 **Fases 0 a 4 implementadas, e a Fase 5 com tudo feito menos a decklist por fotografia.** A app
 deixou de depender do Supabase e guarda tudo — eventos, decks, colecção — como ficheiros JSON no
 próprio repositório, escritos pela Contents API do GitHub. Utilizador único, sem contas. As decisões
-estão em `docs/adr/` (0001 a 0013).
+estão em `docs/adr/` (0001 a 0014).
 
 `npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
@@ -75,7 +75,8 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       botão travado até os dois fazerem sentido), o resultado final no
       cabeçalho, apagar evento e apagar match com confirmação, e "Event details" para **corrigir a
       classificação de um torneio já fechado**, corrigir o set (só Limited) e escolher a arte do
-      evento
+      evento. **Partilhar o relatório** do torneio numa página HTML só, com as imagens das cartas
+      lá dentro, pela folha de partilha do Android (ADR 0014)
 - [x] **Match Registration** — selector de cores com 3 estados por pip, resultado, notas
 - [x] **Add Event** — selector de formato (7 tipos), nome, data, local e **set escolhido de uma
       lista da Scryfall** (só em Sealed/Draft), com cache offline e escrita à mão como recurso
@@ -113,12 +114,15 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
 - [x] `docs/adr/0001` a `0006` — GitHub como source of truth, dados JSON versionados, app nativa em
       vez de PWA, escrita por outbox, repositório público, utilizador único
 - [x] `docs/adr/0011` — o contador de vida é efémero; o que fica no ficheiro é `games[].life`
+- [x] `docs/adr/0014` — o relatório de um evento é um ficheiro HTML com as imagens dentro, partilhado
+      pela folha de partilha do Android
 - [x] `data-model.md` reescrito para o modelo de ficheiros
 
 ### Dados e ferramentas
 - [x] `data/schema/{event,opponents}.schema.json` — o contrato
 - [x] `tools/validate-data.mts` — schema + coerência (ids, rondas, adversários, games vs resultado)
 - [x] `tools/build-bundle.mts` — `bundle.json` para instalação e restauro
+- [x] `tools/render-report.mts` — `npm run report -- <id>`, o relatório de um evento no computador
 - [x] CI a validar, compilar tipos e correr testes em cada push; Pages a publicar o bundle a partir de `main`
 - [x] `npm run check` — o que o CI corre, num comando
 

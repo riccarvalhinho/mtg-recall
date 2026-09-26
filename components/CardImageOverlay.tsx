@@ -8,7 +8,8 @@
 //
 // O URL da imagem é **construído** a partir do `scryfallId`, pelo caminho documentado da Scryfall:
 // `cards.scryfall.io/<tamanho>/front/<1.ª letra>/<2.ª letra>/<id>.jpg`. Não se guarda no ficheiro do
-// deck porque se deduz, e uma string por carta que se pode calcular é peso que não paga renda.
+// deck porque se deduz, e uma string por carta que se pode calcular é peso que não paga renda. A
+// regra vive em domain/thumbnails.ts (`cardImageUrl`), onde o relatório de evento também a usa.
 
 import { View, Text, Modal, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
@@ -17,13 +18,7 @@ import { useState } from 'react';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/typography';
 import type { DeckCard } from '../types';
-
-/** A carta inteira, em tamanho de leitura. `null` quando não há impressão concreta. */
-export function cardImageUrl(scryfallId?: string): string | null {
-  const id = scryfallId?.trim().toLowerCase();
-  if (!id || id.length < 2) return null;
-  return `https://cards.scryfall.io/normal/front/${id[0]}/${id[1]}/${id}.jpg`;
-}
+import { cardImageUrl } from '../domain/thumbnails';
 
 interface CardImageOverlayProps {
   card?: DeckCard;

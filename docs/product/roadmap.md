@@ -72,6 +72,18 @@ usá-lo entre rondas e ver se a disposição aguenta — Q13. Ver ADR 0011 para 
 - [ ] Confirmar que o ecrã fica aceso a ronda inteira (`expo-keep-awake` nunca correu num APK)
 - [ ] Confirmar que a vida aparece no ficheiro do evento depois de registar a ronda
 
+### Relatório de evento — escrito, por partilhar a sério
+
+Feito (ADR 0014): o botão de partilhar do Event Detail gera o relatório do torneio em HTML, com as
+imagens lá dentro, e abre a folha de partilha. A página está testada contra o Reality Fracture
+(`domain/eventReport.test.ts`); o que toca no telemóvel — cache das imagens, ficheiro, partilha —
+não corre fora de um APK.
+
+- [ ] Partilhar um evento para o Telegram e confirmar que o ficheiro chega com as imagens
+- [ ] Abrir o ficheiro num Android **e num iPhone**: as cartas abrem ao toque? as rondas abrem?
+- [ ] Exportar em modo de avião, com o deck já aberto antes, e ver o aviso das imagens que faltam
+- [ ] Ver o tamanho do ficheiro de um Commander, se algum dia houver um
+
 ### Por confirmar no telemóvel
 
 Coisas escritas e testadas contra payloads sintéticos, mas nunca corridas contra o mundo real — o

@@ -3,7 +3,7 @@
 // Print: design/screen-event-detail.png
 
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -36,6 +36,7 @@ import { CardArtPicker } from '../../components/CardArtPicker';
 import { SetSelector } from '../../components/SetSelector';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { RecordScore } from '../../components/RecordScore';
+import { shareEventReport } from '../../services/eventExport';
 
 // ─── Classificação final ──────────────────────────────────────────────────────
 
@@ -875,6 +876,8 @@ export default function EventDetailScreen() {
   const completeEvent = useEventsStore(s => s.completeEvent);
   const deleteMatch   = useEventsStore(s => s.deleteMatch);
   const addBareMatches = useEventsStore(s => s.addBareMatches);
+  const decks          = useEventsStore(s => s.decks);
+  const opponents      = useEventsStore(s => s.opponents);
 
   // All useState calls must be above any early return
   const [deleteEventModal,   setDeleteEventModal]   = useState(false);
@@ -883,6 +886,8 @@ export default function EventDetailScreen() {
   const [deleteMatchModal,   setDeleteMatchModal]   = useState<{ round: number; opponent: string } | null>(null);
   const [quickOpen,          setQuickOpen]          = useState(false);
   const [quickSequence,      setQuickSequence]      = useState<MatchResult[]>([]);
+  const [exporting,          setExporting]          = useState(false);
+  const [exportNotice,       setExportNotice]       = useState<string | null>(null);
 
   if (!event) {
     return (
@@ -931,6 +936,33 @@ export default function EventDetailScreen() {
     });
   }
 
+  /**
+   * O relatório do torneio, para mandar aos amigos — ADR 0014.
+   *
+   * Pode demorar uns segundos: as imagens das cartas vão dentro do ficheiro. Enquanto isso o botão
+   * mostra que está a trabalhar e não aceita um segundo toque. O aviso por baixo da barra só aparece
+   * quando há alguma coisa a dizer — imagens que ficaram de fora, ou uma falha.
+   */
+  async function shareReport() {
+    if (exporting) return;
+    setExporting(true);
+    setExportNotice(null);
+    try {
+      const linked = decks.find(d => d.id === event!.deckId);
+      const result = await shareEventReport(event!, linked, opponents);
+      if (result.linked > 0) {
+        setExportNotice(
+          `${result.linked} image${result.linked === 1 ? '' : 's'} couldn't be saved into the file ` +
+          `(no connection). ${result.linked === 1 ? 'It loads' : 'They load'} from the internet when opened.`,
+        );
+      }
+    } catch (error) {
+      setExportNotice(error instanceof Error ? error.message : 'Could not export this event.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   /** Contar a vida da ronda seguinte. À saída, o contador abre o registo já preenchido. */
   function goToLifeCounter() {
     router.push({
@@ -964,10 +996,26 @@ export default function EventDetailScreen() {
           <Feather name="chevron-left" size={20} color={colors.textPrim} />
         </Pressable>
         <Text style={styles.breadcrumb}>Events</Text>
+        <Pressable
+          style={styles.shareBtn}
+          onPress={shareReport}
+          disabled={exporting}
+          accessibilityLabel="Share event report"
+        >
+          {exporting
+            ? <ActivityIndicator size="small" color={colors.gold} />
+            : <Feather name="share-2" size={16} color={colors.gold} />}
+        </Pressable>
         <Pressable style={styles.deleteBtn} onPress={() => setDeleteEventModal(true)}>
           <Feather name="trash-2" size={16} color={colors.loss} />
         </Pressable>
       </View>
+      {exporting && <Text style={styles.exportNotice}>Preparing the report…</Text>}
+      {exportNotice && (
+        <Pressable onPress={() => setExportNotice(null)}>
+          <Text style={styles.exportNotice}>{exportNotice}</Text>
+        </Pressable>
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Event Header */}
@@ -1336,8 +1384,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.gold,
   },
-  deleteBtn: {
+  shareBtn: {
     marginLeft: 'auto',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.goldDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  exportNotice: {
+    fontFamily: fonts.bodyItal,
+    fontSize: 13,
+    color: colors.textSec,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  deleteBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,

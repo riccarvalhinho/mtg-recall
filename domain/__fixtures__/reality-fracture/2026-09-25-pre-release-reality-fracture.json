@@ -1,0 +1,168 @@
+{
+  "id": "2026-09-25-pre-release-reality-fracture",
+  "name": "Pre release - Reality Fracture",
+  "type": "Sealed",
+  "setCode": "fra",
+  "date": "2026-09-25",
+  "location": "Arena Porto",
+  "status": "active",
+  "deckId": "pre-release-reality-fracture",
+  "matches": [
+    {
+      "round": 1,
+      "opponentId": "marcelo-marino",
+      "opponentColors": {
+        "main": [
+          "W",
+          "G"
+        ],
+        "splash": [
+          "R"
+        ]
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "opponentId": "adiel-y",
+      "opponentColors": {
+        "main": [
+          "W",
+          "G"
+        ],
+        "splash": [
+          "U"
+        ]
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "W"
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "opponentId": "joao-rocha",
+      "opponentColors": {
+        "main": [
+          "B",
+          "R"
+        ],
+        "splash": []
+      },
+      "result": "L",
+      "games": [
+        {
+          "number": 1,
+          "result": "L"
+        },
+        {
+          "number": 2,
+          "result": "L"
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "opponentId": "jose-lirio",
+      "opponentColors": {
+        "main": [
+          "B",
+          "G"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "W"
+        },
+        {
+          "number": 3,
+          "result": "L"
+        }
+      ]
+    },
+    {
+      "round": 5,
+      "opponentId": "luis-rocha",
+      "opponentColors": {
+        "main": [
+          "W",
+          "R"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W"
+        },
+        {
+          "number": 2,
+          "result": "L"
+        },
+        {
+          "number": 3,
+          "result": "W"
+        }
+      ]
+    },
+    {
+      "round": 6,
+      "opponentId": "vasco-alves",
+      "opponentColors": {
+        "main": [
+          "W",
+          "B"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W",
+          "life": {
+            "me": 17,
+            "opponent": 6
+          }
+        },
+        {
+          "number": 2,
+          "result": "W"
+        }
+      ]
+    }
+  ]
+}
