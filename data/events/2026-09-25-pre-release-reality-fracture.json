@@ -137,6 +137,32 @@
           "result": "W"
         }
       ]
+    },
+    {
+      "round": 6,
+      "opponentId": "vasco-alves",
+      "opponentColors": {
+        "main": [
+          "W",
+          "B"
+        ],
+        "splash": []
+      },
+      "result": "W",
+      "games": [
+        {
+          "number": 1,
+          "result": "W",
+          "life": {
+            "me": 17,
+            "opponent": 6
+          }
+        },
+        {
+          "number": 2,
+          "result": "W"
+        }
+      ]
     }
   ]
 }
