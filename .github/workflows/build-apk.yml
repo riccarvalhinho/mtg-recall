@@ -1,5 +1,10 @@
-name: Gerar APK
+name: Gerar APK (EAS — não usar)
 
+# ⚠ NÃO É ESTE O WORKFLOW A USAR. A app compila-se pelo **Gerar APK (Gradle)**, sem EAS e sem
+# conta na Expo (ADR 0008). Este ficou no repositório para o dia em que se queira voltar ao EAS, e
+# chama-se "(EAS)" para não se confundir com o outro na lista do separador Actions — foi o que
+# aconteceu a 2026-09-26, quando este foi disparado por engano e teve de ser cancelado.
+#
 # Existe para o APK poder ser pedido sem computador: abre-se o separador Actions no browser do
 # telemóvel, carrega-se em "Run workflow", e no fim o APK sai num link do expo.dev.
 #
