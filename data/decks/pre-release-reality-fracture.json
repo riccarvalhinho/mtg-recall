@@ -310,8 +310,19 @@
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/d/6d86e410-20c4-4248-96bf-5780ece6274a.jpg?1789729585"
     },
     {
-      "name": "Whiplash Wordsmith",
-      "quantity": 1
+      "name": "Whiplash Wordsmith // Vicious Verse",
+      "quantity": 1,
+      "scryfallId": "8096bc9a-a610-448f-bef2-7230e17e9777",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{3}{B/R} // {B/R}",
+      "cmc": 4,
+      "typeLine": "Creature — Vampire Sorcerer // Sorcery",
+      "colors": [
+        "B",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/0/8096bc9a-a610-448f-bef2-7230e17e9777.jpg?1789127692"
     }
   ]
 }
