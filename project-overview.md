@@ -2,7 +2,7 @@
 
 > Estado actual do projecto. Actualizar sempre que uma feature for implementada, uma decisão técnica
 > for tomada, ou o estado mudar.
-> Última actualização: 2026-09-14
+> Última actualização: 2026-09-26
 
 ---
 
@@ -22,12 +22,10 @@ estão em `docs/adr/` (0001 a 0014).
 
 `npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
-O que falta não é código. São quatro passos manuais que dependem das contas do autor — ligar o
-Pages, guardar a keystore e correr o workflow do APK, criar o token, registar o primeiro torneio — e
-estão em `docs/ops/telemovel-setup.md`.
-
-**`data/events/` está vazio.** Enquanto não houver lá um torneio a sério, a cadeia telemóvel →
-commit → bundle → restauro não está provada ponta a ponta, e é a única coisa que interessa a seguir.
+**A app está em uso a sério.** Seis torneios em `data/events/` — três carregados de memória pelo
+Quick record, três registados ronda a ronda no telemóvel —, com os commits a chegarem da app e o
+Pages a publicar o bundle a cada um. Os passos manuais estão todos feitos; da cadeia só falta provar
+o restauro num telemóvel limpo.
 
 **O arquivo antigo já cabe na app (ADR 0013).** Metade desses registos é só o torneio, as cores, o
 resultado e talvez o tema do deck — sem decklist e sem detalhe por ronda. As cores voltaram a ser um
@@ -158,25 +156,20 @@ A dívida conhecida e o que ficou por confirmar estão em `docs/product/roadmap.
       atira, como as preferências
 - [x] `store/useLifeStore.ts` — a gaveta que entrega os games contados ao registo de match
 - [x] `store/useEventsStore.ts` local-first; Supabase removido do código e das dependências
-- [x] 448 testes nos módulos puros
+- [x] 577 testes nos módulos puros
 
 ---
 
 ## O que falta
 
-**Passos manuais**, com o guia em `docs/ops/telemovel-setup.md`:
+**Os passos manuais estão feitos** — Pages, keystore, APK pelo Gradle, token, primeiro torneio.
 
-- [ ] Ligar o GitHub Pages (Settings → Pages → Source: GitHub Actions)
-- [ ] Guardar a keystore nos segredos e correr o workflow **Gerar APK (Gradle)** (ADR 0008 — sem
-      EAS e sem conta na Expo)
-- [ ] Criar o token e colá-lo no écran de Settings
-- [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
+**Por confirmar contra o mundo real:**
 
-**Por confirmar contra o mundo real** — escrito e testado contra payloads sintéticos, mas o proxy do
-ambiente de desenvolvimento recusa ligações à Scryfall:
-
-- [ ] `GET /sets` e `GET /cards/search` no telemóvel
-- [ ] A primeira execução do workflow `refresh-prices.yml`
+- [ ] O restauro a partir do bundle num telemóvel limpo
+- [ ] O `refresh-prices.yml` com uma colecção a sério — já corre verde, mas `data/collection/` ainda
+      não existe e não há preços a actualizar
+- [ ] Partilhar o relatório de um evento (ADR 0014) e abri-lo num Android e num iPhone
 
 A dívida conhecida está listada em `docs/product/roadmap.md`.
 

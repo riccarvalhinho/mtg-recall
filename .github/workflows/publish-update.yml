@@ -1,10 +1,15 @@
-name: Publicar update
+name: Publicar update (EAS — não usar)
 
+# ⚠ NÃO É ESTE O WORKFLOW A USAR. A app compila-se e actualiza-se só pelo **Gerar APK (Gradle)**, sem EAS e sem
+# conta na Expo (ADR 0008). Sem EAS não há entrega de JavaScript pelo ar: qualquer alteração é um APK novo. Este ficou no repositório para o dia em que se queira voltar ao EAS, e
+# chama-se "(EAS)" para não se confundir com o outro na lista do separador Actions — foi o que
+# aconteceu a 2026-09-26, quando este foi disparado por engano e teve de ser cancelado.
+#
 # Entrega alterações de JavaScript ao telemóvel sem APK novo: a app vai buscá-las ao arrancar.
 #
 # Serve para quase tudo — écrans, lógica, correcções. NÃO serve quando muda alguma coisa nativa:
 # uma dependência com código nativo, uma permissão, o ícone, a versão do SDK. Nesses casos é o
-# workflow "Gerar APK".
+# workflow "Gerar APK (EAS — não usar)".
 on:
   workflow_dispatch:
     inputs:

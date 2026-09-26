@@ -1,7 +1,7 @@
 # MTG Recall — Roadmap
 
 > O que vem a seguir e por que ordem. Actualizar quando uma fase fechar ou quando a ordem mudar.
-> Última actualização: 2026-09-14
+> Última actualização: 2026-09-26
 
 A app é de utilizador único (ADR 0006) e os dados são ficheiros no repositório (ADR 0002). Tudo o que
 está aqui assume isso.
@@ -10,30 +10,30 @@ está aqui assume isso.
 
 ## Onde estamos
 
-As Fases 0 a 4 estão **implementadas** e a Fase 5 só tem por fazer a decklist por fotografia.
-`npm run check` passa: dados válidos, typecheck limpo, testes verdes.
+As Fases 0 a 4 estão **implementadas** e a Fase 5 só tem por provar a decklist por fotografia num
+deck inteiro. `npm run check` passa: dados válidos, typecheck limpo, testes verdes.
 
-O que falta não é código — são quatro passos manuais que dependem das contas do autor, e usar a app
-a sério uma vez. **`data/events/` está vazio**: enquanto não houver lá um torneio verdadeiro, a
-cadeia telemóvel → commit → bundle → restauro não está provada ponta a ponta, e é essa a única coisa
-que interessa a seguir.
+**A app está em uso a sério** desde Setembro de 2026: seis torneios em `data/events/`, três deles
+carregados de memória pelo Quick record e três registados ronda a ronda, com os commits a chegarem
+do telemóvel. A cadeia telemóvel → commit → CI → Pages está provada ponta a ponta. O que falta está
+abaixo, e é quase tudo "usar e confirmar".
 
 ---
 
 ## O que falta mesmo
 
-### Passos manuais — só o autor os pode dar
+### Passos manuais — feitos
 
-O guia está em `docs/ops/telemovel-setup.md`. Não há código a escrever em nenhum destes.
+Todos provados pelo que está no repositório (guia em `docs/ops/telemovel-setup.md`):
 
-- [ ] Ligar o GitHub Pages — Settings → Pages → Source: GitHub Actions
-- [ ] Guardar a keystore nos segredos (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`)
-- [ ] Correr o workflow **Gerar APK (Gradle)** e instalar a partir da Release
-- [ ] Criar o token fine-grained e colá-lo no écran de Settings
-- [ ] Registar o primeiro torneio a sério e confirmar que aparece um commit
+- [x] Ligar o GitHub Pages — o workflow **Publicar no GitHub Pages** corre verde a cada commit
+- [x] Guardar a keystore nos segredos — o **Gerar APK (Gradle)** compila e assina
+- [x] Correr o workflow **Gerar APK (Gradle)** e instalar a partir da Release
+- [x] Criar o token fine-grained e colá-lo no écran de Settings — os commits vêm da app
+- [x] Registar o primeiro torneio a sério e confirmar que aparece um commit
 
-**Pronto quando:** um FNM inteiro se regista em modo de avião e, à saída da loja, aparece um commit
-com o evento completo.
+Por provar: o **restauro** a partir do bundle num telemóvel limpo (ou depois de desinstalar). É a
+única metade da cadeia que ainda não correu.
 
 ### Registos retroactivos — escritos, por usar no arquivo a sério
 
@@ -42,8 +42,9 @@ ligado, e o **Quick record** transforma um "6-2" em rondas nuas numa folha só. 
 passa a caber na app com o que dele existe — o nome, a data, as cores, o recorde e a posição —, sem
 decklist, sem adversários e sem detalhe por ronda.
 
-Por provar: carregar o arquivo a sério. É aí que se vê se o Quick record tem os toques certos e se
-a precedência das cores (evento → deck → nada) dá sempre a resposta esperada. Ver também a **Q16**:
+Usado: os dois torneios de 2025 (Edge of Eternities) e o Aetherdrift entraram pelo Quick record, só com o recorde e a
+posição. Por provar: a precedência das cores (evento → deck → nada) — nenhum evento tem ainda cores
+próprias escritas, todos herdam as do deck. Ver também a **Q16**:
 se um splash deve contar para a estatística daquela cor, decidido por omissão a favor de não.
 
 De caminho, isto corrigiu um bug que ninguém tinha visto: os três écrans que desenham cores liam
@@ -57,9 +58,9 @@ O `rank` (`"Top 8"`) deu lugar a `placement` + `playersCount`, e os escalões pa
 calcular-se — ADR 0012. Os dois números são um par obrigatório desde a Q15, decidida na revisão de
 2026-09-15. Falta o mesmo que falta a tudo o resto: um torneio a sério.
 
-- [ ] Fechar um torneio pelos dois campos novos e confirmar o escalão que a folha propõe
+- [x] Fechar um torneio pelos dois campos novos e confirmar o escalão que a folha propõe
 - [ ] Confirmar que o botão de concluir trava com só um dos números preenchido
-- [ ] Confirmar que `placement` e `playersCount` aparecem no ficheiro do evento
+- [x] Confirmar que `placement` e `playersCount` aparecem no ficheiro do evento
 - [ ] Corrigir a posição em *Event details* depois do torneio fechado e ver o commit
 - [ ] Ver a pirâmide e o gráfico com mais do que um evento lá dentro
 
@@ -70,7 +71,8 @@ usá-lo entre rondas e ver se a disposição aguenta — Q13. Ver ADR 0011 para 
 
 - [ ] Contar uma ronda a sério com o telemóvel pousado entre os dois jogadores
 - [ ] Confirmar que o ecrã fica aceso a ronda inteira (`expo-keep-awake` nunca correu num APK)
-- [ ] Confirmar que a vida aparece no ficheiro do evento depois de registar a ronda
+- [x] Confirmar que a vida aparece no ficheiro do evento depois de registar a ronda — ronda 6 do
+      Reality Fracture, game 1
 
 ### Relatório de evento — escrito, por partilhar a sério
 
@@ -92,8 +94,9 @@ proxy do ambiente de desenvolvimento recusa ligações à Scryfall.
 - [ ] O primeiro pedido verdadeiro a `GET /sets` (selector de set do evento)
 - [ ] O primeiro pedido verdadeiro a `GET /cards/search` (procura de cartas)
 - [ ] A primeira execução do workflow `refresh-prices.yml` com colecção a sério
-- [ ] O primeiro build com Gradle — o `expo prebuild` e a injecção da assinatura
-      (`android.injected.signing.*`) nunca correram neste projecto
+- [x] O primeiro build com Gradle — corre verde (build 15, 2026-09-26)
+- [x] Cartas completadas pela Scryfall no telemóvel — os decks têm `scryfallId`, `typeLine` e
+      `artCropUrl` que só podiam ter vindo de lá
 
 ---
 
