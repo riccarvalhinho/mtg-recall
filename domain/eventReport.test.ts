@@ -122,6 +122,13 @@ describe('reportImageUrls', () => {
     expect(urls[0]).toBe(setSymbolUrl('fra'));
   });
 
+  it('pede o símbolo de cada colecção da lista, não só a do evento', () => {
+    // O Last Gasp deste deck é uma impressão de outra colecção (trc): tem de levar o seu símbolo.
+    const urls = reportImageUrls(real);
+    expect(urls).toContain(setSymbolUrl('fra'));
+    expect(urls).toContain(setSymbolUrl('trc'));
+  });
+
   it('uma carta por impressão, e os básicos sem impressão não pedem nada', () => {
     const urls = reportImageUrls(real);
     const printed = realDeck.cards!.filter(c => c.scryfallId);
