@@ -5,17 +5,19 @@ import { renderEventReport, reportFileName, reportImageUrls, setSymbolUrl, type 
 import { cardImageUrl } from './thumbnails';
 import type { Deck, DeckCard, Event, Opponent } from '../types';
 
-// ─── Os dados a sério ────────────────────────────────────────────────────────
+// ─── Os dados a sério, congelados ────────────────────────────────────────────
 //
-// O Pre release — Reality Fracture, tal como está em data/: 4-2, W/B, quarenta cartas. É o evento
-// do protótipo em design/event-export/, e testar contra ele é testar contra o que se vai partilhar.
+// O Pre release — Reality Fracture tal como estava a 2026-09-26: a decorrer, 4-2 depois de seis
+// rondas, W/B, quarenta cartas. É uma cópia e não o ficheiro de data/ de propósito: a app continua
+// a escrever nesse (fechou o torneio, mexeu no deck), e um teste que parte cada vez que se usa a
+// app não testa nada.
 
-const DATA = path.join(__dirname, '..', 'data');
-const read = <T,>(...parts: string[]): T => JSON.parse(fs.readFileSync(path.join(DATA, ...parts), 'utf8'));
+const FIXTURES = path.join(__dirname, '__fixtures__', 'reality-fracture');
+const read = <T,>(name: string): T => JSON.parse(fs.readFileSync(path.join(FIXTURES, name), 'utf8'));
 
-const realEvent = read<Event>('events', '2026-09-25-pre-release-reality-fracture.json');
-const realDeck = read<Deck>('decks', 'pre-release-reality-fracture.json');
-const realOpponents = read<{ items: Opponent[] }>('taxonomies', 'opponents.json').items;
+const realEvent = read<Event>('2026-09-25-pre-release-reality-fracture.json');
+const realDeck = read<Deck>('pre-release-reality-fracture.json');
+const realOpponents = read<{ items: Opponent[] }>('opponents.json').items;
 const real: ReportInput = { event: realEvent, deck: realDeck, opponents: realOpponents };
 
 // ─── Auxiliares ──────────────────────────────────────────────────────────────

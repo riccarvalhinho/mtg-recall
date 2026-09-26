@@ -1,0 +1,333 @@
+{
+  "id": "pre-release-reality-fracture",
+  "name": "Pre release - Reality Fracture",
+  "colors": {
+    "main": [
+      "W",
+      "B"
+    ],
+    "splash": []
+  },
+  "format": "Sealed",
+  "archetype": "Grind graveyard",
+  "thumbnailCardId": "a803dbe7-153a-4e92-ad4d-c2babebe003d",
+  "cards": [
+    {
+      "name": "Academic Ascent",
+      "quantity": 1,
+      "scryfallId": "730d8c28-1e58-4b8e-89e9-445d154d2e83",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/3/730d8c28-1e58-4b8e-89e9-445d154d2e83.jpg?1788878081"
+    },
+    {
+      "name": "Break Under Pressure",
+      "quantity": 1,
+      "scryfallId": "46974d94-e900-43e4-92b5-4fb9b9f7cf46",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/4/6/46974d94-e900-43e4-92b5-4fb9b9f7cf46.jpg?1789385622"
+    },
+    {
+      "name": "Campus Crier",
+      "quantity": 2,
+      "scryfallId": "6047b14c-91d5-4f8e-af3f-057a541e2546",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Creature — Human Advisor",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/0/6047b14c-91d5-4f8e-af3f-057a541e2546.jpg?1788878120"
+    },
+    {
+      "name": "Cast Away Doubt",
+      "quantity": 1,
+      "scryfallId": "3b5b28a4-0abd-4dc2-9856-c9a8d27f6a2d",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Sorcery",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/b/3b5b28a4-0abd-4dc2-9856-c9a8d27f6a2d.jpg?1788353191"
+    },
+    {
+      "name": "Charge the Sanctum",
+      "quantity": 1,
+      "scryfallId": "87b40df5-5c0a-41f5-a09c-a04f17066a91",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{R/W}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "W",
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/7/87b40df5-5c0a-41f5-a09c-a04f17066a91.jpg?1788521570"
+    },
+    {
+      "name": "Danitha, Spear of Agony",
+      "quantity": 1,
+      "scryfallId": "6489814b-3d10-423e-988c-324740d36748",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Human Knight",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/4/6489814b-3d10-423e-988c-324740d36748.jpg?1789127194"
+    },
+    {
+      "name": "Extended Absence",
+      "quantity": 1,
+      "scryfallId": "eb4b6ed8-782e-4473-abc9-d50bf2275c6a",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{3}{B}",
+      "cmc": 4,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/b/eb4b6ed8-782e-4473-abc9-d50bf2275c6a.jpg?1789556713"
+    },
+    {
+      "name": "Hexhaven Battalion",
+      "quantity": 1,
+      "scryfallId": "3b6ac80e-c726-4bd0-893a-e666041a04a6",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{4}{W}{W}",
+      "cmc": 6,
+      "typeLine": "Sorcery",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/3/b/3b6ac80e-c726-4bd0-893a-e666041a04a6.jpg?1789556695"
+    },
+    {
+      "name": "Last Gasp",
+      "quantity": 1,
+      "scryfallId": "6d9c8d6b-b49f-4777-baa3-6381a624e3c6",
+      "setCode": "trc",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/6/d/6d9c8d6b-b49f-4777-baa3-6381a624e3c6.jpg?1785981178"
+    },
+    {
+      "name": "Mabel, Bitter Recluse",
+      "quantity": 1,
+      "scryfallId": "b2a412b0-2ae4-4552-bc5e-70654b6b9b4e",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{B}",
+      "cmc": 1,
+      "typeLine": "Legendary Creature — Mouse Warlock",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/b/2/b2a412b0-2ae4-4552-bc5e-70654b6b9b4e.jpg?1789385677"
+    },
+    {
+      "name": "Memory Trap",
+      "quantity": 1,
+      "scryfallId": "2f5345ae-4489-4d05-b2d5-c71285254f05",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{W}",
+      "cmc": 3,
+      "typeLine": "Enchantment",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/2/f/2f5345ae-4489-4d05-b2d5-c71285254f05.jpg?1788866058"
+    },
+    {
+      "name": "Meticulous Commons",
+      "quantity": 1,
+      "scryfallId": "93ac525e-1919-43dd-aba4-073b7e4c1768",
+      "setCode": "fra",
+      "rarity": "common",
+      "cmc": 0,
+      "typeLine": "Land",
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/3/93ac525e-1919-43dd-aba4-073b7e4c1768.jpg?1789557002"
+    },
+    {
+      "name": "Paradox Shaper // Omit Variables",
+      "quantity": 1,
+      "scryfallId": "e61b9d48-0ace-4453-afe0-a1024444bac0",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{1}{U/B} // {U/B}",
+      "cmc": 2,
+      "typeLine": "Creature — Octopus Wizard // Sorcery",
+      "colors": [
+        "U",
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/6/e61b9d48-0ace-4453-afe0-a1024444bac0.jpg?1788329390"
+    },
+    {
+      "name": "Plains",
+      "quantity": 8,
+      "typeLine": "Basic Land — Plains"
+    },
+    {
+      "name": "Proft, Sinister Mastermind",
+      "quantity": 2,
+      "scryfallId": "d36b0e06-cb82-4c48-bf35-e76f109116f6",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Legendary Creature — Human Rogue",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/d/3/d36b0e06-cb82-4c48-bf35-e76f109116f6.jpg?1789127196"
+    },
+    {
+      "name": "Prophesied End",
+      "quantity": 1,
+      "scryfallId": "1f95399a-9766-4f3d-aa6a-ece55e0530d9",
+      "setCode": "fra",
+      "rarity": "uncommon",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Instant",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/1/f/1f95399a-9766-4f3d-aa6a-ece55e0530d9.jpg?1788951920"
+    },
+    {
+      "name": "Rank Rat",
+      "quantity": 1,
+      "scryfallId": "4ff6da82-d7dd-4b59-b7e6-30670cea7169",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Creature — Zombie Rat",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/4/f/4ff6da82-d7dd-4b59-b7e6-30670cea7169.jpg?1789556727"
+    },
+    {
+      "name": "Return to the Light Realms",
+      "quantity": 1,
+      "scryfallId": "9e72f397-2384-40f1-882b-f627664d97df",
+      "setCode": "fra",
+      "rarity": "mythic",
+      "manaCost": "{7}{W}{W}",
+      "cmc": 9,
+      "typeLine": "Sorcery",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/9/e/9e72f397-2384-40f1-882b-f627664d97df.jpg?1788878107"
+    },
+    {
+      "name": "Shatterwing Pegasus",
+      "quantity": 1,
+      "scryfallId": "e29095de-59ec-4562-ba8e-73f952e457ae",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{W}",
+      "cmc": 3,
+      "typeLine": "Creature — Pegasus",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/2/e29095de-59ec-4562-ba8e-73f952e457ae.jpg?1789385580"
+    },
+    {
+      "name": "Solve for Disappointment",
+      "quantity": 1,
+      "scryfallId": "7beaa8c9-1a2c-4c88-b579-91e371d8d9e3",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{B}",
+      "cmc": 2,
+      "typeLine": "Sorcery",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/b/7beaa8c9-1a2c-4c88-b579-91e371d8d9e3.jpg?1788878155"
+    },
+    {
+      "name": "Surgical Precision",
+      "quantity": 1,
+      "scryfallId": "d3acf176-ef02-4729-88c4-0f0dfbfdada4",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{1}{W}",
+      "cmc": 2,
+      "typeLine": "Sorcery",
+      "colors": [
+        "W"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/d/3/d3acf176-ef02-4729-88c4-0f0dfbfdada4.jpg?1789385570"
+    },
+    {
+      "name": "Swamp",
+      "quantity": 8,
+      "typeLine": "Basic Land — Swamp"
+    },
+    {
+      "name": "Theoretical Necromancer",
+      "quantity": 1,
+      "scryfallId": "e36a7908-1e22-494b-adb4-e72ac0974d62",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{B}",
+      "cmc": 3,
+      "typeLine": "Creature — Vampire Warlock",
+      "colors": [
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/e/3/e36a7908-1e22-494b-adb4-e72ac0974d62.jpg?1789556734"
+    },
+    {
+      "name": "Vindictive Triumph",
+      "quantity": 1,
+      "scryfallId": "a803dbe7-153a-4e92-ad4d-c2babebe003d",
+      "setCode": "fra",
+      "rarity": "rare",
+      "manaCost": "{W}{B}{B}",
+      "cmc": 3,
+      "typeLine": "Instant",
+      "colors": [
+        "W",
+        "B"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/a/8/a803dbe7-153a-4e92-ad4d-c2babebe003d.jpg?1789127665"
+    }
+  ]
+}
