@@ -1,6 +1,7 @@
 # Exportar um evento — proposta
 
-> Estado: **proposta, por decidir.** Nada disto está na app. O protótipo
+> Estado: **formato decidido — ADR 0014**; layout aprovado com as alterações de 2026-09-26 (ver o
+> fim). Nada disto está ainda na app. O protótipo
 > (`prototipo-reality-fracture.html`) é o ficheiro que a app escreveria para o *Pre release — Reality
 > Fracture*, gerado a partir dos dados reais — abre-se no telemóvel e manda-se pelo Telegram para
 > testar a coisa a sério antes de escrever uma linha na app.
@@ -69,9 +70,11 @@ partilha só o URL (o `Share` do React Native, sem módulo novo).
 - Fica como recurso **só se** o teste do ponto A mostrar que o HTML não abre bem num dos telemóveis
   do grupo.
 
-### A recomendação
+### A decisão — ADR 0014
 
-**Começar por A, desenhado para B vir depois sem trabalho novo.** O renderer é lógica pura —
+**Sempre o ficheiro HTML (A)**, partilhado pela folha de partilha do Android: o botão Export abre a
+lista de apps (Telegram, WhatsApp, …) e escolhe-se ali. O renderer fica pronto para B vir um dia
+sem trabalho novo. O renderer é lógica pura —
 `(evento, deck, adversários) → string HTML` — e vive em `domain/eventReport.ts`, com testes. A app
 usa-o para escrever o ficheiro; o `tools/build-bundle.mts` pode usá-lo amanhã para escrever as
 páginas do Pages, porque `domain/` corre igual em Node.
@@ -116,14 +119,15 @@ como a app. Os nomes e textos em inglês (convenção da app).
 │ THE DECK                             │  3 · O DECK
 │ Pre release - Reality Fracture       │     nome, cores, arquétipo, nº cartas
 │ ⚪⚫  Grind graveyard · 40 cards       │
-│ ┌ curva de mana ─────────────────┐   │     curva + contagem por tipo
-│ │ ▁ ▂ █ █ ▂ ▁ ▂                  │   │     (o analisador, em pequeno)
-│ └ Creatures 10 · Instants 7 … ───┘   │
-│ LANDS                            17  │     a decklist como no Deck Detail:
-│ [arte] 1 Meticulous Commons  ◆       │     recorte da arte, qtd, nome,
-│ CREATURES                        10  │     raridade, custo de mana
-│ [arte] 2 Campus Crier      ◆ (1)⚪    │
-│   … toque → a carta inteira por cima │     ← o ponto da coisa
+│ ┌ MANA CURVE ────────┬ COLORS ──┐   │     curva empilhada: criaturas em
+│ │       ▒  ▒         │   ◯      │   │     baixo, outros feitiços em cima;
+│ │ ▁  █  █  ▁  ▁  ▁   │  ⚪ 42%   │   │     à direita o anel das cores, com
+│ │                    │  ⚫ 50%   │   │     as cores de mana a sério
+│ └ Creatures 10 · Instants 7 … ──┘   │
+│ CREATURES                        10  │     a decklist como no Deck Detail:
+│ [arte] 2 Campus Crier      ◆ (1)⚪    │     recorte da arte, qtd, nome,
+│   … toque → a carta inteira por cima │     raridade, custo de mana
+│ LANDS                            17  │     ← os terrenos no fim
 ├──────────────────────────────────────┤
 │ ROUND BY ROUND                       │  4 · MATCHES
 │ R1 [L] Marcelo Marino  ⚪🟢·🔴 1–2 ›  │     fechadas: quem, cores, games
@@ -142,9 +146,18 @@ Decisões dentro do layout, e porquê:
 - **Os números são os da app, e só esses:** recorde, pontos, win rate. Mais os games (9–7), que a app
   não mostra em número mas cabem numa linha e dizem se os 4-2 foram apertados.
 - **As pastilhas W/L por ronda** são o "track record" de relance, e levam à ronda.
-- **A decklist agrupa por tipo pela ordem da app** (`groupByType`: pela contagem, por isso num
-  Limited os terrenos saem primeiro). Pô-los no fim leria melhor para quem recebe, mas desviava do
-  "igual ao que vejo na app". Fica a questão em aberto na Q19.
+- **A decklist agrupa por tipo pela ordem da app** (`groupByType`, pela contagem) **mas com os
+  terrenos sempre no fim.** Num Limited eles são o grupo maior e saíam primeiro; para quem recebe o
+  que interessa são os feitiços. Decidido a 2026-09-26.
+- **A curva é empilhada: criaturas em baixo, o resto em cima**, com a legenda e os dois totais. Os
+  baldes são os do `manaCurve` (sem terrenos, 7+ no fim). Diz de relance se o deck tem corpo em
+  cada custo ou se os 3 são todos remoção.
+- **O anel das cores**, pequeno, à direita da curva: a regra do `colorDistribution` (uma carta de
+  duas cores conta nas duas, por isso é proporção entre cores e não fatia de um total) e as cores
+  de `theme/mana.ts` — `bg` para o branco, `borderSel` para as outras, porque os `bg` escuros não se
+  veem no fundo do cartão. Cada fatia tem ao lado o pip e a percentagem, para a leitura não depender
+  só da cor. Os híbridos aparecem como fatias finas (o `{R/W}` do Charge the Sanctum dá 4% de
+  vermelho), o que é verdade sobre o deck.
 - **A carta inteira abre por cima**, com `:target`: a imagem `normal` da Scryfall (~70 KB) só
   descarrega quando se toca — os recortes pequenos da lista é que carregam logo.
 - **As rondas vêm fechadas** e mostram já o adversário e os games; abrir dá game a game. Uma ronda de
