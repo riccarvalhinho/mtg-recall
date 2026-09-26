@@ -93,6 +93,31 @@ describe('renderEventReport — o evento a sério', () => {
   });
 });
 
+describe('renderEventReport — a capa', () => {
+  const html = renderEventReport(real);
+
+  it('mostra a arte da capa inteira no topo, antes do título', () => {
+    const cover = realDeck.cards!.find(c => c.scryfallId === realDeck.thumbnailCardId)!;
+    const art = html.indexOf(`<img class="cover-art" src="${cover.artCropUrl}"`);
+    expect(art).toBeGreaterThan(-1);
+    expect(art).toBeLessThan(html.indexOf('<h1>'));
+  });
+
+  it('a linha da capa abre a carta inteira, a mesma da decklist', () => {
+    const cover = realDeck.cards!.find(c => c.scryfallId === realDeck.thumbnailCardId)!;
+    const link = html.match(/<a class="cover-link" href="#([^"]+)">Cover · ([^<]+) <span>/);
+    expect(link?.[2]).toBe(cover.name);
+    expect(html).toContain(`<div class="lb" id="${link![1]}"`);
+  });
+
+  it('sem capa, o cabeçalho fica só com o texto', () => {
+    const plain = renderEventReport({ event: event(), opponents: [] });
+    expect(plain).toContain('<header class="cover flat">');
+    expect(plain).not.toContain('<img class="cover-art"');
+    expect(plain).not.toContain('class="cover-link" href');
+  });
+});
+
 describe('renderEventReport — imagens embutidas', () => {
   it('troca cada URL pela versão embutida', () => {
     const urls = reportImageUrls(real);

@@ -169,19 +169,6 @@ interface Context {
   overlayIds: Map<string, string>;
 }
 
-/**
- * Como a capa do evento aparece no topo. Em experiência — ver design/event-export/README.md.
- *
- *  - `backdrop`: a arte por trás do título, escurecida (a primeira versão).
- *  - `banner`: a arte inteira e nítida, a largura toda, com o título por baixo.
- *  - `card`: a carta inteira, pequena, ao lado do título, como a capa de um livro.
- */
-export type CoverStyle = 'backdrop' | 'banner' | 'card';
-
-export interface ReportOptions {
-  cover?: CoverStyle;
-}
-
 /** A versão embutida de um URL, se houver; senão o próprio URL. */
 function src(ctx: Context, url: string): string {
   return ctx.assets.get(url) ?? url;
@@ -413,14 +400,9 @@ function standingLine(event: Event): string | undefined {
   return tier ? `${placement} · ${tierLabel(tier)}` : placement;
 }
 
-export function renderEventReport(
-  input: ReportInput,
-  assets: ReportAssets = new Map(),
-  options: ReportOptions = {},
-): string {
+export function renderEventReport(input: ReportInput, assets: ReportAssets = new Map()): string {
   const { event, deck, opponents } = input;
   const ctx: Context = { assets, symbols: new SymbolSheet(), overlayIds: new Map() };
-  const coverStyle = options.cover ?? 'backdrop';
 
   const stats = calcEventStats(event);
   const games = event.matches.flatMap(m => m.games ?? []);
@@ -506,41 +488,33 @@ export function renderEventReport(
       }${metaPips}</p>
       ${standing ? `<p class="meta standing">${esc(standing)}</p>` : ''}`;
 
-  // A carta da capa: a do deck cuja arte é a que ilustra o evento. É ela que a capa abre ao toque.
+  // A capa do evento, a largura toda e nítida, com o título por baixo — escolhida entre três
+  // propostas (design/event-export/README.md). A arte escurecida por trás do título, que foi a
+  // primeira, fazia da capa uma textura: quem abre o relatório tem de a ver.
+  //
+  // A carta da capa é a do deck cuja arte ilustra o evento, e a linha "Cover · …" abre-a inteira
+  // — a mesma sobreposição da decklist.
   const coverCard = hero ? cards.find(card => card.artCropUrl === hero) : undefined;
   const coverAnchor = coverCard?.scryfallId ? ctx.overlayIds.get(coverCard.scryfallId) : undefined;
-  const coverFull = cardImageUrl(coverCard?.scryfallId);
+  const coverLine = !coverCard
+    ? ''
+    : coverAnchor
+      ? `<a class="cover-link" href="#${coverAnchor}">Cover · ${esc(coverCard.name)} <span>›</span></a>`
+      : `<p class="cover-link">Cover · ${esc(coverCard.name)}</p>`;
 
-  let header: string;
-  if (hero && coverStyle === 'banner') {
-    const link = coverCard
-      ? coverAnchor
-        ? `<a class="cover-link" href="#${coverAnchor}">Cover · ${esc(coverCard.name)} <span>›</span></a>`
-        : `<p class="cover-link">Cover · ${esc(coverCard.name)}</p>`
-      : '';
-    header = `
-  <header class="cover-banner">
+  const header = hero
+    ? `
+  <header class="cover">
     <img class="cover-art" src="${src(ctx, hero)}" alt="${coverCard ? esc(coverCard.name) : ''}">
     <div class="hero-in">${heroText}
-      ${link}
+      ${coverLine}
     </div>
-  </header>`;
-  } else if (hero && coverStyle === 'card') {
-    const plate = `<img src="${src(ctx, coverFull ?? hero)}" alt="${coverCard ? esc(coverCard.name) : ''}">`;
-    header = `
-  <header class="cover-card">
-    ${coverAnchor ? `<a class="cover-plate" href="#${coverAnchor}" aria-label="Cover card">${plate}</a>` : `<span class="cover-plate">${plate}</span>`}
-    <div class="cover-text">${heroText}
-    </div>
-  </header>`;
-  } else {
-    const heroStyle = hero ? ` style="background-image:url(&quot;${src(ctx, hero)}&quot;)"` : '';
-    header = `
-  <header class="hero${hero ? '' : ' flat'}"${heroStyle}>
+  </header>`
+    : `
+  <header class="cover flat">
     <div class="hero-in">${heroText}
     </div>
   </header>`;
-  }
 
   return `<!doctype html>
 <html lang="en">
@@ -610,31 +584,18 @@ a { color: inherit; text-decoration: none; }
 img { max-width: 100%; }
 .page { max-width: 600px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
 
-.hero { position: relative; margin-inline: -16px; min-height: 260px; display: flex; align-items: flex-end;
-  background: var(--card) center 30% / cover no-repeat; }
-.hero.flat { min-height: 0; padding-top: 32px; background: none; }
-.hero::after { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(19,15,10,.15) 0%, rgba(19,15,10,.55) 45%, var(--bg) 100%); }
-.hero.flat::after { display: none; }
+.cover { position: relative; margin-inline: -16px; }
+.cover.flat { padding-top: 32px; }
 .hero-in { position: relative; z-index: 1; padding: 0 16px 18px; width: 100%; }
-
-.cover-banner { position: relative; margin-inline: -16px; }
 .cover-art { display: block; width: 100%; aspect-ratio: 626 / 457; max-height: 62vh; object-fit: cover;
   object-position: center 30%; background: var(--card);
   -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
-.cover-banner .hero-in { margin-top: -64px; padding-bottom: 20px; }
+.cover-art + .hero-in { margin-top: -64px; padding-bottom: 20px; }
 .cover-link { display: inline-flex; gap: 6px; margin: 10px 0 0; font-size: 14px; font-style: italic; color: var(--text-dim); }
 .cover-link span { color: var(--gold-dim); }
 a.cover-link:hover, a.cover-link:focus-visible { color: var(--text-sec); }
 
-.cover-card { display: grid; grid-template-columns: 104px 1fr; gap: 16px; align-items: center; padding-block: 28px 22px; }
-.cover-plate { display: block; }
-.cover-plate img { display: block; width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 5% / 3.6%;
-  background: var(--card); box-shadow: 0 10px 28px rgba(0,0,0,.55), 0 0 0 1px var(--border); transform: rotate(-2deg); }
-a.cover-plate:focus-visible img { box-shadow: 0 0 0 2px var(--gold-dim); }
-.cover-text { min-width: 0; }
-.cover-card h1 { font-size: clamp(22px, 6vw, 30px); }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .badge { font: 500 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold);
   border: 1px solid var(--gold-dim); border-radius: 999px; padding: 5px 10px; background: rgba(19,15,10,.6);

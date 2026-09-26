@@ -5,20 +5,18 @@
  * um APK. As imagens ficam como links para a Scryfall — embuti-las é trabalho do telemóvel
  * (`services/eventExport.ts`), que tem a cache das imagens.
  *
- *   npm run report -- 2026-09-25-pre-release-reality-fracture [saída.html] [--cover=banner|card|backdrop]
+ *   npm run report -- 2026-09-25-pre-release-reality-fracture [saída.html]
  *
  * Sem saída, escreve em design/event-export/<id>.html.
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { renderEventReport, reportFileName, type CoverStyle } from '../domain/eventReport.ts';
+import { renderEventReport, reportFileName } from '../domain/eventReport.ts';
 import type { Deck, Event, Opponent } from '../types/index.ts';
 import { loadAll } from './load-data.mts';
 import { repoRoot, rel } from './paths.mts';
 
-const args = process.argv.slice(2);
-const cover = args.find((arg) => arg.startsWith('--cover='))?.slice('--cover='.length) as CoverStyle | undefined;
-const [id, output] = args.filter((arg) => !arg.startsWith('--'));
+const [id, output] = process.argv.slice(2);
 const data = loadAll();
 
 if (!id) {
@@ -38,5 +36,5 @@ const opponents = (data.opponents.data as { items: Opponent[] }).items;
 
 const target = output ? path.resolve(output) : path.join(repoRoot, 'design', 'event-export', reportFileName(event));
 fs.mkdirSync(path.dirname(target), { recursive: true });
-fs.writeFileSync(target, renderEventReport({ event, deck, opponents }, new Map(), { cover }));
+fs.writeFileSync(target, renderEventReport({ event, deck, opponents }));
 console.log(`${rel(target)} — ${Math.round(fs.statSync(target).size / 1024)} KB`);
