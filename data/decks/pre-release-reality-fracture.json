@@ -113,8 +113,18 @@
       "artCropUrl": "https://cards.scryfall.io/art_crop/front/8/2/8295c48c-b4dd-4bc1-a206-04cf12b79bbd.jpg?1789470746"
     },
     {
-      "name": "Hallway Heckler",
-      "quantity": 1
+      "name": "Hallway Heckler // Vicious Verse",
+      "quantity": 1,
+      "scryfallId": "7e324816-552f-455d-97c4-5ea6b26d2e6e",
+      "setCode": "fra",
+      "rarity": "common",
+      "manaCost": "{2}{R} // {B/R}",
+      "cmc": 3,
+      "typeLine": "Creature — Elemental Sorcerer // Sorcery",
+      "colors": [
+        "R"
+      ],
+      "artCropUrl": "https://cards.scryfall.io/art_crop/front/7/e/7e324816-552f-455d-97c4-5ea6b26d2e6e.jpg?1789127576"
     },
     {
       "name": "Heartstring Puller",
