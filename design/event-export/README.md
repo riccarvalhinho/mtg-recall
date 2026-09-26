@@ -178,3 +178,9 @@ Decisões dentro do layout, e porquê:
 - O sideboard aparece fechado, depois da lista principal.
 - As fontes continuam a vir do Google Fonts; sem rede caem para Georgia. Embutir as duas famílias
   seriam ~150 KB — fica para quando se vir que faz falta.
+- **A capa do evento está no topo, inteira e nítida** (decidido a 2026-09-26). Havia três propostas:
+  a arte escurecida por trás do título (a primeira versão, que fazia da capa uma textura), a arte a
+  largura toda com o título por baixo, e a carta inteira pequena ao lado do título, como a capa de
+  um livro. Ficou a segunda — é a mesma leitura do cartão-herói da Home, e é a primeira coisa que
+  quem abre o ficheiro vê. Por baixo da classificação, a linha *Cover · Master of Barbs ›* abre a
+  carta inteira. Sem capa (um evento sem deck), o cabeçalho fica só com o texto.

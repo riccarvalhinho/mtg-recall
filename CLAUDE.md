@@ -527,7 +527,7 @@ dentro: gera **rondas nuas** em vez de guardar dois números, porque o recorde s
 as N rondas, que é um commit e não oito.
 
 **O relatório de um evento partilha-se (ADR 0014).** O botão de partilhar no cabeçalho do Event
-Detail gera uma página HTML só — o torneio, os números da StatsBar, uma pastilha W/L por ronda, o
+Detail gera uma página HTML só — a capa do evento a largura toda no topo, o torneio, os números da StatsBar, uma pastilha W/L por ronda, o
 deck com a curva empilhada (criaturas / o resto) e o anel das cores, a decklist como no Deck Detail
 mas **com os terrenos no fim**, a carta inteira ao toque, e ronda a ronda contra quem — e entrega-a à
 folha de partilha do Android, onde se escolhe o Telegram ou o WhatsApp. `domain/eventReport.ts` é a

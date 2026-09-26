@@ -165,6 +165,8 @@ class SymbolSheet {
 interface Context {
   assets: ReportAssets;
   symbols: SymbolSheet;
+  /** `scryfallId` → a âncora da carta inteira, para a capa poder abrir a mesma sobreposição. */
+  overlayIds: Map<string, string>;
 }
 
 /** A versão embutida de um URL, se houver; senão o próprio URL. */
@@ -230,6 +232,7 @@ function cardRow(ctx: Context, card: DeckCard, id: string): { row: string; overl
 
   const full = cardImageUrl(card.scryfallId);
   if (!full) return { row: `<li><span class="card">${inner}</span></li>`, overlay: '' };
+  if (!ctx.overlayIds.has(card.scryfallId!)) ctx.overlayIds.set(card.scryfallId!, id);
 
   return {
     row: `<li id="${id}-row"><a class="card" href="#${id}">${inner}</a></li>`,
@@ -399,7 +402,7 @@ function standingLine(event: Event): string | undefined {
 
 export function renderEventReport(input: ReportInput, assets: ReportAssets = new Map()): string {
   const { event, deck, opponents } = input;
-  const ctx: Context = { assets, symbols: new SymbolSheet() };
+  const ctx: Context = { assets, symbols: new SymbolSheet(), overlayIds: new Map() };
 
   const stats = calcEventStats(event);
   const games = event.matches.flatMap(m => m.games ?? []);
@@ -477,7 +480,41 @@ export function renderEventReport(input: ReportInput, assets: ReportAssets = new
 
   // O resto dos pips pede classes a meio do desenho; o CSS só se escreve no fim.
   const metaPips = shownColors ? `<span class="pips">${pips(ctx, shownColors)}</span>` : '';
-  const heroStyle = hero ? ` style="background-image:url(&quot;${src(ctx, hero)}&quot;)"` : '';
+  const heroText = `
+      <div class="badges">${badges}</div>
+      <h1>${esc(event.name)}</h1>
+      <p class="meta"><span>${esc(formatDate(event.date))}</span>${
+        event.location ? `<span>${esc(event.location)}</span>` : ''
+      }${metaPips}</p>
+      ${standing ? `<p class="meta standing">${esc(standing)}</p>` : ''}`;
+
+  // A capa do evento, a largura toda e nítida, com o título por baixo — escolhida entre três
+  // propostas (design/event-export/README.md). A arte escurecida por trás do título, que foi a
+  // primeira, fazia da capa uma textura: quem abre o relatório tem de a ver.
+  //
+  // A carta da capa é a do deck cuja arte ilustra o evento, e a linha "Cover · …" abre-a inteira
+  // — a mesma sobreposição da decklist.
+  const coverCard = hero ? cards.find(card => card.artCropUrl === hero) : undefined;
+  const coverAnchor = coverCard?.scryfallId ? ctx.overlayIds.get(coverCard.scryfallId) : undefined;
+  const coverLine = !coverCard
+    ? ''
+    : coverAnchor
+      ? `<a class="cover-link" href="#${coverAnchor}">Cover · ${esc(coverCard.name)} <span>›</span></a>`
+      : `<p class="cover-link">Cover · ${esc(coverCard.name)}</p>`;
+
+  const header = hero
+    ? `
+  <header class="cover">
+    <img class="cover-art" src="${src(ctx, hero)}" alt="${coverCard ? esc(coverCard.name) : ''}">
+    <div class="hero-in">${heroText}
+      ${coverLine}
+    </div>
+  </header>`
+    : `
+  <header class="cover flat">
+    <div class="hero-in">${heroText}
+    </div>
+  </header>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -497,16 +534,7 @@ ${ctx.symbols.css()}
 </head>
 <body>
 <div class="page">
-  <header class="hero${hero ? '' : ' flat'}"${heroStyle}>
-    <div class="hero-in">
-      <div class="badges">${badges}</div>
-      <h1>${esc(event.name)}</h1>
-      <p class="meta"><span>${esc(formatDate(event.date))}</span>${
-        event.location ? `<span>${esc(event.location)}</span>` : ''
-      }${metaPips}</p>
-      ${standing ? `<p class="meta standing">${esc(standing)}</p>` : ''}
-    </div>
-  </header>
+${header}
 
   <section aria-label="Result">
     <div class="stats">
@@ -556,13 +584,18 @@ a { color: inherit; text-decoration: none; }
 img { max-width: 100%; }
 .page { max-width: 600px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px; }
 
-.hero { position: relative; margin-inline: -16px; min-height: 260px; display: flex; align-items: flex-end;
-  background: var(--card) center 30% / cover no-repeat; }
-.hero.flat { min-height: 0; padding-top: 32px; background: none; }
-.hero::after { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(19,15,10,.15) 0%, rgba(19,15,10,.55) 45%, var(--bg) 100%); }
-.hero.flat::after { display: none; }
+.cover { position: relative; margin-inline: -16px; }
+.cover.flat { padding-top: 32px; }
 .hero-in { position: relative; z-index: 1; padding: 0 16px 18px; width: 100%; }
+.cover-art { display: block; width: 100%; aspect-ratio: 626 / 457; max-height: 62vh; object-fit: cover;
+  object-position: center 30%; background: var(--card);
+  -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 58%, transparent 100%); }
+.cover-art + .hero-in { margin-top: -64px; padding-bottom: 20px; }
+.cover-link { display: inline-flex; gap: 6px; margin: 10px 0 0; font-size: 14px; font-style: italic; color: var(--text-dim); }
+.cover-link span { color: var(--gold-dim); }
+a.cover-link:hover, a.cover-link:focus-visible { color: var(--text-sec); }
+
 .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
 .badge { font: 500 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--gold);
   border: 1px solid var(--gold-dim); border-radius: 999px; padding: 5px 10px; background: rgba(19,15,10,.6);
