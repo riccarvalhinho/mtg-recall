@@ -9,6 +9,12 @@
   "placement": 12,
   "playersCount": 26,
   "deckId": "pre-release-reality-fracture",
+  "deckColors": {
+    "main": [
+      "R"
+    ],
+    "splash": []
+  },
   "matches": [
     {
       "round": 1,
