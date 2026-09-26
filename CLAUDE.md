@@ -47,6 +47,7 @@ conhecimento prévio de padrões ou convenções.
 | Segredos | `expo-secure-store` (token do GitHub) |
 | Preferências | AsyncStorage, fora de `data/` — ADR 0010 |
 | Ecrã aceso | `expo-keep-awake`, só enquanto o contador de vida está aberto |
+| Partilhar | `expo-file-system` + `expo-sharing` — o relatório de evento em HTML (ADR 0014) |
 | Distribuição | APK compilado no GitHub Actions, publicado em Releases (ADR 0008) |
 | Câmara / OCR | `expo-camera` + ML Kit Text Recognition, local (ADR 0009) |
 | Card data | Scryfall API |
@@ -74,7 +75,7 @@ conhecimento prévio de padrões ou convenções.
     decks.tsx               Decks
     stats.tsx               Stats
     profile.tsx             Settings (token + sincronização)
-  event/[id].tsx            Event Detail (push, sem tab bar)
+  event/[id].tsx            Event Detail (push, sem tab bar) — com o botão de partilhar o relatório
   deck/[id].tsx             Deck Detail + analisador (push, sem tab bar)
   opponent/[id].tsx         Opponent Detail — registo + head-to-head (push, sem tab bar)
 
@@ -85,12 +86,12 @@ conhecimento prévio de padrões ou convenções.
 /domain                     lógica pura, sem I/O e testável — outbox, slug, base64, sets, search,
                             match, manaSelection, manaCost, deck, deckList, basicLands, cards,
                             cardCache, collection, opponents, thumbnails, ocrDecklist, dates,
-                            lifeCounter, holdRepeat, placement, eventColors, quickRecord
+                            lifeCounter, holdRepeat, placement, eventColors, quickRecord, eventReport
 /services                   tudo o que fala com o mundo: github, localStore, outbox, sync, repoFiles,
-                            scryfall, imagePrefetch, ocr, preferences, lifeSession
+                            scryfall, imagePrefetch, ocr, preferences, lifeSession, eventExport
 /store                      useEventsStore (Zustand) + useScanStore (a gaveta do scan)
                             + useLifeStore (a gaveta do contador de vida)
-/theme                      colors, typography, mana
+/theme                      colors, typography, mana, rarity
 /types                      tipos TypeScript — derivam dos schemas
 /assets/mana/symbols.ts     símbolos de mana em SVG, locais (WUBRG)
 /assets/mana/costSymbols.ts símbolos de custo, gerados a partir da Scryfall por workflow
@@ -102,7 +103,7 @@ conhecimento prévio de padrões ou convenções.
   collection/cards.json     a colecção; prices.json e value-history.json são escritos pelo CI
   taxonomies/opponents.json adversários, por referência
 
-/tools                      validate-data.mts, build-bundle.mts, refresh-prices.mts
+/tools                      validate-data.mts, build-bundle.mts, refresh-prices.mts, render-report.mts
 /site                       o que vai para o GitHub Pages (o bundle é gerado, não commitado)
 /docs
   adr/                      decisões estruturais
@@ -163,6 +164,7 @@ npm run validate    # valida data/**/*.json contra data/schema/*.json
 npm run bundle      # gera o bundle.json que a app lê ao instalar/restaurar
 npm run test        # testes dos módulos puros
 npm run check       # validate + typecheck + test, o que o CI corre
+npm run report -- <id>  # o relatório de um evento em HTML, como a app o partilha
 npm run prices      # actualiza preços da colecção (corre no CI, não à mão)
 npm start           # Expo em desenvolvimento
 ```
@@ -523,6 +525,20 @@ gravam-se as N rondas de uma vez. `domain/quickRecord.ts` tem a lógica e os tes
 dentro: gera **rondas nuas** em vez de guardar dois números, porque o recorde sai sempre de
 `matches` e uma segunda verdade obrigaria seis sítios a saber das duas; e grava **uma vez só** para
 as N rondas, que é um commit e não oito.
+
+**O relatório de um evento partilha-se (ADR 0014).** O botão de partilhar no cabeçalho do Event
+Detail gera uma página HTML só — o torneio, os números da StatsBar, uma pastilha W/L por ronda, o
+deck com a curva empilhada (criaturas / o resto) e o anel das cores, a decklist como no Deck Detail
+mas **com os terrenos no fim**, a carta inteira ao toque, e ronda a ronda contra quem — e entrega-a à
+folha de partilha do Android, onde se escolhe o Telegram ou o WhatsApp. `domain/eventReport.ts` é a
+página e tem testes; `services/eventExport.ts` é o resto.
+
+Duas regras lá dentro. **Nada do que é essencial depende de JavaScript** — as rondas abrem com
+`<details>` e a carta com `:target` —, porque no iPhone o Telegram abre documentos num visualizador
+que pode não correr scripts. E **as imagens vão dentro do ficheiro**: cache do `expo-image` primeiro,
+rede depois, e o que faltar fica como link para a Scryfall — exportar nunca falha por causa de uma
+imagem. Um Limited dá 3–4 MB. `npm run report -- <id>` gera a mesma página no computador, com as
+imagens como links.
 
 **Pela Home, sem evento, não se grava nada.** A app é um registo de torneios; meia dúzia de jogos na
 mesa da cozinha estragariam o win rate de sempre e a lista de adversários.

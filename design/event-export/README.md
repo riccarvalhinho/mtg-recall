@@ -1,10 +1,12 @@
-# Exportar um evento — proposta
+# Exportar um evento
 
-> Estado: **formato decidido — ADR 0014**; layout aprovado com as alterações de 2026-09-26 (ver o
-> fim). Nada disto está ainda na app. O protótipo
-> (`prototipo-reality-fracture.html`) é o ficheiro que a app escreveria para o *Pre release — Reality
-> Fracture*, gerado a partir dos dados reais — abre-se no telemóvel e manda-se pelo Telegram para
-> testar a coisa a sério antes de escrever uma linha na app.
+> Estado: **feito** — `domain/eventReport.ts` (a página), `services/eventExport.ts` (imagens,
+> ficheiro e partilha) e o botão de partilhar no Event Detail. Formato no ADR 0014. Falta
+> experimentar num APK e abrir num iPhone do grupo.
+>
+> O ficheiro `2026-09-25-pre-release-reality-fracture.html` aqui ao lado é gerado pelo mesmo código
+> que a app usa: `npm run report -- <id do evento>`. Leva as imagens como links (embuti-las é
+> trabalho do telemóvel, que tem a cache delas).
 
 ## O que se quer
 
@@ -165,11 +167,14 @@ Decisões dentro do layout, e porquê:
 - **Sem adversário** escreve-se *Unknown opponent*, em itálico e apagado — é texto de apresentação,
   não um registo, e não contamina nada (ao contrário do que o `data-model.md` proíbe nos dados).
 
-## O que o protótipo não faz (e a versão a sério fará)
+## O que ficou diferente da proposta
 
-- As fontes vêm do Google Fonts; sem rede cai para Georgia. A versão a sério pode embutir as duas
-  famílias (~150 KB) — decidir depois do teste.
-- Os básicos aparecem sem arte: o protótipo não aplica `withBasicLandArt`.
-- Os símbolos WUBRG vão embutidos (os mesmos SVG de `assets/mana/symbols.ts`); os híbridos
-  (`{R/W}`) vêm da Scryfall — na app usam-se os de `costSymbols.ts`.
-- O gerador do protótipo é um script descartável e não está no repositório.
+- **As imagens vão dentro do ficheiro**, não como links — revisão do ADR 0014. Cache do telemóvel
+  primeiro, rede depois, link em último recurso. Na secção A acima, onde diz que as imagens
+  "carregam no telemóvel de quem abre", isso passou a ser só o recurso.
+- O símbolo da colecção de cada carta aparece pintado pela raridade, como no Deck Detail — mas só
+  quando vai embutido (uma máscara CSS com um SVG remoto é recusada num ficheiro aberto do disco).
+  Sem ele fica um losango da mesma cor.
+- O sideboard aparece fechado, depois da lista principal.
+- As fontes continuam a vir do Google Fonts; sem rede caem para Georgia. Embutir as duas famílias
+  seriam ~150 KB — fica para quando se vir que faz falta.

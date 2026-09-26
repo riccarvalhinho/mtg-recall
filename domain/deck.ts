@@ -119,20 +119,53 @@ const CURVE_TOP = 7;
  * punha-as todas na barra da esquerda como se fossem grátis.
  */
 export function manaCurve(cards: DeckCard[] | undefined): CurveBucket[] {
-  const buckets = new Map<number, number>();
+  return stackedManaCurve(cards).map(({ cmc, isTop, creatures, other }) => ({
+    cmc,
+    isTop,
+    count: creatures + other,
+  }));
+}
+
+export interface StackedCurveBucket {
+  cmc: number;
+  isTop: boolean;
+  creatures: number;
+  /** Tudo o que não é criatura: instants, sorceries, artefactos, encantamentos, planeswalkers. */
+  other: number;
+}
+
+/**
+ * A mesma curva, separada em criaturas e o resto.
+ *
+ * Dois decks com a mesma curva podem ser coisas opostas — dez cartas de 3 que são dez criaturas, ou
+ * dez cartas de 3 que são remoção. O relatório de evento desenha as duas partes empilhadas.
+ *
+ * As regras são as de `manaCurve`, que é esta função somada: sem terrenos, sem cartas sem `cmc`, e
+ * o último balde junta o 7 e acima. Uma carta de duas faces conta pela primeira, como em
+ * `primaryType`.
+ */
+export function stackedManaCurve(cards: DeckCard[] | undefined): StackedCurveBucket[] {
+  const creatures = new Map<number, number>();
+  const other = new Map<number, number>();
 
   for (const card of mainboard(cards ?? [])) {
     if (isLand(card) || card.cmc === undefined) continue;
     const bucket = Math.min(Math.floor(card.cmc), CURVE_TOP);
-    buckets.set(bucket, (buckets.get(bucket) ?? 0) + card.quantity);
+    const target = primaryType(card) === 'Creature' ? creatures : other;
+    target.set(bucket, (target.get(bucket) ?? 0) + card.quantity);
   }
 
-  if (buckets.size === 0) return [];
+  if (creatures.size === 0 && other.size === 0) return [];
 
-  const highest = Math.max(...buckets.keys());
-  const result: CurveBucket[] = [];
+  const highest = Math.max(...creatures.keys(), ...other.keys());
+  const result: StackedCurveBucket[] = [];
   for (let cmc = 0; cmc <= highest; cmc += 1) {
-    result.push({ cmc, isTop: cmc === CURVE_TOP, count: buckets.get(cmc) ?? 0 });
+    result.push({
+      cmc,
+      isTop: cmc === CURVE_TOP,
+      creatures: creatures.get(cmc) ?? 0,
+      other: other.get(cmc) ?? 0,
+    });
   }
   return result;
 }

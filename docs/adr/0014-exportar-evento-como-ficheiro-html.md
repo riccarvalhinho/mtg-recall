@@ -27,10 +27,15 @@ coisa qualquer.
   (`expo-file-system`) e partilha-o; nada passa pela outbox nem por `data/`.
 - **Nada do que é essencial depende de JavaScript.** As rondas abrem com `<details>`, a carta
   inteira abre com uma âncora e `:target`. O único script é conforto.
-- As imagens das cartas são **links para a Scryfall**, não vão embutidas: gerar não precisa de rede,
-  o ficheiro fica em ~60 KB, e as imagens carregam no telemóvel de quem abre. A carta inteira só
-  descarrega quando se toca nela.
-- Os símbolos de mana WUBRG vão embutidos, os mesmos de `assets/mana/symbols.ts`.
+- **As imagens vão dentro do ficheiro** — os recortes da lista, a carta inteira de cada uma, a arte
+  do topo e os símbolos das colecções. O ficheiro leva tudo o que mostra, e quem o abre não precisa
+  de rede nem de um visualizador que aceite ir buscar imagens fora (revisão de 2026-09-26, abaixo).
+- Cada imagem procura-se primeiro na **cache do `expo-image`** (o que o Deck Detail já desenhou),
+  depois na rede. **O que não se conseguir fica como link para a Scryfall**: exportar nunca falha
+  por causa de uma imagem, e na loja sem rede sai o ficheiro com o que houver em cache (regra 3).
+  O Event Detail diz quantas ficaram de fora.
+- Os símbolos de mana vão embutidos a partir dos SVG locais (`assets/mana/symbols.ts` e
+  `costSymbols.ts`), cada um uma vez só no CSS.
 
 ## Alternativas consideradas
 
@@ -50,8 +55,21 @@ um dia, publicar a mesma página no Pages sem escrever outro renderer.
 
 **Fica difícil:** dois módulos nativos novos (`expo-sharing`, `expo-file-system`) — APK novo, como
 qualquer alteração (ADR 0008). No chat o relatório aparece como ficheiro, sem pré-visualização, e
-no Android abre-se por "Abrir com…" → browser.
+no Android abre-se por "Abrir com…" → browser. E o ficheiro pesa: ~3–4 MB num Limited (umas 23
+cartas diferentes, recorte e carta inteira de cada uma); um Commander de cem cartas diferentes
+chega aos 15 MB. O Telegram e o WhatsApp aceitam documentos muito maiores.
 
-**A vigiar:** se no iPhone de alguém do grupo o ficheiro abrir sem imagens (o visualizador a
-recusar recursos remotos), a saída é embutir os recortes da lista na geração — com rede — e deixar a
-carta inteira como link. Ou voltar ao link do Pages.
+**A vigiar:** um Commander a passar do razoável — a saída seria deixar as cartas inteiras como link
+e embutir só os recortes. E o `:target` no visualizador do iPhone, que ainda ninguém experimentou.
+
+## Revisão de 2026-09-26 — as imagens vão dentro
+
+A primeira versão desta decisão deixava as imagens como links para a Scryfall, para o ficheiro ficar
+leve e gerar-se sem rede. A pergunta que a desfez foi a certa: *quem recebe vê as cartas?* Só se
+tiver rede **e** se o visualizador em que o abrir aceitar ir buscar imagens fora — e o do Telegram
+e do WhatsApp no iPhone é justamente o que não se sabe. Um relatório de cartas sem cartas não serve.
+
+Embutir custa o peso e precisa de rede ao gerar. O peso aceita-se (ver acima). A rede resolve-se
+pela cache: as imagens de um deck que já se abriu no telemóvel estão em disco, e o que não estiver
+fica como link — o mesmo comportamento da primeira versão, só que agora como recurso e não como
+regra.

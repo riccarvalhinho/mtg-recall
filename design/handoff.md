@@ -57,7 +57,8 @@ export const colors = {
 
 ### 1.2b Cores das raridades
 
-Vivem em `components/SetSymbol.tsx` e **não** em `theme/colors.ts`, de propósito: a paleta da app é
+Vivem em `theme/rarity.ts` (usadas pelo `SetSymbol` e pelo relatório de evento) e **não** em
+`theme/colors.ts`, de propósito: a paleta da app é
 quente e estas têm de ser neutras. Um cinzento morno lê-se como dourado ao lado de um dourado a
 sério, e a raridade deixa de se ver.
 

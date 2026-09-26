@@ -8,6 +8,7 @@ import {
   deckPerformance,
   isLand,
   manaCurve,
+  stackedManaCurve,
   primaryType,
   rankDecks,
   typeCounts,
@@ -174,6 +175,36 @@ describe('manaCurve', () => {
     expect(top.isTop).toBe(true);
     expect(top.cmc).toBe(7);
     expect(top.count).toBe(3);
+  });
+});
+
+describe('stackedManaCurve', () => {
+  it('separa as criaturas do resto em cada balde', () => {
+    const curve = stackedManaCurve([
+      card({ name: 'Bear', quantity: 3, cmc: 2, typeLine: 'Creature — Bear' }),
+      card({ name: 'Shock', quantity: 2, cmc: 2, typeLine: 'Instant' }),
+      card({ name: 'Golem', quantity: 1, cmc: 2, typeLine: 'Artifact Creature — Golem' }),
+    ]);
+    expect(curve.find(bucket => bucket.cmc === 2)).toEqual({ cmc: 2, isTop: false, creatures: 4, other: 2 });
+  });
+
+  it('uma carta de duas faces conta pela primeira', () => {
+    const curve = stackedManaCurve([
+      card({ name: 'Paradox Shaper // Omit Variables', quantity: 1, cmc: 2, typeLine: 'Creature — Octopus Wizard // Sorcery' }),
+    ]);
+    expect(curve[2]).toMatchObject({ creatures: 1, other: 0 });
+  });
+
+  it('somada, é a manaCurve — as duas não podem discordar', () => {
+    const cards = [
+      card({ name: 'A', quantity: 4, cmc: 1, typeLine: 'Instant' }),
+      card({ name: 'B', quantity: 2, cmc: 1, typeLine: 'Creature' }),
+      card({ name: 'Island', quantity: 17, cmc: 0, typeLine: 'Basic Land — Island' }),
+      card({ name: 'Ulamog', quantity: 1, cmc: 10, typeLine: 'Legendary Creature — Eldrazi' }),
+      card({ name: 'Side', quantity: 3, cmc: 3, typeLine: 'Sorcery', board: 'side' }),
+    ];
+    expect(stackedManaCurve(cards).map(b => ({ cmc: b.cmc, isTop: b.isTop, count: b.creatures + b.other })))
+      .toEqual(manaCurve(cards));
   });
 });
 
